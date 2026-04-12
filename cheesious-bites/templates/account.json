@@ -1,0 +1,11 @@
+{
+  "name": "Account",
+  "sections": {
+    "header": { "type": "header-section", "settings": {} },
+    "account": { "type": "account-section", "settings": {} },
+    "footer": { "type": "footer-section", "settings": {} }
+  },
+  "header_order": ["header"],
+  "order": ["account"],
+  "footer_order": ["footer"]
+}

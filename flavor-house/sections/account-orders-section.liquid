@@ -1,0 +1,41 @@
+{% comment %}
+  Account Orders Section — Order history for /account/orders
+  JS fetches orders from /api/storefront/orders and renders them.
+{% endcomment %}
+
+<section class="account-orders-section section-padding">
+  <div class="container">
+    <div id="orders-page" style="display:none;">
+      <div class="account-header">
+        <div>
+          <h1>Order History</h1>
+          <p class="text-muted">Your past orders and their status.</p>
+        </div>
+        <a href="/account" class="btn btn-outline btn-sm">Back to Account</a>
+      </div>
+
+      <div id="orders-list" class="orders-list">
+        <div class="orders-loading text-muted" style="text-align:center;padding:3rem;">Loading orders...</div>
+      </div>
+
+      <div id="orders-empty" style="display:none;text-align:center;padding:4rem 0;">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" stroke-width="1.5" style="margin:0 auto 1rem;"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        <h2>No orders yet</h2>
+        <p class="text-muted" style="margin-bottom:1.5rem;">Once you place an order, it will appear here.</p>
+        <a href="/menu" class="btn btn-primary">Browse Menu</a>
+      </div>
+
+      <!-- Pagination -->
+      <div id="orders-pagination" class="orders-pagination" style="display:none;">
+        <button class="btn btn-outline btn-sm" id="orders-load-more">Load More</button>
+      </div>
+    </div>
+
+    <!-- Not logged in -->
+    <div id="orders-not-logged-in" style="display:none;text-align:center;padding:4rem 0;">
+      <h2>Sign in to view orders</h2>
+      <p class="text-muted" style="margin-bottom:1.5rem;">You need to be signed in to see your order history.</p>
+      <button class="btn btn-primary" data-open-auth>Sign In</button>
+    </div>
+  </div>
+</section>

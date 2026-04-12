@@ -175,6 +175,8 @@
     })();
   </script>
 
+  {% render 'customer-auth' %}
+
   {{ 'theme.js' | asset_url | script_tag }}
 
   {% if theme.custom_js %}

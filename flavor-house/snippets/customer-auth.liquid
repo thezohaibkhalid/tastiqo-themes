@@ -1,0 +1,73 @@
+{% comment %}
+  Customer Auth Modal — Login / OTP verification
+  Renders a full-screen modal for email + OTP passwordless login.
+  JS handles all API calls to /api/storefront/customer/auth/*
+{% endcomment %}
+
+<div class="auth-modal-backdrop" id="auth-modal">
+  <div class="auth-modal">
+    <button class="auth-modal-close" data-close-auth aria-label="Close">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+
+    <!-- Step 1: Email -->
+    <div class="auth-step" id="auth-step-email">
+      <div class="auth-header">
+        <h2>Welcome</h2>
+        <p>Sign in or create an account to place orders and track your history.</p>
+      </div>
+      <form id="auth-email-form" class="auth-form">
+        <div class="form-group">
+          <label for="auth-email">Email address</label>
+          <input type="email" id="auth-email" name="email" placeholder="you@example.com" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label for="auth-name">Your name <span class="text-muted">(optional)</span></label>
+          <input type="text" id="auth-name" name="full_name" placeholder="Full name" autocomplete="name">
+        </div>
+        <div class="auth-error" id="auth-email-error" style="display:none;"></div>
+        <button type="submit" class="btn btn-primary btn-full" id="auth-email-btn">
+          <span>Continue</span>
+          <span class="btn-spinner" style="display:none;">
+            <svg width="16" height="16" viewBox="0 0 24 24" class="spin"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="32" stroke-linecap="round"/></svg>
+          </span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Step 2: OTP Verification -->
+    <div class="auth-step" id="auth-step-otp" style="display:none;">
+      <div class="auth-header">
+        <h2>Verify your email</h2>
+        <p>We sent a 6-digit code to <strong id="auth-otp-email-display"></strong></p>
+      </div>
+      <form id="auth-otp-form" class="auth-form">
+        <div class="form-group">
+          <label for="auth-otp">Verification code</label>
+          <input type="text" id="auth-otp" name="otp" placeholder="000000" required maxlength="6" inputmode="numeric" autocomplete="one-time-code" style="text-align:center;font-size:1.5rem;letter-spacing:0.5rem;">
+        </div>
+        <div class="auth-error" id="auth-otp-error" style="display:none;"></div>
+        <button type="submit" class="btn btn-primary btn-full" id="auth-otp-btn">
+          <span>Verify & Sign In</span>
+          <span class="btn-spinner" style="display:none;">
+            <svg width="16" height="16" viewBox="0 0 24 24" class="spin"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="32" stroke-linecap="round"/></svg>
+          </span>
+        </button>
+        <div class="auth-footer">
+          <button type="button" class="btn-link" id="auth-resend-btn">Resend code</button>
+          <span class="text-muted"> &middot; </span>
+          <button type="button" class="btn-link" id="auth-back-btn">Change email</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Step 3: Success (brief flash) -->
+    <div class="auth-step" id="auth-step-success" style="display:none;">
+      <div class="auth-header" style="text-align:center;padding:2rem 0;">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" stroke-width="2" style="margin:0 auto 1rem;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <h2>You're signed in!</h2>
+        <p id="auth-welcome-name"></p>
+      </div>
+    </div>
+  </div>
+</div>

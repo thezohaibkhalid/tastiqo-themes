@@ -1,0 +1,10 @@
+{
+  "name": "Order History",
+  "sections": {
+    "orders": {
+      "type": "account-orders-section",
+      "settings": {}
+    }
+  },
+  "order": ["orders"]
+}

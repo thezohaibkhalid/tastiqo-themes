@@ -1,0 +1,78 @@
+{% comment %}
+  Account Section — Customer profile & quick links
+  Rendered on /account when logged in. JS redirects to /account/login if not.
+{% endcomment %}
+
+<section class="account-section section-padding">
+  <div class="container">
+    <div class="account-page" id="account-page" style="display:none;">
+      <div class="account-header">
+        <h1>My Account</h1>
+        <button class="btn btn-outline btn-sm" id="account-logout-btn">Sign Out</button>
+      </div>
+
+      <!-- Profile Card -->
+      <div class="account-card">
+        <div class="account-card-header">
+          <h3>Profile</h3>
+          <button class="btn-link" id="account-edit-toggle">Edit</button>
+        </div>
+        <div id="account-profile-display">
+          <div class="account-detail">
+            <span class="account-label">Name</span>
+            <span id="account-name">—</span>
+          </div>
+          <div class="account-detail">
+            <span class="account-label">Email</span>
+            <span id="account-email">—</span>
+          </div>
+          <div class="account-detail">
+            <span class="account-label">Phone</span>
+            <span id="account-phone">—</span>
+          </div>
+        </div>
+        <form id="account-profile-form" style="display:none;" class="auth-form">
+          <div class="form-group">
+            <label for="profile-name">Name</label>
+            <input type="text" id="profile-name" name="full_name">
+          </div>
+          <div class="form-group">
+            <label for="profile-phone">Phone</label>
+            <input type="tel" id="profile-phone" name="phone">
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-sm">Save</button>
+            <button type="button" class="btn btn-outline btn-sm" id="account-edit-cancel">Cancel</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Addresses Card -->
+      <div class="account-card">
+        <div class="account-card-header">
+          <h3>Saved Addresses</h3>
+          <button class="btn btn-outline btn-sm" id="account-add-address-btn">+ Add</button>
+        </div>
+        <div id="account-addresses-list" class="account-addresses">
+          <p class="text-muted">Loading addresses...</p>
+        </div>
+      </div>
+
+      <!-- Quick Links -->
+      <div class="account-card">
+        <a href="/account/orders" class="account-link-row">
+          <span>Order History</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <!-- Not logged in state -->
+    <div id="account-not-logged-in" style="display:none;text-align:center;padding:4rem 0;">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" stroke-width="1.5" style="margin:0 auto 1rem;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <h2>Sign in to your account</h2>
+      <p class="text-muted" style="margin-bottom:1.5rem;">View your orders, manage addresses, and more.</p>
+      <button class="btn btn-primary" data-open-auth>Sign In</button>
+    </div>
+  </div>
+</section>

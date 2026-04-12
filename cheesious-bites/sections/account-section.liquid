@@ -1,0 +1,64 @@
+{% comment %}
+  Account Section — Customer profile & quick links (Cheesious Bites)
+{% endcomment %}
+
+<section class="cb-section cb-account-section">
+  <div class="cb-container">
+    <div class="cb-account-page" id="account-page" style="display:none;">
+      <div class="cb-account-header">
+        <h1 class="cb-heading-xl">My Account</h1>
+        <button class="cb-btn cb-btn-outline cb-btn-sm" id="account-logout-btn">Sign Out</button>
+      </div>
+
+      <div class="cb-account-card">
+        <div class="cb-account-card-header">
+          <h3>Profile</h3>
+          <button class="cb-btn-link" id="account-edit-toggle">Edit</button>
+        </div>
+        <div id="account-profile-display">
+          <div class="cb-account-detail"><span class="cb-account-label">Name</span><span id="account-name">—</span></div>
+          <div class="cb-account-detail"><span class="cb-account-label">Email</span><span id="account-email">—</span></div>
+          <div class="cb-account-detail"><span class="cb-account-label">Phone</span><span id="account-phone">—</span></div>
+        </div>
+        <form id="account-profile-form" style="display:none;" class="cb-auth-form">
+          <div class="cb-form-group">
+            <label for="profile-name">Name</label>
+            <input type="text" id="profile-name" name="full_name">
+          </div>
+          <div class="cb-form-group">
+            <label for="profile-phone">Phone</label>
+            <input type="tel" id="profile-phone" name="phone">
+          </div>
+          <div style="display:flex;gap:0.5rem;">
+            <button type="submit" class="cb-btn cb-btn-primary cb-btn-sm">Save</button>
+            <button type="button" class="cb-btn cb-btn-outline cb-btn-sm" id="account-edit-cancel">Cancel</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="cb-account-card">
+        <div class="cb-account-card-header">
+          <h3>Saved Addresses</h3>
+          <button class="cb-btn cb-btn-outline cb-btn-sm" id="account-add-address-btn">+ Add</button>
+        </div>
+        <div id="account-addresses-list" class="cb-account-addresses">
+          <p style="color:var(--cb-text-muted);">Loading addresses...</p>
+        </div>
+      </div>
+
+      <div class="cb-account-card">
+        <a href="/account/orders" class="cb-account-link-row">
+          <span>Order History</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <div id="account-not-logged-in" style="display:none;text-align:center;padding:4rem 0;">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--cb-text-muted)" stroke-width="1.5" style="margin:0 auto 1rem;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <h2 class="cb-heading-lg">Sign in to your account</h2>
+      <p style="color:var(--cb-text-muted);margin-bottom:1.5rem;">View your orders, manage addresses, and more.</p>
+      <button class="cb-btn cb-btn-primary" data-open-auth>Sign In</button>
+    </div>
+  </div>
+</section>

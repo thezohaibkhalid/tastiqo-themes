@@ -1,0 +1,11 @@
+{
+  "name": "Login",
+  "sections": {
+    "header": { "type": "header-section", "settings": {} },
+    "login": { "type": "account-login-section", "settings": {} },
+    "footer": { "type": "footer-section", "settings": {} }
+  },
+  "header_order": ["header"],
+  "order": ["login"],
+  "footer_order": ["footer"]
+}

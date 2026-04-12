@@ -1,0 +1,10 @@
+{
+  "name": "Login",
+  "sections": {
+    "login": {
+      "type": "account-login-section",
+      "settings": {}
+    }
+  },
+  "order": ["login"]
+}
