@@ -1,0 +1,23 @@
+{
+  "name": "Product Page",
+  "sections": {
+    "product-detail": {
+      "type": "product-detail",
+      "settings": {
+        "show_variants": true,
+        "show_toppings": true,
+        "show_calories": true,
+        "show_tags": true
+      }
+    },
+    "related": {
+      "type": "related-items",
+      "settings": {
+        "title": "You May Also Like",
+        "items_count": 4,
+        "columns": 4
+      }
+    }
+  },
+  "order": ["product-detail", "related"]
+}

@@ -1,0 +1,79 @@
+{% comment %} Menu Categories — Grid of category cards with images {% endcomment %}
+
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <h2>{{ section.settings.title | default: "Explore Our Menu" }}</h2>
+      {% if section.settings.subtitle %}
+        <p>{{ section.settings.subtitle }}</p>
+      {% endif %}
+    </div>
+
+    {% if menu_categories.size > 0 %}
+      <div class="grid-{{ section.settings.columns | default: 3 }}">
+        {% for cat in menu_categories limit: section.settings.limit | default: 6 %}
+          <a href="/collection/{{ cat.handle }}" class="category-card">
+            {% if cat.image %}
+              <img src="{{ cat.image }}" alt="{{ cat.title }}" loading="lazy">
+            {% else %}
+              <div style="width:100%;height:100%;background:linear-gradient(135deg, var(--color-primary), var(--color-dark));"></div>
+            {% endif %}
+            <div class="category-card-overlay">
+              <div>
+                <h3>{{ cat.title }}</h3>
+                <span>{{ cat.items.size }} {{ cat.items.size | pluralize: "item", "items" }}</span>
+              </div>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p style="text-align:center;color:var(--color-text-muted);">No categories available.</p>
+    {% endif %}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Menu Categories",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Section Title",
+      "default": "Explore Our Menu"
+    },
+    {
+      "type": "text",
+      "id": "subtitle",
+      "label": "Subtitle",
+      "default": "Something for every craving"
+    },
+    {
+      "type": "select",
+      "id": "columns",
+      "label": "Grid Columns",
+      "default": "3",
+      "options": [
+        { "value": "2", "label": "2 Columns" },
+        { "value": "3", "label": "3 Columns" },
+        { "value": "4", "label": "4 Columns" }
+      ]
+    },
+    {
+      "type": "range",
+      "id": "limit",
+      "label": "Max Categories",
+      "min": 2,
+      "max": 12,
+      "default": 6
+    }
+  ],
+  "presets": [
+    {
+      "name": "Menu Categories",
+      "settings": {}
+    }
+  ]
+}
+{% endschema %}

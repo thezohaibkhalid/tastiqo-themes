@@ -1,0 +1,120 @@
+{% comment %} Hero Banner — Full-width hero with background image, text, and CTAs {% endcomment %}
+
+<section class="hero-banner">
+  <div class="hero-banner-bg" style="background-image: url('{{ restaurant.cover_image | default: '' }}');"></div>
+  <div class="hero-banner-overlay" style="background: rgba(0,0,0,{{ section.settings.overlay_opacity | default: 60 | divided_by: 100.0 }});"></div>
+
+  <div class="hero-banner-content" style="text-align: {{ section.settings.alignment | default: 'center' }};">
+    {% if branch %}
+      <div class="badge badge-secondary" style="margin-bottom: 1rem; display: inline-flex;">
+        📍 {{ branch.name }}
+      </div>
+    {% endif %}
+
+    <h1 class="animate-fade-in-up">
+      {{ section.settings.title | default: restaurant.name }}
+    </h1>
+
+    <p class="animate-fade-in-up animate-delay-100">
+      {{ section.settings.subtitle | default: restaurant.tagline }}
+    </p>
+
+    <div class="hero-banner-actions animate-fade-in-up animate-delay-200">
+      {% if section.settings.cta_text %}
+        <a href="{{ section.settings.cta_link | default: '/menu' }}" class="btn btn-primary btn-lg">
+          {{ section.settings.cta_text }}
+        </a>
+      {% endif %}
+
+      {% if section.settings.cta2_text %}
+        {% if ordering.whatsappOrderEnabled and section.settings.cta2_link == "" %}
+          <a href="{{ ordering.whatsappOrderHref }}" target="_blank" rel="noopener" class="btn btn-secondary btn-lg">
+            {{ section.settings.cta2_text }}
+          </a>
+        {% elsif section.settings.cta2_link %}
+          <a href="{{ section.settings.cta2_link }}" class="btn btn-outline btn-lg" style="border-color: rgba(255,255,255,0.3); color: #fff;">
+            {{ section.settings.cta2_text }}
+          </a>
+        {% endif %}
+      {% endif %}
+    </div>
+
+    {% if ordering.enabled %}
+      <div style="margin-top: 1.5rem; font-size: 0.8125rem; opacity: 0.7;">
+        🕐 Delivery in {{ ordering.estimated_delivery_min }}–{{ ordering.estimated_delivery_max }} min
+        {% if ordering.free_delivery_above %}
+          · Free delivery above {{ ordering.free_delivery_above | money }}
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Hero Banner",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Heading",
+      "default": "Authentic Flavors, Delivered Fresh"
+    },
+    {
+      "type": "textarea",
+      "id": "subtitle",
+      "label": "Subheading",
+      "default": "From our kitchen to your doorstep"
+    },
+    {
+      "type": "range",
+      "id": "overlay_opacity",
+      "label": "Overlay Opacity (%)",
+      "min": 0,
+      "max": 90,
+      "default": 60
+    },
+    {
+      "type": "select",
+      "id": "alignment",
+      "label": "Text Alignment",
+      "default": "center",
+      "options": [
+        { "value": "left", "label": "Left" },
+        { "value": "center", "label": "Center" },
+        { "value": "right", "label": "Right" }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "cta_text",
+      "label": "Button 1 Text",
+      "default": "View Menu"
+    },
+    {
+      "type": "url",
+      "id": "cta_link",
+      "label": "Button 1 Link",
+      "default": "/menu"
+    },
+    {
+      "type": "text",
+      "id": "cta2_text",
+      "label": "Button 2 Text",
+      "default": "Order on WhatsApp"
+    },
+    {
+      "type": "url",
+      "id": "cta2_link",
+      "label": "Button 2 Link (leave empty for WhatsApp)",
+      "default": ""
+    }
+  ],
+  "presets": [
+    {
+      "name": "Hero Banner",
+      "settings": {}
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,25 @@
+{
+  "name": "Menu",
+  "sections": {
+    "menu-header": {
+      "type": "menu-header",
+      "settings": {
+        "show_delivery_time": true
+      }
+    },
+    "filter": {
+      "type": "menu-filter-bar",
+      "settings": {
+        "show_all_tab": true
+      }
+    },
+    "grid": {
+      "type": "menu-grid",
+      "settings": {
+        "columns": 3,
+        "show_description": true
+      }
+    }
+  },
+  "order": ["menu-header", "filter", "grid"]
+}

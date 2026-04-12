@@ -1,0 +1,32 @@
+{
+  "current": {
+    "colors": {
+      "color_primary": "#E11D48",
+      "color_secondary": "#E59700",
+      "color_background": "#FAF8F5",
+      "color_dark": "#1C1410"
+    },
+    "typography": {
+      "font_heading": "Playfair Display",
+      "font_body": "DM Sans"
+    },
+    "layout": {
+      "max_width": "1280px",
+      "border_radius": "0.75rem"
+    },
+    "header": {
+      "header_sticky": true,
+      "show_branch_bar": true,
+      "show_cart_icon": true
+    },
+    "footer": {
+      "show_social_links": true,
+      "show_hours": true,
+      "show_payment_methods": true
+    },
+    "mobile": {
+      "show_mobile_nav": true,
+      "show_whatsapp_button": true
+    }
+  }
+}

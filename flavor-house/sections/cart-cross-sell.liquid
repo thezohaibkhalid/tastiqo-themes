@@ -1,0 +1,41 @@
+{% comment %} Cart Cross-Sell — Suggest additional items {% endcomment %}
+
+{% assign items = featured.popular %}
+
+{% if items.size > 0 %}
+<section class="section section-alt">
+  <div class="container">
+    <div class="section-header">
+      <h2>{{ section.settings.title | default: "Add Something Extra?" }}</h2>
+    </div>
+
+    <div class="grid-4">
+      {% for item in items limit: section.settings.items_count | default: 4 %}
+        {% render 'menu-card', item: item, ordering: ordering, compact: true %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% schema %}
+{
+  "name": "Cart Cross-Sell",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Section Title",
+      "default": "Add Something Extra?"
+    },
+    {
+      "type": "range",
+      "id": "items_count",
+      "label": "Number of Items",
+      "min": 2,
+      "max": 8,
+      "default": 4
+    }
+  ]
+}
+{% endschema %}

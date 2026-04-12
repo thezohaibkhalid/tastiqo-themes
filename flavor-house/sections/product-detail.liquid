@@ -1,0 +1,140 @@
+{% comment %} Product Detail — Full product page with variants, toppings, and add to cart {% endcomment %}
+
+<section class="product-detail">
+  <div class="container">
+    {% if product %}
+      <div class="product-grid">
+        <!-- Image -->
+        <div class="product-image">
+          <img src="{{ product.imageUrl }}" alt="{{ product.name }}">
+          {% if product.hasDiscount %}
+            <span class="badge badge-primary" style="position:absolute;top:1rem;left:1rem;">
+              -{{ product.discountPercent }}%
+            </span>
+          {% endif %}
+          {% if product.isSoldOut %}
+            <div style="position:absolute;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;">
+              <span class="badge badge-danger" style="font-size:1rem;padding:0.5rem 1.5rem;">Sold Out</span>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Info -->
+        <div class="product-info">
+          {% if product.collectionTitle %}
+            <a href="{{ product.collectionUrl }}" style="font-size:0.8125rem;color:var(--color-primary);font-weight:500;">
+              ← {{ product.collectionTitle }}
+            </a>
+          {% endif %}
+
+          <h1>{{ product.name }}</h1>
+
+          {% if product.description %}
+            <p class="product-desc">{{ product.description }}</p>
+          {% endif %}
+
+          <!-- Price -->
+          <div class="product-price-row">
+            <span class="product-price" id="product-active-price">{{ product.priceMoney }}</span>
+            {% if product.hasDiscount %}
+              <span class="product-compare-price">{{ product.compareAtPriceMoney }}</span>
+              <span class="badge badge-primary product-discount-badge">-{{ product.discountPercent }}%</span>
+            {% endif %}
+          </div>
+
+          <!-- Variants -->
+          {% if section.settings.show_variants and product.hasVariants %}
+            <div class="product-variants">
+              <h3>Select Size</h3>
+              <div class="variant-options">
+                {% for variant in product.variants %}
+                  <button class="variant-btn {% if variant.isDefault %}selected{% endif %}" data-variant-id="{{ variant.id }}" data-price="{{ variant.priceMoney }}">
+                    {{ variant.title }} — {{ variant.priceMoney }}
+                  </button>
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+
+          <!-- Toppings -->
+          {% if section.settings.show_toppings and product.hasToppings %}
+            <div class="product-toppings">
+              <h3>Add Toppings</h3>
+              {% for topping in product.toppings %}
+                <label class="topping-option">
+                  <input type="checkbox" value="{{ topping.id }}" name="topping">
+                  <span>{{ topping.name }}</span>
+                  <span class="topping-price">+{{ topping.priceMoney }}</span>
+                </label>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <!-- Quantity -->
+          {% unless product.isSoldOut %}
+            <div class="product-quantity">
+              <div class="quantity-control">
+                <button data-qty-minus>−</button>
+                <span data-qty-value>1</span>
+                <button data-qty-plus>+</button>
+              </div>
+              <button class="btn btn-primary btn-lg" style="flex:1;">
+                Add to Cart
+              </button>
+            </div>
+          {% endunless %}
+
+          <!-- Meta -->
+          <div class="product-meta">
+            {% if section.settings.show_calories and product.calories %}
+              <span>🔥 {{ product.calories }} cal</span>
+            {% endif %}
+            {% if section.settings.show_tags and product.tags.size > 0 %}
+              {% for tag in product.tags %}
+                <span class="badge badge-outline">{{ tag }}</span>
+              {% endfor %}
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% else %}
+      <div style="text-align:center;padding:4rem 0;">
+        <h2>Product not found</h2>
+        <p style="color:var(--color-text-muted);margin-bottom:1.5rem;">This item may no longer be available.</p>
+        <a href="/menu" class="btn btn-primary">Browse Menu</a>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Product Detail",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "show_variants",
+      "label": "Show Variants",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_toppings",
+      "label": "Show Toppings",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_calories",
+      "label": "Show Calories",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_tags",
+      "label": "Show Tags",
+      "default": true
+    }
+  ]
+}
+{% endschema %}

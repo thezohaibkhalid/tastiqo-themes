@@ -1,0 +1,108 @@
+{% comment %} Testimonials — Block-based repeatable customer reviews {% endcomment %}
+
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <h2>{{ section.settings.title | default: "What Our Customers Say" }}</h2>
+      {% if section.settings.subtitle %}
+        <p>{{ section.settings.subtitle }}</p>
+      {% endif %}
+    </div>
+
+    {% if section.blocks.size > 0 %}
+      <div class="grid-3">
+        {% for block in section.blocks %}
+          <div class="testimonial-card">
+            {% if block.settings.image %}
+              <div class="testimonial-avatar">
+                <img src="{{ block.settings.image }}" alt="{{ block.settings.name }}" loading="lazy">
+              </div>
+            {% else %}
+              <div class="testimonial-avatar" style="background:var(--color-primary);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:1.125rem;">
+                {{ block.settings.name | slice: 0 }}
+              </div>
+            {% endif %}
+
+            <div class="testimonial-stars">
+              {% assign rating = block.settings.rating | default: 5 %}
+              {% for i in (1..5) %}
+                {% if i <= rating %}
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                {% else %}
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                {% endif %}
+              {% endfor %}
+            </div>
+
+            <p class="testimonial-text">"{{ block.settings.text }}"</p>
+            <div class="testimonial-name">{{ block.settings.name }}</div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Testimonials",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Section Title",
+      "default": "What Our Customers Say"
+    },
+    {
+      "type": "text",
+      "id": "subtitle",
+      "label": "Subtitle",
+      "default": "Real reviews from real food lovers"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "testimonial",
+      "name": "Testimonial",
+      "settings": [
+        {
+          "type": "text",
+          "id": "name",
+          "label": "Customer Name",
+          "default": "Happy Customer"
+        },
+        {
+          "type": "textarea",
+          "id": "text",
+          "label": "Review Text",
+          "default": "Amazing food and great service!"
+        },
+        {
+          "type": "range",
+          "id": "rating",
+          "label": "Rating (Stars)",
+          "min": 1,
+          "max": 5,
+          "default": 5
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Customer Photo"
+        }
+      ]
+    }
+  ],
+  "max_blocks": 6,
+  "presets": [
+    {
+      "name": "Testimonials",
+      "blocks": [
+        { "type": "testimonial", "settings": { "name": "Ahmed K.", "text": "Best food in town!", "rating": 5 } },
+        { "type": "testimonial", "settings": { "name": "Sara M.", "text": "Always fresh, always on time.", "rating": 5 } },
+        { "type": "testimonial", "settings": { "name": "Usman R.", "text": "Great value for the price!", "rating": 4 } }
+      ]
+    }
+  ]
+}
+{% endschema %}

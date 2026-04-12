@@ -1,0 +1,162 @@
+[
+  {
+    "name": "theme_info",
+    "theme_name": "Flavor House",
+    "theme_version": "1.0.0",
+    "theme_author": "Lovable",
+    "theme_documentation_url": ""
+  },
+  {
+    "name": "Colors",
+    "settings": [
+      {
+        "type": "color",
+        "id": "color_primary",
+        "label": "Primary Color",
+        "default": "#E11D48",
+        "info": "Main brand color used for buttons, links, and accents"
+      },
+      {
+        "type": "color",
+        "id": "color_secondary",
+        "label": "Secondary Color",
+        "default": "#E59700",
+        "info": "Used for badges, highlights, and CTA accents"
+      },
+      {
+        "type": "color",
+        "id": "color_background",
+        "label": "Background Color",
+        "default": "#FAF8F5",
+        "info": "Main page background"
+      },
+      {
+        "type": "color",
+        "id": "color_dark",
+        "label": "Dark Background",
+        "default": "#1C1410",
+        "info": "Header, footer, and dark sections"
+      }
+    ]
+  },
+  {
+    "name": "Typography",
+    "settings": [
+      {
+        "type": "select",
+        "id": "font_heading",
+        "label": "Heading Font",
+        "default": "Playfair Display",
+        "options": [
+          { "value": "Playfair Display", "label": "Playfair Display" },
+          { "value": "Poppins", "label": "Poppins" },
+          { "value": "Merriweather", "label": "Merriweather" },
+          { "value": "Lora", "label": "Lora" }
+        ]
+      },
+      {
+        "type": "select",
+        "id": "font_body",
+        "label": "Body Font",
+        "default": "DM Sans",
+        "options": [
+          { "value": "DM Sans", "label": "DM Sans" },
+          { "value": "Inter", "label": "Inter" },
+          { "value": "Nunito Sans", "label": "Nunito Sans" },
+          { "value": "Open Sans", "label": "Open Sans" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Layout",
+    "settings": [
+      {
+        "type": "select",
+        "id": "max_width",
+        "label": "Max Content Width",
+        "default": "1280px",
+        "options": [
+          { "value": "1024px", "label": "Narrow (1024px)" },
+          { "value": "1280px", "label": "Default (1280px)" },
+          { "value": "1440px", "label": "Wide (1440px)" }
+        ]
+      },
+      {
+        "type": "select",
+        "id": "border_radius",
+        "label": "Border Radius",
+        "default": "0.75rem",
+        "options": [
+          { "value": "0", "label": "Sharp" },
+          { "value": "0.375rem", "label": "Subtle" },
+          { "value": "0.75rem", "label": "Rounded" },
+          { "value": "1rem", "label": "Pill" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Header",
+    "settings": [
+      {
+        "type": "checkbox",
+        "id": "header_sticky",
+        "label": "Sticky Header",
+        "default": true
+      },
+      {
+        "type": "checkbox",
+        "id": "show_branch_bar",
+        "label": "Show Branch Bar",
+        "default": true
+      },
+      {
+        "type": "checkbox",
+        "id": "show_cart_icon",
+        "label": "Show Cart Icon",
+        "default": true
+      }
+    ]
+  },
+  {
+    "name": "Footer",
+    "settings": [
+      {
+        "type": "checkbox",
+        "id": "show_social_links",
+        "label": "Show Social Links",
+        "default": true
+      },
+      {
+        "type": "checkbox",
+        "id": "show_hours",
+        "label": "Show Operating Hours",
+        "default": true
+      },
+      {
+        "type": "checkbox",
+        "id": "show_payment_methods",
+        "label": "Show Payment Methods",
+        "default": true
+      }
+    ]
+  },
+  {
+    "name": "Mobile",
+    "settings": [
+      {
+        "type": "checkbox",
+        "id": "show_mobile_nav",
+        "label": "Show Mobile Bottom Nav",
+        "default": true
+      },
+      {
+        "type": "checkbox",
+        "id": "show_whatsapp_button",
+        "label": "Show WhatsApp Float Button",
+        "default": true
+      }
+    ]
+  }
+]

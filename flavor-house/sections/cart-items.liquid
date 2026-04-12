@@ -1,0 +1,53 @@
+{% comment %} Cart Items — List of items in cart {% endcomment %}
+
+<section class="cart-page">
+  <div class="container">
+    <h1 style="font-size:1.75rem;margin-bottom:1.5rem;">Your Cart</h1>
+
+    <div class="cart-layout">
+      <div>
+        {% comment %} Cart items will be rendered dynamically by JS or server {% endcomment %}
+        <div id="cart-items-list">
+          <!-- Example static structure for template testing -->
+          <div class="cart-empty" id="cart-empty-state">
+            <div style="font-size:3rem;margin-bottom:1rem;">🛒</div>
+            <h2>Your cart is empty</h2>
+            <p>Looks like you haven't added anything yet.</p>
+            <a href="/menu" class="btn btn-primary">Browse Menu</a>
+          </div>
+
+          {% comment %}
+          When items exist, each would be rendered like:
+          <div class="cart-item">
+            <div class="cart-item-image">
+              <img src="{{ item.imageUrl }}" alt="{{ item.name }}">
+            </div>
+            <div class="cart-item-info">
+              <div class="cart-item-name">{{ item.name }}</div>
+              <div class="cart-item-variant">{{ item.selectedVariant.title }}</div>
+              <div class="cart-item-bottom">
+                <div class="quantity-control">
+                  <button data-qty-minus>−</button>
+                  <span data-qty-value>{{ item.quantity }}</span>
+                  <button data-qty-plus>+</button>
+                </div>
+                <span class="cart-item-price">{{ item.priceMoney }}</span>
+              </div>
+            </div>
+          </div>
+          {% endcomment %}
+        </div>
+      </div>
+
+      <!-- Summary rendered by cart-summary section -->
+      {{ content_for_cart_summary }}
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Cart Items",
+  "settings": []
+}
+{% endschema %}

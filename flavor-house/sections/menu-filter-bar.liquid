@@ -1,0 +1,31 @@
+{% comment %} Menu Filter Bar — Sticky category tabs for filtering {% endcomment %}
+
+<div class="menu-filter-bar">
+  <div class="container">
+    <div class="menu-filter-list no-scrollbar">
+      {% if section.settings.show_all_tab %}
+        <button class="menu-filter-btn active" data-category="all">All</button>
+      {% endif %}
+
+      {% for cat in menu_categories %}
+        <button class="menu-filter-btn" data-category="{{ cat.handle }}">
+          {{ cat.title }}
+        </button>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Menu Filter Bar",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "show_all_tab",
+      "label": "Show 'All' Tab",
+      "default": true
+    }
+  ]
+}
+{% endschema %}

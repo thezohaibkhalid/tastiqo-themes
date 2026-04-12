@@ -1,0 +1,15 @@
+{
+  "name": "Page Not Found",
+  "sections": {
+    "not-found": {
+      "type": "404",
+      "settings": {
+        "title": "404",
+        "message": "Oops! This page doesn't exist.",
+        "cta_text": "Back to Home",
+        "cta_link": "/"
+      }
+    }
+  },
+  "order": ["not-found"]
+}

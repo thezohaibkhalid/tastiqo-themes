@@ -1,10 +1,6 @@
 {% comment %}
-  Hero section with three style variants:
-    • classic — full-bleed background image, gradient overlay, centred text
-    • split   — left text / right tilted image card
-    • minimal — soft gradient background, big type, no image
-
-  Switch via `style` setting in the editor.
+  Hero section with three style variants + editable blocks.
+  Blocks: heading, text, buttons — each clickable in the editor.
 {% endcomment %}
 
 {%- assign style = section.settings.style | default: 'classic' -%}
@@ -19,37 +15,70 @@
   {%- if style == 'classic' -%}
     <div class="cb-hero-overlay"></div>
     <div class="cb-hero-inner">
-      {% if section.settings.eyebrow != blank %}
-        <span class="cb-hero-eyebrow cb-anim-up">{{ section.settings.eyebrow }}</span>
+      {% for block in section.blocks %}
+        {% if block.type == 'heading' %}
+          <div data-block-id="{{ block.id }}" data-block-type="heading">
+            {% if block.settings.eyebrow != blank %}
+              <span class="cb-hero-eyebrow">{{ block.settings.eyebrow }}</span>
+            {% endif %}
+            <h1 class="cb-hero-title">{{ block.settings.text | default: 'Hand-stretched, wood-fired, cheese-pulled.' }}</h1>
+          </div>
+        {% elsif block.type == 'text' %}
+          <div data-block-id="{{ block.id }}" data-block-type="text">
+            <p class="cb-hero-sub">{{ block.settings.text | default: 'Authentic Italian flavours from our kitchen to your door.' }}</p>
+          </div>
+        {% elsif block.type == 'buttons' %}
+          <div data-block-id="{{ block.id }}" data-block-type="buttons" class="cb-hero-actions" style="{% if style == 'classic' or style == 'minimal' %}justify-content: center;{% endif %}">
+            {% if block.settings.button1_text != blank %}
+              <a href="{{ block.settings.button1_link | default: '/menu' }}" class="cb-btn cb-btn-primary cb-btn-lg">{{ block.settings.button1_text }}</a>
+            {% endif %}
+            {% if block.settings.button2_text != blank %}
+              <a href="{{ block.settings.button2_link | default: '/about' }}" class="cb-btn cb-btn-outline cb-btn-lg" style="{% if style == 'classic' %}border-color: rgba(255,255,255,0.6); color: #fff;{% endif %}">{{ block.settings.button2_text }}</a>
+            {% endif %}
+          </div>
+        {% endif %}
+      {% endfor %}
+
+      {% if section.blocks.size == 0 %}
+        <h1 class="cb-hero-title">{{ section.settings.title | default: 'Hand-stretched, wood-fired, cheese-pulled.' }}</h1>
+        <p class="cb-hero-sub">{{ section.settings.subtitle | default: 'Authentic Italian flavours.' }}</p>
+        <div class="cb-hero-actions" style="justify-content: center;">
+          <a href="/menu" class="cb-btn cb-btn-primary cb-btn-lg">Order now</a>
+        </div>
       {% endif %}
-      <h1 class="cb-hero-title cb-anim-up delay-1">{{ section.settings.title | default: 'Hand-stretched, wood-fired, cheese-pulled.' }}</h1>
-      <p class="cb-hero-sub cb-anim-up delay-2">{{ section.settings.subtitle | default: 'Authentic Italian flavours from our kitchen to your door.' }}</p>
-      <div class="cb-hero-actions cb-anim-up delay-3">
-        {% if section.settings.cta1_text != blank %}
-          <a href="{{ section.settings.cta1_link | default: '/menu' }}" class="cb-btn cb-btn-primary cb-btn-lg">{{ section.settings.cta1_text }}</a>
-        {% endif %}
-        {% if section.settings.cta2_text != blank %}
-          <a href="{{ section.settings.cta2_link | default: '/about' }}" class="cb-btn cb-btn-outline cb-btn-lg" style="border-color: rgba(255,255,255,0.6); color: #fff;">{{ section.settings.cta2_text }}</a>
-        {% endif %}
-      </div>
     </div>
 
   {%- elsif style == 'split' -%}
     <div class="cb-hero-grid">
       <div>
-        {% if section.settings.eyebrow != blank %}
-          <span class="cb-hero-eyebrow cb-anim-up">{{ section.settings.eyebrow }}</span>
+        {% for block in section.blocks %}
+          {% if block.type == 'heading' %}
+            <div data-block-id="{{ block.id }}" data-block-type="heading">
+              {% if block.settings.eyebrow != blank %}
+                <span class="cb-hero-eyebrow" style="background: var(--cb-secondary); color: var(--cb-accent);">{{ block.settings.eyebrow }}</span>
+              {% endif %}
+              <h1 class="cb-hero-title" style="color: var(--cb-accent);">{{ block.settings.text | default: 'Pizza done right.' }}</h1>
+            </div>
+          {% elsif block.type == 'text' %}
+            <div data-block-id="{{ block.id }}" data-block-type="text">
+              <p class="cb-hero-sub" style="color: var(--cb-text);">{{ block.settings.text | default: 'San Marzano tomatoes. Buffalo mozzarella.' }}</p>
+            </div>
+          {% elsif block.type == 'buttons' %}
+            <div data-block-id="{{ block.id }}" data-block-type="buttons" class="cb-hero-actions">
+              {% if block.settings.button1_text != blank %}
+                <a href="{{ block.settings.button1_link | default: '/menu' }}" class="cb-btn cb-btn-primary cb-btn-lg">{{ block.settings.button1_text }}</a>
+              {% endif %}
+              {% if block.settings.button2_text != blank %}
+                <a href="{{ block.settings.button2_link | default: '/about' }}" class="cb-btn cb-btn-outline cb-btn-lg">{{ block.settings.button2_text }}</a>
+              {% endif %}
+            </div>
+          {% endif %}
+        {% endfor %}
+
+        {% if section.blocks.size == 0 %}
+          <h1 class="cb-hero-title" style="color: var(--cb-accent);">{{ section.settings.title | default: 'Pizza done right.' }}</h1>
+          <p class="cb-hero-sub" style="color: var(--cb-text);">{{ section.settings.subtitle }}</p>
         {% endif %}
-        <h1 class="cb-hero-title cb-anim-up delay-1">{{ section.settings.title | default: 'Pizza done right.' }}</h1>
-        <p class="cb-hero-sub cb-anim-up delay-2">{{ section.settings.subtitle | default: 'San Marzano tomatoes. Buffalo mozzarella. 90 seconds in the wood oven.' }}</p>
-        <div class="cb-hero-actions cb-anim-up delay-3">
-          {% if section.settings.cta1_text != blank %}
-            <a href="{{ section.settings.cta1_link | default: '/menu' }}" class="cb-btn cb-btn-primary cb-btn-lg">{{ section.settings.cta1_text }}</a>
-          {% endif %}
-          {% if section.settings.cta2_text != blank %}
-            <a href="{{ section.settings.cta2_link | default: '/about' }}" class="cb-btn cb-btn-outline cb-btn-lg">{{ section.settings.cta2_text }}</a>
-          {% endif %}
-        </div>
       </div>
       <div class="cb-hero-image">
         {% if bg_image != blank %}
@@ -62,16 +91,31 @@
 
   {%- else -%}
     <div class="cb-container" style="text-align: center;">
-      {% if section.settings.eyebrow != blank %}
-        <span class="cb-hero-eyebrow cb-anim-up" style="background: var(--color-secondary); color: var(--color-accent);">{{ section.settings.eyebrow }}</span>
-      {% endif %}
-      <h1 class="cb-hero-title cb-anim-up delay-1">{{ section.settings.title | default: 'Cheesious Bites' }}</h1>
-      <p class="cb-hero-sub cb-anim-up delay-2" style="margin-left: auto; margin-right: auto;">{{ section.settings.subtitle | default: 'Wood-fired pizzas, ridiculous cheese pulls.' }}</p>
-      <div class="cb-hero-actions cb-anim-up delay-3" style="justify-content: center;">
-        {% if section.settings.cta1_text != blank %}
-          <a href="{{ section.settings.cta1_link | default: '/menu' }}" class="cb-btn cb-btn-primary cb-btn-lg">{{ section.settings.cta1_text }}</a>
+      {% for block in section.blocks %}
+        {% if block.type == 'heading' %}
+          <div data-block-id="{{ block.id }}" data-block-type="heading">
+            {% if block.settings.eyebrow != blank %}
+              <span class="cb-hero-eyebrow" style="background: var(--cb-secondary); color: var(--cb-accent);">{{ block.settings.eyebrow }}</span>
+            {% endif %}
+            <h1 class="cb-hero-title" style="color: var(--cb-accent);">{{ block.settings.text | default: 'Cheesious Bites' }}</h1>
+          </div>
+        {% elsif block.type == 'text' %}
+          <div data-block-id="{{ block.id }}" data-block-type="text">
+            <p class="cb-hero-sub" style="margin-left: auto; margin-right: auto;">{{ block.settings.text | default: 'Wood-fired pizzas, ridiculous cheese pulls.' }}</p>
+          </div>
+        {% elsif block.type == 'buttons' %}
+          <div data-block-id="{{ block.id }}" data-block-type="buttons" class="cb-hero-actions" style="justify-content: center;">
+            {% if block.settings.button1_text != blank %}
+              <a href="{{ block.settings.button1_link | default: '/menu' }}" class="cb-btn cb-btn-primary cb-btn-lg">{{ block.settings.button1_text }}</a>
+            {% endif %}
+          </div>
         {% endif %}
-      </div>
+      {% endfor %}
+
+      {% if section.blocks.size == 0 %}
+        <h1 class="cb-hero-title" style="color: var(--cb-accent);">{{ section.settings.title | default: 'Cheesious Bites' }}</h1>
+        <p class="cb-hero-sub" style="margin-left: auto; margin-right: auto;">{{ section.settings.subtitle }}</p>
+      {% endif %}
     </div>
   {%- endif -%}
 
@@ -80,6 +124,7 @@
 {% schema %}
 {
   "name": "Hero",
+  "max_blocks": 6,
   "settings": [
     {
       "type": "select",
@@ -92,15 +137,44 @@
         { "value": "minimal", "label": "Minimal — big type, no image" }
       ]
     },
-    { "type": "text",     "id": "eyebrow",  "label": "Eyebrow",   "default": "Wood-fired since 2018" },
-    { "type": "text",     "id": "title",    "label": "Title",     "default": "Hand-stretched, wood-fired, cheese-pulled." },
-    { "type": "textarea", "id": "subtitle", "label": "Subtitle",  "default": "Authentic Italian flavours from our kitchen to your door." },
     { "type": "image_picker", "id": "background_image", "label": "Background / hero image" },
-    { "type": "text", "id": "cta1_text", "label": "Button 1 text", "default": "Order now" },
-    { "type": "url",  "id": "cta1_link", "label": "Button 1 link", "default": "/menu" },
-    { "type": "text", "id": "cta2_text", "label": "Button 2 text", "default": "Our story" },
-    { "type": "url",  "id": "cta2_link", "label": "Button 2 link", "default": "/about" }
+    { "type": "text", "id": "title", "label": "Fallback title (used when no blocks)", "default": "Hand-stretched, wood-fired, cheese-pulled." },
+    { "type": "textarea", "id": "subtitle", "label": "Fallback subtitle", "default": "Authentic Italian flavours from our kitchen to your door." }
   ],
-  "presets": [{ "name": "Hero", "settings": {} }]
+  "blocks": [
+    {
+      "type": "heading",
+      "name": "Heading",
+      "settings": [
+        { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "Wood-fired since 2018" },
+        { "type": "text", "id": "text", "label": "Heading text", "default": "Hand-stretched, wood-fired, cheese-pulled." }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "Text",
+      "settings": [
+        { "type": "textarea", "id": "text", "label": "Text", "default": "Authentic Italian flavours from our kitchen to your door." }
+      ]
+    },
+    {
+      "type": "buttons",
+      "name": "Buttons",
+      "settings": [
+        { "type": "text", "id": "button1_text", "label": "Button 1 text", "default": "Order now" },
+        { "type": "url",  "id": "button1_link", "label": "Button 1 link", "default": "/menu" },
+        { "type": "text", "id": "button2_text", "label": "Button 2 text", "default": "Our story" },
+        { "type": "url",  "id": "button2_link", "label": "Button 2 link", "default": "/about" }
+      ]
+    }
+  ],
+  "presets": [{
+    "name": "Hero",
+    "blocks": [
+      { "type": "heading", "settings": { "eyebrow": "Wood-fired since 2018", "text": "Hand-stretched, wood-fired, cheese-pulled." } },
+      { "type": "text", "settings": { "text": "Authentic Italian flavours from our kitchen to your door." } },
+      { "type": "buttons", "settings": { "button1_text": "Order now", "button1_link": "/menu", "button2_text": "Our story", "button2_link": "/about" } }
+    ]
+  }]
 }
 {% endschema %}

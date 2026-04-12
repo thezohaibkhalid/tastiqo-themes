@@ -1,0 +1,60 @@
+{% comment %} Menu Grid — Full menu listing grouped by category {% endcomment %}
+
+<section class="section">
+  <div class="container" id="menu-grid">
+    {% assign cols = section.settings.columns | default: 3 %}
+
+    {% if menu_categories.size > 0 %}
+      {% for cat in menu_categories %}
+        <div class="menu-category-group" data-category="{{ cat.handle }}" style="margin-bottom: 3rem;">
+          <div style="margin-bottom: 1.25rem;">
+            <h2 style="font-size: 1.5rem;">{{ cat.title }}</h2>
+            {% if cat.description and section.settings.show_description %}
+              <p style="color: var(--color-text-muted); font-size: 0.875rem; margin-top: 0.25rem;">{{ cat.description }}</p>
+            {% endif %}
+          </div>
+
+          {% if cat.items.size > 0 %}
+            <div class="grid-{{ cols }}">
+              {% for item in cat.items %}
+                {% render 'menu-card', item: item, ordering: ordering %}
+              {% endfor %}
+            </div>
+          {% else %}
+            <p style="color:var(--color-text-muted);padding:2rem 0;">No items available in this category.</p>
+          {% endif %}
+        </div>
+      {% endfor %}
+    {% else %}
+      <div style="text-align:center;padding:4rem 0;">
+        <h2 style="font-size:1.5rem;margin-bottom:0.5rem;">No Menu Available</h2>
+        <p style="color:var(--color-text-muted);">Please check back later or select a different branch.</p>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Menu Grid",
+  "settings": [
+    {
+      "type": "select",
+      "id": "columns",
+      "label": "Grid Columns",
+      "default": "3",
+      "options": [
+        { "value": "2", "label": "2 Columns" },
+        { "value": "3", "label": "3 Columns" },
+        { "value": "4", "label": "4 Columns" }
+      ]
+    },
+    {
+      "type": "checkbox",
+      "id": "show_description",
+      "label": "Show Category Descriptions",
+      "default": true
+    }
+  ]
+}
+{% endschema %}

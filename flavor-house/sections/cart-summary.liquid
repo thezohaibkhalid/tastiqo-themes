@@ -1,0 +1,79 @@
+{% comment %} Cart Summary — Order total, delivery fee, checkout button {% endcomment %}
+
+<div class="cart-summary-card">
+  <div class="cart-summary-title">Order Summary</div>
+
+  <div class="cart-summary-row">
+    <span>Subtotal</span>
+    <span id="cart-subtotal">Rs.0</span>
+  </div>
+
+  {% if section.settings.show_delivery_fee and ordering.delivery_fee %}
+    <div class="cart-summary-row">
+      <span>Delivery Fee</span>
+      <span>{{ ordering.delivery_fee_money }}</span>
+    </div>
+    {% if ordering.free_delivery_above %}
+      <div style="font-size:0.75rem;color:var(--color-success);margin-bottom:0.5rem;">
+        Free delivery on orders above {{ ordering.free_delivery_above | money }}
+      </div>
+    {% endif %}
+  {% endif %}
+
+  {% if section.settings.show_tax_note and taxes.gst_enabled %}
+    <div class="cart-summary-row" style="font-size:0.8125rem;color:var(--color-text-muted);">
+      <span>GST ({{ taxes.gst_rate }}%)</span>
+      <span>{% if taxes.included_in_prices %}Included{% else %}Calculated at checkout{% endif %}</span>
+    </div>
+  {% endif %}
+
+  <div class="cart-summary-row total">
+    <span>Total</span>
+    <span id="cart-total">Rs.0</span>
+  </div>
+
+  {% if ordering.min_order_amount %}
+    <div style="font-size:0.75rem;color:var(--color-text-muted);margin-bottom:1rem;">
+      Minimum order: {{ ordering.min_order_money }}
+    </div>
+  {% endif %}
+
+  <a href="/checkout" class="btn btn-primary btn-lg" style="width:100%;margin-bottom:0.75rem;">
+    Proceed to Checkout
+  </a>
+
+  {% if ordering.whatsappOrderEnabled %}
+    <a href="{{ ordering.whatsappOrderHref }}" target="_blank" rel="noopener" class="btn btn-lg" style="width:100%;background:#25D366;color:#fff;">
+      Order via WhatsApp
+    </a>
+  {% endif %}
+
+  {% if payments %}
+    <div style="margin-top:1rem;display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;">
+      {% if payments.cod %}<span class="badge badge-outline">Cash on Delivery</span>{% endif %}
+      {% if payments.card %}<span class="badge badge-outline">Card</span>{% endif %}
+      {% if payments.jazzcash %}<span class="badge badge-outline">JazzCash</span>{% endif %}
+      {% if payments.easypaisa %}<span class="badge badge-outline">Easypaisa</span>{% endif %}
+    </div>
+  {% endif %}
+</div>
+
+{% schema %}
+{
+  "name": "Cart Summary",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "show_delivery_fee",
+      "label": "Show Delivery Fee",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_tax_note",
+      "label": "Show Tax Note",
+      "default": true
+    }
+  ]
+}
+{% endschema %}

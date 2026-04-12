@@ -1,0 +1,48 @@
+{% comment %}
+  Branch Selector Modal
+  Variables: branch, branch_selector, request
+{% endcomment %}
+
+{% if branch_selector.has_multiple %}
+<div class="branch-modal-backdrop" id="branch-modal" {% if branch_selector.show_popup %}data-auto-open="true"{% endif %}>
+  <div class="branch-modal">
+    <div class="branch-modal-header">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+        <div>
+          <h2>Select Your Branch</h2>
+          <p>Choose the nearest location for accurate menu &amp; pricing</p>
+        </div>
+        <button data-close-branch-selector aria-label="Close branch selector" style="color:var(--color-text-muted);padding:0.25rem;margin-top:0.125rem;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="branch-modal-body">
+      {% for group in branch_selector.cities_grouped %}
+        <div class="branch-city-group">
+          <div class="branch-city-label">{{ group.city }}</div>
+
+          {% for b in group.branches %}
+            <form method="POST" action="/api/storefront/set-branch" style="margin: 0;">
+              <input type="hidden" name="branch_id" value="{{ b.id }}">
+              <button type="submit" class="branch-option {% if b.is_current %}current{% endif %}" style="width: 100%; text-align: left; background: none; border: 1px solid var(--color-border); cursor: pointer;">
+                <div class="branch-option-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                </div>
+                <div class="branch-option-info">
+                  <h3>{{ b.name }}</h3>
+                  <p>{{ b.address }}</p>
+                </div>
+                <span class="branch-option-status {% if b.is_open %}open{% else %}closed{% endif %}">
+                  {% if b.is_open %}Open{% else %}Closed{% endif %}
+                </span>
+              </button>
+            </form>
+          {% endfor %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}

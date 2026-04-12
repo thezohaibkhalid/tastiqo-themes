@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="{{ localization.locale | default: 'en' }}" dir="{% if localization.rtl %}rtl{% else %}ltr{% endif %}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ seo.title | default: restaurant.name }}</title>
+  <meta name="description" content="{{ seo.description | default: restaurant.tagline }}">
+  {% if seo.keywords %}<meta name="keywords" content="{{ seo.keywords }}">{% endif %}
+  {% if seo.canonical %}<link rel="canonical" href="{{ seo.canonical }}">{% endif %}
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="{{ seo.title | default: restaurant.name }}">
+  <meta property="og:description" content="{{ seo.description | default: restaurant.tagline }}">
+  <meta property="og:type" content="{{ seo.og_type | default: 'website' }}">
+  {% if seo.og_image %}<meta property="og:image" content="{{ seo.og_image }}">{% endif %}
+  <meta name="twitter:card" content="{{ seo.twitter_card | default: 'summary_large_image' }}">
+
+  <link rel="icon" href="{{ restaurant.icon }}">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family={{ theme.font_heading | default: 'Playfair+Display' }}:wght@400;500;600;700;800&family={{ theme.font_body | default: 'DM+Sans' }}:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  {{ 'theme.css' | asset_url | stylesheet_tag }}
+</head>
+<body class="font-body bg-background text-foreground antialiased">
+
+  {% render 'header',
+    restaurant: restaurant,
+    navigation: navigation,
+    branch: branch,
+    branch_selector: branch_selector,
+    request: request,
+    theme: theme,
+    ordering: ordering
+  %}
+
+  <main id="main-content">
+    {{ content_for_layout }}
+  </main>
+
+  {% render 'footer',
+    restaurant: restaurant,
+    navigation: navigation,
+    ordering: ordering,
+    payments: payments
+  %}
+
+  {% render 'branch-selector',
+    branch: branch,
+    branch_selector: branch_selector,
+    request: request
+  %}
+
+  {% render 'mobile-bottom-nav',
+    request: request,
+    ordering: ordering
+  %}
+
+  {% render 'floating-whatsapp',
+    ordering: ordering
+  %}
+
+  {{ 'theme.js' | asset_url | script_tag }}
+</body>
+</html>
