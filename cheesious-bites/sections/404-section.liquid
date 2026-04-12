@@ -1,0 +1,26 @@
+{% comment %} 404 page section. {% endcomment %}
+
+<section class="cb-section" style="text-align: center;">
+  <div class="cb-container" style="max-width: 560px;">
+    <div style="font-size: 6rem; line-height: 1; margin-bottom: 12px;" class="cb-anim-up">🍕</div>
+    <h1 class="cb-anim-up delay-1" style="margin-bottom: 12px;">{{ section.settings.title | default: 'Page not found' }}</h1>
+    <p class="cb-anim-up delay-2" style="color: var(--color-muted); margin-bottom: 32px;">
+      {{ section.settings.body | default: "Looks like this slice slipped out of the box. Let's get you back to the menu." }}
+    </p>
+    <div class="cb-anim-up delay-3" style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+      <a href="/" class="cb-btn cb-btn-primary cb-btn-lg">Back home</a>
+      <a href="/menu" class="cb-btn cb-btn-outline cb-btn-lg">Browse menu</a>
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "404",
+  "settings": [
+    { "type": "text", "id": "title", "label": "Title", "default": "Page not found" },
+    { "type": "textarea", "id": "body", "label": "Body", "default": "Looks like this slice slipped out of the box. Let's get you back to the menu." }
+  ],
+  "presets": [{ "name": "404", "settings": {} }]
+}
+{% endschema %}

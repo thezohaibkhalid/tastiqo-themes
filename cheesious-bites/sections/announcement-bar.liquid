@@ -1,0 +1,24 @@
+{% if section.settings.enabled %}
+  <div class="cb-announce" style="background: {{ section.settings.bg_color | default: '#5C2018' }}; color: {{ section.settings.text_color | default: '#FFFFFF' }};">
+    {{ section.settings.text }}
+    {% if section.settings.link and section.settings.link_text %}
+      &nbsp;<a href="{{ section.settings.link }}" style="color: {{ section.settings.text_color | default: '#FFFFFF' }};">{{ section.settings.link_text }} →</a>
+    {% endif %}
+  </div>
+{% endif %}
+
+{% schema %}
+{
+  "name": "Announcement Bar",
+  "group": "header",
+  "settings": [
+    { "type": "checkbox", "id": "enabled", "label": "Show announcement bar", "default": true },
+    { "type": "text", "id": "text", "label": "Message", "default": "🧀 Free delivery on orders above Rs.1,500 — try our new Truffle Mozzarella!" },
+    { "type": "text", "id": "link_text", "label": "Link text", "default": "Order now" },
+    { "type": "url",  "id": "link",      "label": "Link URL",  "default": "/menu" },
+    { "type": "color", "id": "bg_color",   "label": "Background", "default": "#5C2018" },
+    { "type": "color", "id": "text_color", "label": "Text color", "default": "#FFFFFF" }
+  ],
+  "presets": [{ "name": "Announcement Bar", "settings": {} }]
+}
+{% endschema %}

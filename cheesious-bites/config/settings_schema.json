@@ -1,0 +1,67 @@
+[
+  {
+    "name": "theme_info",
+    "theme_name": "Cheesious Bites",
+    "theme_version": "1.0.0",
+    "theme_author": "Tastiqo",
+    "theme_documentation_url": "",
+    "theme_support_url": ""
+  },
+  {
+    "name": "Colors",
+    "settings": [
+      { "type": "color", "id": "color_primary",   "label": "Primary (cheese orange)", "default": "#E85D2F" },
+      { "type": "color", "id": "color_secondary", "label": "Secondary (mustard)",     "default": "#FFC93C" },
+      { "type": "color", "id": "color_accent",    "label": "Accent (deep tomato)",    "default": "#5C2018" },
+      { "type": "color", "id": "color_bg",        "label": "Background",              "default": "#FFF8F1" },
+      { "type": "color", "id": "color_surface",   "label": "Surface",                 "default": "#FFFFFF" },
+      { "type": "color", "id": "color_text",      "label": "Body text",               "default": "#231910" },
+      { "type": "color", "id": "color_muted",     "label": "Muted text",              "default": "#7A6A5C" },
+      { "type": "color", "id": "color_border",    "label": "Border",                  "default": "#F2E6D6" }
+    ]
+  },
+  {
+    "name": "Typography",
+    "settings": [
+      {
+        "type": "select",
+        "id": "font_heading",
+        "label": "Heading font",
+        "default": "Fraunces",
+        "options": [
+          { "value": "Fraunces",         "label": "Fraunces (warm serif)" },
+          { "value": "Playfair Display", "label": "Playfair Display" },
+          { "value": "DM Serif Display", "label": "DM Serif Display" },
+          { "value": "Poppins",          "label": "Poppins (sans)" }
+        ]
+      },
+      {
+        "type": "select",
+        "id": "font_body",
+        "label": "Body font",
+        "default": "Inter",
+        "options": [
+          { "value": "Inter",     "label": "Inter" },
+          { "value": "DM Sans",   "label": "DM Sans" },
+          { "value": "Manrope",   "label": "Manrope" },
+          { "value": "Lato",      "label": "Lato" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Layout",
+    "settings": [
+      { "type": "range", "id": "page_width", "label": "Max page width (px)", "min": 1100, "max": 1600, "step": 20, "default": 1280 },
+      { "type": "range", "id": "radius_sm",  "label": "Small radius (px)",   "min": 2,   "max": 16, "step": 2, "default": 8  },
+      { "type": "range", "id": "radius_md",  "label": "Medium radius (px)",  "min": 4,   "max": 24, "step": 2, "default": 14 },
+      { "type": "range", "id": "radius_lg",  "label": "Large radius (px)",   "min": 8,   "max": 36, "step": 4, "default": 24 }
+    ]
+  },
+  {
+    "name": "Custom CSS",
+    "settings": [
+      { "type": "html", "id": "custom_css", "label": "Custom CSS", "default": "" }
+    ]
+  }
+]

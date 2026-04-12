@@ -1,0 +1,89 @@
+{% comment %}
+  Footer section — editable in the theme editor.
+  Three-column layout with brand, links, hours, and social.
+{% endcomment %}
+
+<footer class="cb-footer">
+  <div class="cb-footer-inner">
+
+    <div class="cb-footer-brand">
+      <a href="/" class="cb-footer-logo">
+        {% if theme.logo_image != blank %}
+          <img src="{{ theme.logo_image }}" alt="{{ restaurant.name }}">
+        {% elsif restaurant.logo %}
+          <img src="{{ restaurant.logo }}" alt="{{ restaurant.name }}">
+        {% else %}
+          <span class="cb-logo-mark">🧀</span>
+          <span>{{ restaurant.name | default: "Cheesious Bites" }}</span>
+        {% endif %}
+      </a>
+      <p class="cb-footer-tagline">
+        {{ section.settings.tagline | default: restaurant.tagline | default: "Hand-stretched, wood-fired, cheese-pulled." }}
+      </p>
+    </div>
+
+    <div class="cb-footer-col">
+      <h4>Explore</h4>
+      <ul>
+        {% for item in navigation.primary %}
+          <li><a href="{{ item.url }}">{{ item.label }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="cb-footer-col">
+      <h4>Contact</h4>
+      <ul class="cb-footer-contact">
+        {% if branch.address %}<li>📍 {{ branch.address }}</li>{% endif %}
+        {% if branch.phone %}<li>📞 <a href="tel:{{ branch.phone }}">{{ branch.phone }}</a></li>{% endif %}
+        {% if restaurant.email %}<li>✉️ <a href="mailto:{{ restaurant.email }}">{{ restaurant.email }}</a></li>{% endif %}
+      </ul>
+    </div>
+
+    {% if branch.hours and branch.hours.size > 0 %}
+      <div class="cb-footer-col">
+        <h4>Hours</h4>
+        <ul class="cb-footer-hours">
+          {% for h in branch.hours %}
+            <li>
+              <span class="cb-day">{{ h.day }}</span>
+              <span class="cb-time">{% if h.closed %}Closed{% else %}{{ h.open }} – {{ h.close }}{% endif %}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="cb-footer-bottom">
+    <span>{{ section.settings.copyright | default: "© 2026 Cheesious Bites. All rights reserved." }}</span>
+    <span class="cb-footer-credits">{{ section.settings.credits | default: "Crafted with ❤️ & mozzarella." }}</span>
+  </div>
+</footer>
+
+{% schema %}
+{
+  "name": "Footer",
+  "settings": [
+    { "type": "text", "id": "tagline", "label": "Tagline", "default": "Hand-stretched, wood-fired, cheese-pulled to perfection." },
+    { "type": "text", "id": "copyright", "label": "Copyright text", "default": "© 2026 Cheesious Bites. All rights reserved." },
+    { "type": "text", "id": "credits", "label": "Credits line", "default": "Crafted with ❤️ & mozzarella." }
+  ],
+  "blocks": [
+    {
+      "type": "link_column",
+      "name": "Link Column",
+      "settings": [
+        { "type": "text", "id": "title", "label": "Column title", "default": "Links" },
+        { "type": "text", "id": "link_1_text", "label": "Link 1 text", "default": "Home" },
+        { "type": "url",  "id": "link_1_url",  "label": "Link 1 URL",  "default": "/" },
+        { "type": "text", "id": "link_2_text", "label": "Link 2 text", "default": "Menu" },
+        { "type": "url",  "id": "link_2_url",  "label": "Link 2 URL",  "default": "/menu" },
+        { "type": "text", "id": "link_3_text", "label": "Link 3 text", "default": "" },
+        { "type": "url",  "id": "link_3_url",  "label": "Link 3 URL",  "default": "" }
+      ]
+    }
+  ],
+  "presets": [{ "name": "Footer", "settings": {} }]
+}
+{% endschema %}

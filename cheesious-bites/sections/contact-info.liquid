@@ -1,0 +1,47 @@
+{% comment %} Contact info — combined hours, phone, address, email + map. {% endcomment %}
+
+<section class="cb-section">
+  <div class="cb-container">
+    <div class="cb-section-head cb-anim-up">
+      {% if section.settings.eyebrow %}<span class="cb-eyebrow">{{ section.settings.eyebrow }}</span>{% endif %}
+      <h2>{{ section.settings.title | default: 'Get in touch' }}</h2>
+      {% if section.settings.subtitle %}<p>{{ section.settings.subtitle }}</p>{% endif %}
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px;">
+      {% if branch.phone %}
+        <div class="cb-loc-card cb-anim-up">
+          <div style="font-size: 2rem; margin-bottom: 12px;">📞</div>
+          <h3>Call us</h3>
+          <a href="tel:{{ branch.phone }}" style="color: var(--color-primary); font-weight: 600;">{{ branch.phone }}</a>
+        </div>
+      {% endif %}
+      {% if restaurant.email %}
+        <div class="cb-loc-card cb-anim-up delay-1">
+          <div style="font-size: 2rem; margin-bottom: 12px;">✉️</div>
+          <h3>Email</h3>
+          <a href="mailto:{{ restaurant.email }}" style="color: var(--color-primary); font-weight: 600;">{{ restaurant.email }}</a>
+        </div>
+      {% endif %}
+      {% if branch.address %}
+        <div class="cb-loc-card cb-anim-up delay-2">
+          <div style="font-size: 2rem; margin-bottom: 12px;">📍</div>
+          <h3>Visit</h3>
+          <div class="cb-loc-addr">{{ branch.address }}</div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Contact Info",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "Talk to us" },
+    { "type": "text", "id": "title", "label": "Title", "default": "Get in touch" },
+    { "type": "textarea", "id": "subtitle", "label": "Subtitle", "default": "We love hearing from you. Reach out anytime." }
+  ],
+  "presets": [{ "name": "Contact Info", "settings": {} }]
+}
+{% endschema %}

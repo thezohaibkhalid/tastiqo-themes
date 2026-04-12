@@ -1,0 +1,30 @@
+{
+  "name": "Product",
+  "sections": {
+    "product": {
+      "type": "product-detail",
+      "settings": {}
+    },
+    "header": {
+      "type": "header-section",
+      "settings": {
+        "show_search": false,
+        "show_cart": true,
+        "mobile_style": "drawer"
+      }
+    },
+    "footer": {
+      "type": "footer-section",
+      "settings": {}
+    }
+  },
+  "order": [
+    "product"
+  ],
+  "header_order": [
+    "header"
+  ],
+  "footer_order": [
+    "footer"
+  ]
+}

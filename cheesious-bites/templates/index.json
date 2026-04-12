@@ -1,0 +1,121 @@
+{
+  "name": "Homepage",
+  "sections": {
+    "header": {
+      "type": "header-section",
+      "settings": {
+        "show_search": false,
+        "show_cart": true,
+        "mobile_style": "drawer"
+      }
+    },
+    "announcement": {
+      "type": "announcement-bar",
+      "settings": {
+        "enabled": true,
+        "text": "🧀 Free delivery on orders above Rs.1,500 — try our new Truffle Mozzarella!",
+        "link_text": "Order now",
+        "link": "/menu",
+        "bg_color": "#5C2018",
+        "text_color": "#FFFFFF"
+      }
+    },
+    "hero": {
+      "type": "hero-section",
+      "settings": {
+        "style": "classic",
+        "eyebrow": "Wood-fired since 2018",
+        "title": "Hand-stretched, wood-fired, cheese-pulled.",
+        "subtitle": "Authentic Italian flavours from our kitchen to your door.",
+        "cta1_text": "Order now",
+        "cta1_link": "/menu",
+        "cta2_text": "Our story",
+        "cta2_link": "/about"
+      }
+    },
+    "categories": {
+      "type": "menu-categories",
+      "settings": {
+        "layout": "grid",
+        "eyebrow": "Explore",
+        "title": "Browse our menu",
+        "subtitle": "Something for every craving.",
+        "columns": 3,
+        "limit": 6
+      }
+    },
+    "featured": {
+      "type": "featured-items",
+      "settings": {
+        "card_style": "elevated",
+        "eyebrow": "Most loved",
+        "title": "Crowd favourites",
+        "subtitle": "Hand-picked dishes our customers come back for.",
+        "columns": 3,
+        "limit": 6,
+        "show_view_all": true
+      }
+    },
+    "about": {
+      "type": "about-section",
+      "settings": {
+        "image_position": "left",
+        "eyebrow": "Our story",
+        "title": "Born from the love of cheese.",
+        "body": "It started with one wood-fired oven and a stubborn belief: real pizza needs real cheese, real tomatoes, and the patience to do it right. Six years and four branches later, we still hand-stretch every dough.",
+        "cta_text": "Read our story",
+        "cta_link": "/about"
+      }
+    },
+    "testimonials": {
+      "type": "testimonials",
+      "settings": {
+        "eyebrow": "Reviews",
+        "title": "What our regulars say"
+      }
+    },
+    "locations": {
+      "type": "locations-section",
+      "settings": {
+        "eyebrow": "Find us",
+        "title": "Cheesious near you",
+        "subtitle": "Four locations across Karachi. Always fresh, always melty."
+      }
+    },
+    "cta": {
+      "type": "cta-banner",
+      "settings": {
+        "title": "Ready for the cheese pull?",
+        "subtitle": "Order online and we'll have it at your door in 30 minutes.",
+        "cta1_text": "Order now",
+        "cta1_link": "/menu",
+        "cta2_text": "Find a branch",
+        "cta2_link": "/locations"
+      }
+    },
+    "footer": {
+      "type": "footer-section",
+      "settings": {
+        "tagline": "Hand-stretched, wood-fired, cheese-pulled to perfection.",
+        "copyright": "© 2026 Cheesious Bites. All rights reserved.",
+        "credits": "Crafted with ❤️ & mozzarella."
+      }
+    }
+  },
+  "header_order": [
+    "header",
+    "announcement"
+  ],
+  "order": [
+    "hero",
+    "categories",
+    "featured",
+    "about",
+    "testimonials",
+    "locations",
+    "cta"
+  ],
+  "footer_order": [
+    "footer"
+  ]
+}

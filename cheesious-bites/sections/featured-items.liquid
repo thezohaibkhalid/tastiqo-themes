@@ -1,0 +1,129 @@
+{% comment %}
+  Featured items grid with three card design variants:
+    • minimal  — image, title, price (transparent)
+    • elevated — surface card with shadow, badge, description
+    • overlay  — image fills, text overlays on hover
+
+  Pulls items from menu_categories context.
+{% endcomment %}
+
+{%- assign style = section.settings.card_style | default: 'elevated' -%}
+{%- assign cols  = section.settings.columns    | default: 3 -%}
+{%- assign limit = section.settings.limit      | default: 6 -%}
+
+<section class="cb-section">
+  <div class="cb-container">
+
+    {% if section.settings.title != blank or section.settings.subtitle != blank %}
+      <div class="cb-section-head cb-anim-up">
+        {% if section.settings.eyebrow != blank %}<span class="cb-eyebrow">{{ section.settings.eyebrow }}</span>{% endif %}
+        {% if section.settings.title != blank %}<h2>{{ section.settings.title }}</h2>{% endif %}
+        {% if section.settings.subtitle != blank %}<p>{{ section.settings.subtitle }}</p>{% endif %}
+      </div>
+    {% endif %}
+
+    <div class="cb-grid" style="--cb-cols: {{ cols }};">
+      {%- assign rendered = 0 -%}
+      {%- for cat in menu_categories -%}
+        {%- for item in cat.items -%}
+          {%- if rendered >= limit -%}{%- break -%}{%- endif -%}
+
+          {%- if style == 'minimal' -%}
+            <a href="{{ item.url }}" class="cb-card--minimal cb-anim-up">
+              <div class="cb-card-img">
+                {% if item.imageUrl != blank %}
+                  <img src="{{ item.imageUrl }}" alt="{{ item.name }}" loading="lazy">
+                {% else %}
+                  <div class="cb-skeleton" style="width:100%;height:100%;"></div>
+                {% endif %}
+              </div>
+              <div class="cb-card-title">{{ item.name }}</div>
+              <div class="cb-card-price">{{ item.price | money }}</div>
+            </a>
+
+          {%- elsif style == 'overlay' -%}
+            <a href="{{ item.url }}" class="cb-card--overlay cb-anim-up">
+              {% if item.imageUrl != blank %}
+                <img src="{{ item.imageUrl }}" alt="{{ item.name }}" loading="lazy">
+              {% else %}
+                <div class="cb-skeleton" style="width:100%;height:100%;"></div>
+              {% endif %}
+              <div class="cb-card-body">
+                <div class="cb-card-title">{{ item.name }}</div>
+                {% if item.description != blank %}
+                  <p class="cb-card-desc">{{ item.description | truncate: 90 }}</p>
+                {% endif %}
+                <div class="cb-card-price">{{ item.price | money }}</div>
+              </div>
+            </a>
+
+          {%- else -%}
+            <a href="{{ item.url }}" class="cb-card--elevated cb-anim-up">
+              <div class="cb-card-img">
+                {% if item.imageUrl != blank %}
+                  <img src="{{ item.imageUrl }}" alt="{{ item.name }}" loading="lazy">
+                {% else %}
+                  <div class="cb-skeleton" style="width:100%;height:100%;"></div>
+                {% endif %}
+                <div class="cb-card-tags">
+                  {% if item.featured %}<span class="cb-pill cb-pill-hot">🔥 Hot</span>{% endif %}
+                  {% if item.tags contains 'new' %}<span class="cb-pill cb-pill-new">New</span>{% endif %}
+                  {% if item.tags contains 'veg' %}<span class="cb-pill cb-pill-veg">Veg</span>{% endif %}
+                </div>
+              </div>
+              <div class="cb-card-body">
+                <div class="cb-card-title">{{ item.name }}</div>
+                {% if item.description != blank %}
+                  <p class="cb-card-desc">{{ item.description | truncate: 100 }}</p>
+                {% endif %}
+                <div class="cb-card-foot">
+                  <span class="cb-card-price">{{ item.price | money }}</span>
+                  <span class="cb-btn cb-btn-primary cb-btn-sm">Add</span>
+                </div>
+              </div>
+            </a>
+          {%- endif -%}
+
+          {%- assign rendered = rendered | plus: 1 -%}
+        {%- endfor -%}
+        {%- if rendered >= limit -%}{%- break -%}{%- endif -%}
+      {%- endfor -%}
+    </div>
+
+    {% if section.settings.show_view_all %}
+      <div style="text-align: center; margin-top: 40px;">
+        <a href="{{ section.settings.view_all_link | default: '/menu' }}" class="cb-btn cb-btn-outline cb-btn-lg">
+          {{ section.settings.view_all_text | default: 'See full menu' }} →
+        </a>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Featured Items",
+  "settings": [
+    {
+      "type": "select",
+      "id": "card_style",
+      "label": "Card design",
+      "default": "elevated",
+      "options": [
+        { "value": "minimal",  "label": "Minimal" },
+        { "value": "elevated", "label": "Elevated card with shadow" },
+        { "value": "overlay",  "label": "Overlay (text on image)" }
+      ]
+    },
+    { "type": "text", "id": "eyebrow",  "label": "Eyebrow",  "default": "Most loved" },
+    { "type": "text", "id": "title",    "label": "Title",    "default": "Crowd favourites" },
+    { "type": "textarea", "id": "subtitle", "label": "Subtitle", "default": "Hand-picked dishes our customers come back for." },
+    { "type": "range", "id": "columns", "label": "Columns", "min": 2, "max": 4, "step": 1, "default": 3 },
+    { "type": "range", "id": "limit",   "label": "Number of items", "min": 2, "max": 12, "step": 1, "default": 6 },
+    { "type": "checkbox", "id": "show_view_all", "label": "Show 'view all' button", "default": true },
+    { "type": "text",     "id": "view_all_text", "label": "Button text", "default": "See full menu" },
+    { "type": "url",      "id": "view_all_link", "label": "Button link", "default": "/menu" }
+  ],
+  "presets": [{ "name": "Featured Items", "settings": {} }]
+}
+{% endschema %}

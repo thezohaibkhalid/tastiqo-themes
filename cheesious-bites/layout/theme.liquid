@@ -1,0 +1,186 @@
+{%- comment -%}
+  Cheesious Bites — root layout.
+
+  Reads EVERY field exposed by the editor's Theme Settings panel and
+  emits them as CSS variables on :root so that changing any value in
+  the editor (Logo / Colors / Typography / Layout / Header / Footer /
+  Buttons / Social links / SEO / Custom CSS+JS) immediately re-skins
+  the entire site without touching any Liquid section.
+
+  Field names mirror `tastiqo-front/src/components/editor/ThemeSettingsPanel.tsx`
+  exactly — do NOT rename them or the editor's settings will silently
+  stop applying.
+{%- endcomment -%}
+
+{%- assign t_logo_image     = theme.logo_image                                     -%}
+{%- assign t_logo_width     = theme.logo_width            | default: 160           -%}
+{%- assign t_favicon        = theme.favicon                                        -%}
+
+{%- assign t_color_primary    = theme.color_primary       | default: '#E85D2F'     -%}
+{%- assign t_color_secondary  = theme.color_secondary     | default: '#FFC93C'     -%}
+{%- assign t_color_accent     = theme.color_accent        | default: '#5C2018'     -%}
+{%- assign t_color_background = theme.color_background    | default: '#FFF8F1'     -%}
+{%- assign t_color_surface    = theme.color_surface       | default: '#FFFFFF'     -%}
+{%- assign t_color_text       = theme.color_text          | default: '#231910'     -%}
+{%- assign t_color_text_muted = theme.color_text_muted    | default: '#7A6A5C'     -%}
+{%- assign t_color_border     = theme.color_border        | default: '#F2E6D6'     -%}
+{%- assign t_color_success    = theme.color_success       | default: '#16A34A'     -%}
+{%- assign t_color_warning    = theme.color_warning       | default: '#F59E0B'     -%}
+{%- assign t_color_error      = theme.color_error         | default: '#DC2626'     -%}
+
+{%- assign t_font_heading   = theme.font_heading          | default: 'Fraunces'    -%}
+{%- assign t_font_body      = theme.font_body             | default: 'Inter'       -%}
+{%- assign t_base_font_size = theme.base_font_size        | default: 16            -%}
+{%- assign t_heading_scale  = theme.heading_scale         | default: 100           -%}
+
+{%- assign t_page_width        = theme.page_width         | default: 1280          -%}
+{%- assign t_spacing_sections  = theme.spacing_sections   | default: 80            -%}
+{%- assign t_border_radius     = theme.border_radius      | default: '14px'        -%}
+
+{%- assign t_header_sticky     = theme.header_sticky                               -%}
+{%- assign t_show_search       = theme.show_search                                 -%}
+{%- assign t_show_cart         = theme.show_cart                                   -%}
+{%- assign t_mobile_menu_style = theme.mobile_menu_style  | default: 'drawer'      -%}
+
+{%- assign t_footer_copyright = theme.footer_copyright    | default: ''            -%}
+{%- assign t_footer_columns   = theme.footer_columns      | default: 4             -%}
+
+{%- assign t_button_style              = theme.button_style              | default: 'rounded' -%}
+{%- assign t_button_border_thickness   = theme.button_border_thickness   | default: 0         -%}
+{%- assign t_button_shadow             = theme.button_shadow             | default: 'small'   -%}
+
+{%- assign t_seo_title       = theme.seo_title                                      -%}
+{%- assign t_seo_description = theme.seo_description                                -%}
+{%- assign t_seo_og_image    = theme.seo_og_image                                   -%}
+
+{%- assign font_heading_url = t_font_heading | replace: ' ', '+' -%}
+{%- assign font_body_url    = t_font_body    | replace: ' ', '+' -%}
+
+<!DOCTYPE html>
+<html lang="{{ localization.locale | default: 'en' }}" dir="{% if localization.rtl %}rtl{% else %}ltr{% endif %}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>{{ t_seo_title | default: seo.title | default: restaurant.name }}</title>
+  <meta name="description" content="{{ t_seo_description | default: seo.description | default: restaurant.tagline }}">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="{{ t_seo_title | default: seo.title | default: restaurant.name }}">
+  <meta property="og:description" content="{{ t_seo_description | default: seo.description | default: restaurant.tagline }}">
+  <meta property="og:type" content="{{ seo.og_type | default: 'website' }}">
+  {% if t_seo_og_image %}
+    <meta property="og:image" content="{{ t_seo_og_image }}">
+  {% elsif seo.og_image %}
+    <meta property="og:image" content="{{ seo.og_image }}">
+  {% endif %}
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="icon" href="{{ t_favicon | default: restaurant.icon | default: restaurant.logo }}">
+
+  <!-- Fonts: heading + body, picked from theme settings -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family={{ font_heading_url }}:wght@400;500;600;700;800&family={{ font_body_url }}:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Theme stylesheet -->
+  {{ 'theme.css' | asset_url | stylesheet_tag }}
+
+  <!-- ─── Theme tokens, regenerated on every save ─────────────────── -->
+  <style id="cb-theme-tokens">
+    :root {
+      /* Brand */
+      --cb-primary:        {{ t_color_primary }};
+      --cb-secondary:      {{ t_color_secondary }};
+      --cb-accent:         {{ t_color_accent }};
+
+      /* Page surfaces */
+      --cb-bg:             {{ t_color_background }};
+      --cb-surface:        {{ t_color_surface }};
+      --cb-text:           {{ t_color_text }};
+      --cb-text-muted:     {{ t_color_text_muted }};
+      --cb-border:         {{ t_color_border }};
+
+      /* Status */
+      --cb-success:        {{ t_color_success }};
+      --cb-warning:        {{ t_color_warning }};
+      --cb-error:          {{ t_color_error }};
+
+      /* Typography */
+      --cb-font-heading:   '{{ t_font_heading }}', Georgia, serif;
+      --cb-font-body:      '{{ t_font_body }}', system-ui, sans-serif;
+      --cb-base-font-size: {{ t_base_font_size }}px;
+      --cb-heading-scale:  {{ t_heading_scale | divided_by: 100.0 }};
+
+      /* Layout */
+      --cb-page-width:     {{ t_page_width }}px;
+      --cb-section-space:  {{ t_spacing_sections }}px;
+      --cb-radius:         {{ t_border_radius }};
+
+      /* Buttons (style + border + shadow) */
+      --cb-btn-radius:
+        {%- if t_button_style == 'pill' %} 999px
+        {%- elsif t_button_style == 'square' %} 0px
+        {%- else %} {{ t_border_radius }}
+        {%- endif -%};
+      --cb-btn-border:     {{ t_button_border_thickness }}px;
+      --cb-btn-shadow:
+        {%- if t_button_shadow == 'medium' %} 0 8px 24px rgba(0, 0, 0, 0.18)
+        {%- elsif t_button_shadow == 'small' %} 0 4px 14px rgba(0, 0, 0, 0.12)
+        {%- else %} none
+        {%- endif -%};
+
+      /* Logo */
+      --cb-logo-width:     {{ t_logo_width }}px;
+    }
+
+    {% if theme.custom_css %}
+      /* User-supplied CSS */
+      {{ theme.custom_css }}
+    {% endif %}
+  </style>
+</head>
+<body class="cb-body{% if t_header_sticky == false %} cb-header-static{% endif %}">
+
+  <!-- Top loading bar -->
+  <div id="cb-load-bar" class="cb-load-bar" aria-hidden="true"></div>
+
+  {%- comment -%}
+    Header and footer are now proper SECTIONS defined in templates/*.json
+    (under header_order / footer_order). They get rendered as part of
+    {{ content_for_layout }} alongside the main content sections, so
+    the editor can see and edit them.
+
+    The snippet files (snippets/header.liquid, snippets/footer.liquid)
+    are kept as fallbacks for themes that haven't migrated yet — if
+    a template doesn't include header-section / footer-section, those
+    snippets would still render. But for Cheesious Bites, the sections
+    are the source of truth.
+  {%- endcomment -%}
+
+  <main id="cb-main" class="cb-main">
+    {{ content_for_layout }}
+  </main>
+
+  <!-- Loaded class flips after first paint for the body fade-in -->
+  <script>
+    (function () {
+      document.documentElement.classList.add('cb-loading');
+      window.addEventListener('load', function () {
+        requestAnimationFrame(function () {
+          document.documentElement.classList.remove('cb-loading');
+          document.documentElement.classList.add('cb-loaded');
+        });
+      });
+    })();
+  </script>
+
+  {{ 'theme.js' | asset_url | script_tag }}
+
+  {% if theme.custom_js %}
+    <script>
+      try { {{ theme.custom_js }} } catch (e) { console.error('[cheesious] custom_js error', e); }
+    </script>
+  {% endif %}
+</body>
+</html>

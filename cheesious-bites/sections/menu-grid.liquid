@@ -1,0 +1,78 @@
+{% comment %} Full menu page — every category, every item. {% endcomment %}
+
+{%- assign style = section.settings.card_style | default: 'elevated' -%}
+{%- assign cols  = section.settings.columns    | default: 3 -%}
+
+<section class="cb-section">
+  <div class="cb-container">
+    {% if section.settings.title != blank %}
+      <div class="cb-section-head cb-anim-up">
+        <h1 style="font-size: clamp(2rem, 4vw, 3rem);">{{ section.settings.title }}</h1>
+        {% if section.settings.subtitle != blank %}<p>{{ section.settings.subtitle }}</p>{% endif %}
+      </div>
+    {% endif %}
+
+    {% for cat in menu_categories %}
+      <div style="margin-bottom: 64px;" id="cat-{{ cat.handle }}">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid var(--color-border);">
+          <h2 style="margin: 0;">{{ cat.title }}</h2>
+          <span style="color: var(--color-muted); font-size: 0.9rem;">{{ cat.items.size }} items</span>
+        </div>
+
+        <div class="cb-grid" style="--cb-cols: {{ cols }};">
+          {% for item in cat.items %}
+            {%- if style == 'minimal' -%}
+              <a href="{{ item.url }}" class="cb-card--minimal cb-anim-up">
+                <div class="cb-card-img">
+                  {% if item.imageUrl != blank %}<img src="{{ item.imageUrl }}" alt="{{ item.name }}" loading="lazy">{% else %}<div class="cb-skeleton" style="width:100%;height:100%;"></div>{% endif %}
+                </div>
+                <div class="cb-card-title">{{ item.name }}</div>
+                <div class="cb-card-price">{{ item.price | money }}</div>
+              </a>
+            {%- else -%}
+              <a href="{{ item.url }}" class="cb-card--elevated cb-anim-up">
+                <div class="cb-card-img">
+                  {% if item.imageUrl != blank %}<img src="{{ item.imageUrl }}" alt="{{ item.name }}" loading="lazy">{% else %}<div class="cb-skeleton" style="width:100%;height:100%;"></div>{% endif %}
+                  <div class="cb-card-tags">
+                    {% if item.featured %}<span class="cb-pill cb-pill-hot">🔥</span>{% endif %}
+                    {% if item.tags contains 'new' %}<span class="cb-pill cb-pill-new">New</span>{% endif %}
+                  </div>
+                </div>
+                <div class="cb-card-body">
+                  <div class="cb-card-title">{{ item.name }}</div>
+                  {% if item.description != blank %}<p class="cb-card-desc">{{ item.description | truncate: 100 }}</p>{% endif %}
+                  <div class="cb-card-foot">
+                    <span class="cb-card-price">{{ item.price | money }}</span>
+                    <span class="cb-btn cb-btn-primary cb-btn-sm">Add</span>
+                  </div>
+                </div>
+              </a>
+            {%- endif -%}
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Menu Grid",
+  "settings": [
+    { "type": "text", "id": "title", "label": "Page title", "default": "Our menu" },
+    { "type": "textarea", "id": "subtitle", "label": "Subtitle", "default": "Hand-stretched, wood-fired, melt-tested." },
+    {
+      "type": "select",
+      "id": "card_style",
+      "label": "Card design",
+      "default": "elevated",
+      "options": [
+        { "value": "minimal",  "label": "Minimal" },
+        { "value": "elevated", "label": "Elevated card" }
+      ]
+    },
+    { "type": "range", "id": "columns", "label": "Columns", "min": 2, "max": 4, "step": 1, "default": 3 }
+  ],
+  "presets": [{ "name": "Menu Grid", "settings": {} }]
+}
+{% endschema %}
