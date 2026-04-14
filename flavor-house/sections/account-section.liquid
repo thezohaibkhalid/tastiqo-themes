@@ -1,6 +1,5 @@
 {% comment %}
-  Account Section — Customer profile & quick links
-  Rendered on /account when logged in. JS redirects to /account/login if not.
+  Account Section — Customer profile, addresses & quick links
 {% endcomment %}
 
 <section class="account-section section-padding">
@@ -18,18 +17,9 @@
           <button class="btn-link" id="account-edit-toggle">Edit</button>
         </div>
         <div id="account-profile-display">
-          <div class="account-detail">
-            <span class="account-label">Name</span>
-            <span id="account-name">—</span>
-          </div>
-          <div class="account-detail">
-            <span class="account-label">Email</span>
-            <span id="account-email">—</span>
-          </div>
-          <div class="account-detail">
-            <span class="account-label">Phone</span>
-            <span id="account-phone">—</span>
-          </div>
+          <div class="account-detail"><span class="account-label">Name</span><span id="account-name">—</span></div>
+          <div class="account-detail"><span class="account-label">Email</span><span id="account-email">—</span></div>
+          <div class="account-detail"><span class="account-label">Phone</span><span id="account-phone">—</span></div>
         </div>
         <form id="account-profile-form" style="display:none;" class="auth-form">
           <div class="form-group">
@@ -76,3 +66,53 @@
     </div>
   </div>
 </section>
+
+<!-- Address Form Modal -->
+<div class="auth-modal-backdrop" id="address-modal" style="display:none;">
+  <div class="auth-modal" style="max-width:480px;">
+    <button class="auth-modal-close" id="address-modal-close" aria-label="Close">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="auth-header">
+      <h2 id="address-modal-title">Add Address</h2>
+    </div>
+    <form id="address-form" class="auth-form">
+      <input type="hidden" id="addr-id" value="">
+      <div class="form-group">
+        <label for="addr-label">Label</label>
+        <input type="text" id="addr-label" placeholder="Home, Work, etc." required>
+      </div>
+      <div class="form-group">
+        <label for="addr-line1">Address Line 1</label>
+        <input type="text" id="addr-line1" placeholder="Street address" required>
+      </div>
+      <div class="form-group">
+        <label for="addr-line2">Address Line 2 <span class="text-muted">(optional)</span></label>
+        <input type="text" id="addr-line2" placeholder="Apt, suite, floor, etc.">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+        <div class="form-group">
+          <label for="addr-city">City</label>
+          <input type="text" id="addr-city" placeholder="City">
+        </div>
+        <div class="form-group">
+          <label for="addr-postal">Postal Code</label>
+          <input type="text" id="addr-postal" placeholder="Postal code">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="addr-notes">Delivery Notes <span class="text-muted">(optional)</span></label>
+        <input type="text" id="addr-notes" placeholder="Gate code, landmark, etc.">
+      </div>
+      <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;">
+        <input type="checkbox" id="addr-default" style="width:auto;">
+        <label for="addr-default" style="margin:0;font-weight:500;">Set as default address</label>
+      </div>
+      <div class="auth-error" id="address-error" style="display:none;"></div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" style="flex:1;" id="address-submit-btn">Save Address</button>
+        <button type="button" class="btn btn-outline" id="address-cancel-btn">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>

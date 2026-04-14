@@ -25,9 +25,15 @@
     <div class="cb-footer-col">
       <h4>Explore</h4>
       <ul>
-        {% for item in navigation.primary %}
-          <li><a href="{{ item.url }}">{{ item.label }}</a></li>
-        {% endfor %}
+        {% if navigation.footer.size > 0 %}
+          {% for item in navigation.footer %}
+            <li><a href="{{ item.url }}">{{ item.title }}</a></li>
+          {% endfor %}
+        {% else %}
+          {% for item in navigation.primary %}
+            <li><a href="{{ item.url }}">{{ item.title }}</a></li>
+          {% endfor %}
+        {% endif %}
       </ul>
     </div>
 
@@ -57,6 +63,13 @@
 
   <div class="cb-footer-bottom">
     <span>{{ section.settings.copyright | default: "© 2026 Cheesious Bites. All rights reserved." }}</span>
+    {% if navigation.legal.size > 0 %}
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        {% for link in navigation.legal %}
+          <a href="{{ link.url }}" style="opacity:0.6;font-size:0.8rem;">{{ link.title }}</a>
+        {% endfor %}
+      </div>
+    {% endif %}
     <span class="cb-footer-credits">{{ section.settings.credits | default: "Crafted with ❤️ & mozzarella." }}</span>
   </div>
 </footer>

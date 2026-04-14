@@ -423,6 +423,8 @@
     }
   }
 
+  let _addressCache = [];
+
   async function loadAddresses() {
     const container = document.getElementById('account-addresses-list');
     if (!container) return;
@@ -430,34 +432,103 @@
       const res = await CustomerAuth.apiRequest('GET', '/addresses');
       if (!res.ok) throw new Error();
       const addresses = await res.json();
-      if (!addresses.length) {
+      _addressCache = addresses || [];
+      if (!addresses || !addresses.length) {
         container.innerHTML = '<p class="text-muted">No saved addresses yet.</p>';
         return;
       }
-      container.innerHTML = addresses.map(a => `
-        <div class="address-card">
+      container.innerHTML = addresses.map(a => {
+        const defaultBadge = a.is_default ? '<span style="background:var(--color-primary);color:#fff;padding:2px 8px;border-radius:10px;font-size:0.7rem;font-weight:600;margin-left:6px;">Default</span>' : '';
+        return `<div class="address-card" style="display:flex;justify-content:space-between;align-items:flex-start;padding:1rem;border:1px solid var(--color-border);border-radius:0.5rem;margin-bottom:0.75rem;">
           <div class="address-card-info">
-            <span class="address-card-label">${a.label}</span>
-            <div>${a.address_line1}${a.address_line2 ? ', ' + a.address_line2 : ''}</div>
-            <div class="text-muted">${[a.city, a.state, a.postal_code].filter(Boolean).join(', ')}</div>
+            <div style="font-weight:600;margin-bottom:4px;">${escH(a.label || 'Address')}${defaultBadge}</div>
+            <div style="font-size:0.9rem;">${escH(a.address_line1)}${a.address_line2 ? ', ' + escH(a.address_line2) : ''}</div>
+            <div class="text-muted" style="font-size:0.85rem;">${[a.city, a.state, a.postal_code].filter(Boolean).map(escH).join(', ')}</div>
+            ${a.delivery_notes ? '<div class="text-muted" style="font-size:0.8rem;font-style:italic;margin-top:4px;">Note: ' + escH(a.delivery_notes) + '</div>' : ''}
           </div>
-          <div class="address-card-actions">
-            <button onclick="deleteAddress(${a.id})" title="Delete">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-            </button>
+          <div style="display:flex;gap:8px;flex-shrink:0;margin-left:12px;">
+            <button class="btn-link" style="font-size:0.8rem;" onclick="window._editAddress(${a.id})">Edit</button>
+            <button class="btn-link" style="font-size:0.8rem;color:var(--color-error, #dc2626);" onclick="window._deleteAddress(${a.id})">Delete</button>
           </div>
-        </div>
-      `).join('');
+        </div>`;
+      }).join('');
     } catch {
       container.innerHTML = '<p class="text-muted">Failed to load addresses.</p>';
     }
   }
 
-  window.deleteAddress = async function(id) {
-    if (!confirm('Delete this address?')) return;
-    await CustomerAuth.apiRequest('DELETE', '/addresses/' + id);
-    loadAddresses();
+  function escH(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+
+  // Address modal
+  const addressModal = document.getElementById('address-modal');
+  const addressForm = document.getElementById('address-form');
+  const addAddressBtn = document.getElementById('account-add-address-btn');
+  const addressCloseBtn = document.getElementById('address-modal-close');
+  const addressCancelBtn = document.getElementById('address-cancel-btn');
+
+  function openAddressModal(addr) {
+    if (!addressModal) return;
+    document.getElementById('address-modal-title').textContent = addr ? 'Edit Address' : 'Add Address';
+    document.getElementById('address-submit-btn').textContent = addr ? 'Update Address' : 'Save Address';
+    document.getElementById('addr-id').value = addr ? addr.id : '';
+    document.getElementById('addr-label').value = addr ? addr.label || '' : '';
+    document.getElementById('addr-line1').value = addr ? addr.address_line1 || '' : '';
+    document.getElementById('addr-line2').value = addr ? addr.address_line2 || '' : '';
+    document.getElementById('addr-city').value = addr ? addr.city || '' : '';
+    document.getElementById('addr-postal').value = addr ? addr.postal_code || '' : '';
+    document.getElementById('addr-notes').value = addr ? addr.delivery_notes || '' : '';
+    document.getElementById('addr-default').checked = addr ? addr.is_default : false;
+    const errorEl = document.getElementById('address-error');
+    if (errorEl) errorEl.style.display = 'none';
+    addressModal.style.display = 'flex';
+  }
+
+  function closeAddressModal() { if (addressModal) addressModal.style.display = 'none'; }
+
+  if (addAddressBtn) addAddressBtn.addEventListener('click', () => openAddressModal(null));
+  if (addressCloseBtn) addressCloseBtn.addEventListener('click', closeAddressModal);
+  if (addressCancelBtn) addressCancelBtn.addEventListener('click', closeAddressModal);
+  if (addressModal) addressModal.addEventListener('click', e => { if (e.target === addressModal) closeAddressModal(); });
+
+  window._editAddress = function(id) {
+    const addr = _addressCache.find(a => a.id === id);
+    if (addr) openAddressModal(addr);
   };
+
+  window._deleteAddress = function(id) {
+    if (!confirm('Delete this address?')) return;
+    CustomerAuth.apiRequest('DELETE', '/addresses/' + id).then(r => { if (r.ok) loadAddresses(); });
+  };
+
+  if (addressForm) addressForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const addrId = document.getElementById('addr-id').value;
+    const errorEl = document.getElementById('address-error');
+    const body = {
+      label: document.getElementById('addr-label').value.trim(),
+      address_line1: document.getElementById('addr-line1').value.trim(),
+      address_line2: document.getElementById('addr-line2').value.trim() || null,
+      city: document.getElementById('addr-city').value.trim() || null,
+      postal_code: document.getElementById('addr-postal').value.trim() || null,
+      delivery_notes: document.getElementById('addr-notes').value.trim() || null,
+      is_default: document.getElementById('addr-default').checked
+    };
+    if (!body.address_line1) { if (errorEl) { errorEl.textContent = 'Address line 1 is required'; errorEl.style.display = 'block'; } return; }
+    const method = addrId ? 'PUT' : 'POST';
+    const url = addrId ? '/addresses/' + addrId : '/addresses';
+    const btn = document.getElementById('address-submit-btn');
+    btn.disabled = true; btn.textContent = 'Saving...';
+    try {
+      const r = await CustomerAuth.apiRequest(method, url, body);
+      if (!r.ok) { const d = await r.json(); throw new Error(d.error || 'Failed'); }
+      closeAddressModal(); loadAddresses();
+    } catch (err) {
+      if (errorEl) { errorEl.textContent = err.message || 'Failed to save'; errorEl.style.display = 'block'; }
+    } finally {
+      btn.disabled = false;
+      btn.textContent = addrId ? 'Update Address' : 'Save Address';
+    }
+  });
 
   // Profile edit toggle
   const editToggle = document.getElementById('account-edit-toggle');

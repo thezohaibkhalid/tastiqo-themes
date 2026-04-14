@@ -20,7 +20,7 @@
 
     <nav class="cb-nav" aria-label="Primary">
       {% for item in navigation.primary %}
-        <a href="{{ item.url }}" class="cb-nav-link {% if item.active %}is-active{% endif %}">{{ item.label }}</a>
+        <a href="{{ item.url }}" class="cb-nav-link {% if item.active %}is-active{% endif %}">{{ item.title }}</a>
       {% endfor %}
     </nav>
 
@@ -72,7 +72,7 @@
   <div class="cb-mobile-drawer" data-cb-mobile-drawer hidden>
     <nav class="cb-mobile-nav" aria-label="Mobile">
       {% for item in navigation.primary %}
-        <a href="{{ item.url }}" class="cb-mobile-link {% if item.active %}is-active{% endif %}">{{ item.label }}</a>
+        <a href="{{ item.url }}" class="cb-mobile-link {% if item.active %}is-active{% endif %}">{{ item.title }}</a>
       {% endfor %}
     </nav>
   </div>
