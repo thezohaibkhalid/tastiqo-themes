@@ -247,12 +247,100 @@
     var container = document.getElementById('account-addresses-list');
     if (!container) return;
     CustomerAuth.apiRequest('GET', '/addresses').then(function(r) { if (!r.ok) throw new Error(); return r.json(); }).then(function(addrs) {
-      if (!addrs.length) { container.innerHTML = '<p style="color:var(--cb-text-muted);">No saved addresses yet.</p>'; return; }
+      if (!addrs || !addrs.length) { container.innerHTML = '<p style="color:var(--cb-text-muted);">No saved addresses yet.</p>'; return; }
       container.innerHTML = addrs.map(function(a) {
-        return '<div class="cb-address-card"><div class="cb-address-card-info"><span class="cb-address-card-label">' + a.label + '</span><div>' + a.address_line1 + (a.address_line2 ? ', ' + a.address_line2 : '') + '</div><div style="color:var(--cb-text-muted);">' + [a.city, a.state, a.postal_code].filter(Boolean).join(', ') + '</div></div></div>';
+        var defaultBadge = a.is_default ? '<span style="background:var(--cb-accent);color:#fff;padding:2px 8px;border-radius:10px;font-size:0.7rem;font-weight:600;margin-left:6px;">Default</span>' : '';
+        return '<div class="cb-address-card" style="display:flex;justify-content:space-between;align-items:flex-start;padding:1rem;border:1px solid var(--cb-border);border-radius:0.75rem;margin-bottom:0.75rem;">' +
+          '<div class="cb-address-card-info">' +
+            '<div style="font-weight:600;margin-bottom:4px;">' + escHTML(a.label || 'Address') + defaultBadge + '</div>' +
+            '<div style="font-size:0.9rem;">' + escHTML(a.address_line1) + (a.address_line2 ? ', ' + escHTML(a.address_line2) : '') + '</div>' +
+            '<div style="color:var(--cb-text-muted);font-size:0.85rem;">' + [a.city, a.state, a.postal_code].filter(Boolean).map(escHTML).join(', ') + '</div>' +
+            (a.delivery_notes ? '<div style="color:var(--cb-text-muted);font-size:0.8rem;font-style:italic;margin-top:4px;">Note: ' + escHTML(a.delivery_notes) + '</div>' : '') +
+          '</div>' +
+          '<div style="display:flex;gap:6px;flex-shrink:0;margin-left:12px;">' +
+            '<button class="cb-btn-link" style="font-size:0.8rem;" onclick="window._editAddress(' + a.id + ')">Edit</button>' +
+            '<button class="cb-btn-link" style="font-size:0.8rem;color:var(--cb-error,#dc2626);" onclick="window._deleteAddress(' + a.id + ')">Delete</button>' +
+          '</div>' +
+        '</div>';
       }).join('');
+      window._addressCache = addrs;
     }).catch(function() { container.innerHTML = '<p style="color:var(--cb-text-muted);">Failed to load addresses.</p>'; });
   }
+
+  function escHTML(s) { var d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+
+  // Address modal
+  var addressModal = document.getElementById('address-modal');
+  var addressForm = document.getElementById('address-form');
+  var addAddressBtn = document.getElementById('account-add-address-btn');
+  var addressCloseBtn = document.getElementById('address-modal-close');
+  var addressCancelBtn = document.getElementById('address-cancel-btn');
+
+  function openAddressModal(addr) {
+    if (!addressModal) return;
+    document.getElementById('address-modal-title').textContent = addr ? 'Edit Address' : 'Add Address';
+    document.getElementById('address-submit-btn').textContent = addr ? 'Update Address' : 'Save Address';
+    document.getElementById('addr-id').value = addr ? addr.id : '';
+    document.getElementById('addr-label').value = addr ? addr.label || '' : '';
+    document.getElementById('addr-line1').value = addr ? addr.address_line1 || '' : '';
+    document.getElementById('addr-line2').value = addr ? addr.address_line2 || '' : '';
+    document.getElementById('addr-city').value = addr ? addr.city || '' : '';
+    document.getElementById('addr-postal').value = addr ? addr.postal_code || '' : '';
+    document.getElementById('addr-notes').value = addr ? addr.delivery_notes || '' : '';
+    document.getElementById('addr-default').checked = addr ? addr.is_default : false;
+    document.getElementById('address-error').style.display = 'none';
+    addressModal.style.display = 'flex';
+  }
+
+  function closeAddressModal() { if (addressModal) addressModal.style.display = 'none'; }
+
+  if (addAddressBtn) addAddressBtn.addEventListener('click', function() { openAddressModal(null); });
+  if (addressCloseBtn) addressCloseBtn.addEventListener('click', closeAddressModal);
+  if (addressCancelBtn) addressCancelBtn.addEventListener('click', closeAddressModal);
+  if (addressModal) addressModal.addEventListener('click', function(e) { if (e.target === addressModal) closeAddressModal(); });
+
+  window._editAddress = function(id) {
+    var addr = (window._addressCache || []).find(function(a) { return a.id === id; });
+    if (addr) openAddressModal(addr);
+  };
+
+  window._deleteAddress = function(id) {
+    if (!confirm('Delete this address?')) return;
+    CustomerAuth.apiRequest('DELETE', '/addresses/' + id).then(function(r) {
+      if (!r.ok) throw new Error();
+      loadAddresses();
+    }).catch(function() { alert('Failed to delete address'); });
+  };
+
+  if (addressForm) addressForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    var addrId = document.getElementById('addr-id').value;
+    var errorEl = document.getElementById('address-error');
+    var body = {
+      label: document.getElementById('addr-label').value.trim(),
+      address_line1: document.getElementById('addr-line1').value.trim(),
+      address_line2: document.getElementById('addr-line2').value.trim() || null,
+      city: document.getElementById('addr-city').value.trim() || null,
+      postal_code: document.getElementById('addr-postal').value.trim() || null,
+      delivery_notes: document.getElementById('addr-notes').value.trim() || null,
+      is_default: document.getElementById('addr-default').checked
+    };
+    if (!body.address_line1) { errorEl.textContent = 'Address line 1 is required'; errorEl.style.display = 'block'; return; }
+    var method = addrId ? 'PUT' : 'POST';
+    var url = addrId ? '/addresses/' + addrId : '/addresses';
+    var btn = document.getElementById('address-submit-btn');
+    btn.disabled = true; btn.textContent = 'Saving...';
+    CustomerAuth.apiRequest(method, url, body).then(function(r) {
+      if (!r.ok) return r.json().then(function(d) { throw new Error(d.error || 'Failed'); });
+      closeAddressModal(); loadAddresses();
+    }).catch(function(err) {
+      errorEl.textContent = err.message || 'Failed to save address';
+      errorEl.style.display = 'block';
+    }).finally(function() {
+      btn.disabled = false;
+      btn.textContent = addrId ? 'Update Address' : 'Save Address';
+    });
+  });
 
   // Profile edit
   var editToggle = document.getElementById('account-edit-toggle');

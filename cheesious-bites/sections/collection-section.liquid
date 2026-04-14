@@ -1,0 +1,66 @@
+{% comment %} Collection page — shows a single category with all its items. {% endcomment %}
+
+{%- assign cols = section.settings.columns | default: 3 -%}
+
+<section class="cb-section">
+  <div class="cb-container">
+    {% if collection %}
+      <div class="cb-section-head cb-anim-up" style="margin-bottom:40px;">
+        <h1 style="font-size: clamp(2rem, 4vw, 3rem);">{{ collection.title }}</h1>
+        {% if collection.description != blank %}
+          <p style="color:var(--color-muted);max-width:600px;">{{ collection.description }}</p>
+        {% endif %}
+        <span style="color:var(--color-muted);font-size:0.9rem;">{{ collection.items.size }} items</span>
+      </div>
+
+      {% if collection.image != blank %}
+        <div style="border-radius:16px;overflow:hidden;margin-bottom:40px;max-height:300px;">
+          <img src="{{ collection.image }}" alt="{{ collection.title }}" style="width:100%;height:100%;object-fit:cover;" loading="lazy">
+        </div>
+      {% endif %}
+
+      <div class="cb-grid" style="--cb-cols: {{ cols }};">
+        {% for item in collection.items %}
+          <a href="{{ item.url }}" class="cb-card--elevated cb-anim-up">
+            <div class="cb-card-img">
+              {% if item.imageUrl != blank %}
+                <img src="{{ item.imageUrl }}" alt="{{ item.name }}" loading="lazy">
+              {% else %}
+                <div class="cb-skeleton" style="width:100%;height:100%;"></div>
+              {% endif %}
+              <div class="cb-card-tags">
+                {% if item.featured %}<span class="cb-pill cb-pill-hot">🔥</span>{% endif %}
+                {% if item.tags contains 'new' %}<span class="cb-pill cb-pill-new">New</span>{% endif %}
+              </div>
+            </div>
+            <div class="cb-card-body">
+              <div class="cb-card-title">{{ item.name }}</div>
+              {% if item.description != blank %}<p class="cb-card-desc">{{ item.description | truncate: 100 }}</p>{% endif %}
+              <div class="cb-card-foot">
+                <span class="cb-card-price">{{ item.price | money }}</span>
+                <span class="cb-btn cb-btn-primary cb-btn-sm">Add</span>
+              </div>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+
+    {% else %}
+      <div style="text-align:center;padding:4rem 0;">
+        <h2 class="cb-heading-lg">Category not found</h2>
+        <p style="color:var(--color-muted);margin-bottom:1.5rem;">The category you're looking for doesn't exist.</p>
+        <a href="/menu" class="cb-btn cb-btn-primary">Browse Full Menu</a>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Collection",
+  "settings": [
+    { "type": "range", "id": "columns", "label": "Columns", "min": 2, "max": 4, "step": 1, "default": 3 }
+  ],
+  "presets": [{ "name": "Collection", "settings": {} }]
+}
+{% endschema %}
