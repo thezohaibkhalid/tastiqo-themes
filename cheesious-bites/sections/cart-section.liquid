@@ -1,66 +1,42 @@
-{% comment %} Cart page — line items + summary. {% endcomment %}
+{% comment %} Cart page — JS-rendered from localStorage. {% endcomment %}
 
-<section>
+<section data-cb-cart-page>
   <div class="cb-container">
     <h1 style="margin: 32px 0 24px;">Your cart</h1>
 
-    {% if cart and cart.items and cart.items.size > 0 %}
-      <div class="cb-cart">
-        <div class="cb-cart-list cb-anim-up">
-          {% for item in cart.items %}
-            <div class="cb-cart-row">
-              {% if item.image %}<img src="{{ item.image }}" alt="{{ item.name }}">{% endif %}
-              <div>
-                <div class="cb-cart-name">{{ item.name }}</div>
-                {% if item.variant %}<div class="cb-cart-meta">{{ item.variant }}</div>{% endif %}
-                <div class="cb-cart-meta">Qty: {{ item.quantity }}</div>
-              </div>
-              <div style="font-weight: 700; color: var(--color-accent);">{{ item.line_price | money }}</div>
-            </div>
-          {% endfor %}
+    <div class="cb-cart" id="cb-cart-filled" style="display:none;">
+      <div class="cb-cart-list cb-anim-up" id="cb-cart-items">
+        <!-- JS renders cart items here -->
+      </div>
+
+      <aside class="cb-cart-summary cb-anim-up delay-1" id="cb-cart-summary">
+        <h3>Order summary</h3>
+        <div class="cb-summary-row">
+          <span>Subtotal</span>
+          <span id="cb-cart-subtotal">Rs. 0</span>
         </div>
+        <div class="cb-summary-row cb-total">
+          <span>Total</span>
+          <span id="cb-cart-total">Rs. 0</span>
+        </div>
+        <div id="cb-checkout-error" style="display:none;background:#FEF2F2;color:var(--cb-error,#dc2626);padding:0.625rem 0.875rem;border-radius:8px;font-size:0.8rem;margin-top:12px;"></div>
+        <button type="button" class="cb-btn cb-btn-primary cb-btn-block cb-btn-lg" style="margin-top: 18px;" id="cb-checkout-btn">
+          Checkout →
+        </button>
+        {% if ordering.whatsapp_order_enabled %}
+          <a href="{{ ordering.whatsapp_order_href }}" target="_blank" rel="noopener" class="cb-btn cb-btn-outline cb-btn-block" style="margin-top: 8px;">
+            Order on WhatsApp
+          </a>
+        {% endif %}
+      </aside>
+    </div>
 
-        <aside class="cb-cart-summary cb-anim-up delay-1">
-          <h3>Order summary</h3>
-          <div class="cb-summary-row">
-            <span>Subtotal</span>
-            <span>{{ cart.subtotal | money }}</span>
-          </div>
-          {% if cart.delivery_fee %}
-            <div class="cb-summary-row">
-              <span>Delivery</span>
-              <span>{{ cart.delivery_fee | money }}</span>
-            </div>
-          {% endif %}
-          {% if cart.tax %}
-            <div class="cb-summary-row">
-              <span>Tax</span>
-              <span>{{ cart.tax | money }}</span>
-            </div>
-          {% endif %}
-          <div class="cb-summary-row cb-total">
-            <span>Total</span>
-            <span>{{ cart.total | money }}</span>
-          </div>
-          <button type="button" class="cb-btn cb-btn-primary cb-btn-block cb-btn-lg" style="margin-top: 18px;">
-            Checkout →
-          </button>
-          {% if ordering.whatsapp_order_enabled %}
-            <a href="{{ ordering.whatsapp_order_href }}" target="_blank" rel="noopener" class="cb-btn cb-btn-outline cb-btn-block" style="margin-top: 8px;">
-              💬 Order on WhatsApp
-            </a>
-          {% endif %}
-        </aside>
-      </div>
-
-    {% else %}
-      <div style="padding: 80px 24px; text-align: center; background: var(--color-surface); border-radius: var(--radius-lg); border: 1px solid var(--color-border);">
-        <div style="font-size: 4rem; margin-bottom: 16px;">🛒</div>
-        <h2>Your cart is empty</h2>
-        <p style="color: var(--color-muted); margin-bottom: 24px;">Add a few cheesy bites to get started.</p>
-        <a href="/menu" class="cb-btn cb-btn-primary cb-btn-lg">Browse the menu</a>
-      </div>
-    {% endif %}
+    <div id="cb-cart-empty" style="display:none; padding: 80px 24px; text-align: center; background: var(--cb-surface); border-radius: var(--cb-radius); border: 1px solid var(--cb-border);">
+      <div style="font-size: 4rem; margin-bottom: 16px;">🛒</div>
+      <h2>Your cart is empty</h2>
+      <p style="color: var(--cb-text-muted); margin-bottom: 24px;">Add a few cheesy bites to get started.</p>
+      <a href="/menu" class="cb-btn cb-btn-primary cb-btn-lg">Browse the menu</a>
+    </div>
   </div>
 </section>
 

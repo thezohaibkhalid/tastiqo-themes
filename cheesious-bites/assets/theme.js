@@ -3,6 +3,313 @@
 (function () {
   'use strict';
 
+  /* -----------------------------------------------
+     TastiqoCart — client-side cart (localStorage)
+  ----------------------------------------------- */
+  var CART_KEY = 'tastiqo_cart';
+
+  var TastiqoCart = {
+    _read: function() {
+      try { return JSON.parse(localStorage.getItem(CART_KEY)) || []; }
+      catch(e) { return []; }
+    },
+    _write: function(items) {
+      localStorage.setItem(CART_KEY, JSON.stringify(items));
+      this._notify();
+    },
+    _notify: function() {
+      window.dispatchEvent(new CustomEvent('cart:updated'));
+      this._updateBadge();
+    },
+    _updateBadge: function() {
+      var count = this.getCount();
+      var badges = document.querySelectorAll('[data-cb-cart-count]');
+      badges.forEach(function(badge) {
+        badge.textContent = count;
+        badge.style.display = count > 0 ? '' : 'none';
+      });
+    },
+    _generateId: function(product_id, modifiers) {
+      var modIds = (modifiers || []).map(function(m) { return m.id; }).sort();
+      return product_id + ':' + modIds.join(',');
+    },
+    getItems: function() { return this._read(); },
+    addItem: function(item) {
+      var items = this._read();
+      var existing = null;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].id === item.id) { existing = items[i]; break; }
+      }
+      if (existing) {
+        existing.quantity += item.quantity;
+      } else {
+        items.push(item);
+      }
+      this._write(items);
+    },
+    updateQuantity: function(id, qty) {
+      var items = this._read();
+      if (qty <= 0) {
+        items = items.filter(function(it) { return it.id !== id; });
+      } else {
+        for (var i = 0; i < items.length; i++) {
+          if (items[i].id === id) { items[i].quantity = qty; break; }
+        }
+      }
+      this._write(items);
+    },
+    removeItem: function(id) {
+      var items = this._read().filter(function(it) { return it.id !== id; });
+      this._write(items);
+    },
+    clear: function() {
+      localStorage.removeItem(CART_KEY);
+      this._notify();
+    },
+    getCount: function() {
+      return this._read().reduce(function(sum, it) { return sum + it.quantity; }, 0);
+    },
+    getSubtotal: function() {
+      return this._read().reduce(function(sum, it) { return sum + (it.unit_price * it.quantity); }, 0);
+    }
+  };
+
+  // Expose globally for cross-page use
+  window.TastiqoCart = TastiqoCart;
+
+  /* -----------------------------------------------
+     Format price (paisa → Rs. X)
+  ----------------------------------------------- */
+  function formatMoney(paisa) {
+    var amount = (paisa / 100).toFixed(2);
+    // Remove trailing .00
+    if (amount.endsWith('.00')) amount = amount.slice(0, -3);
+    return 'Rs. ' + amount;
+  }
+
+  /* -----------------------------------------------
+     Get branch ID from cookie
+  ----------------------------------------------- */
+  function getBranchId() {
+    var match = document.cookie.match(/(?:^|;\s*)storefront_branch_id=([^;]*)/);
+    return match ? decodeURIComponent(match[1]) : null;
+  }
+
+  /* -----------------------------------------------
+     Checkout flow
+  ----------------------------------------------- */
+  function doCheckout() {
+    if (!CustomerAuth.isLoggedIn()) {
+      openAuthModal();
+      return;
+    }
+
+    var items = TastiqoCart.getItems();
+    if (!items.length) return;
+
+    var branchId = getBranchId();
+    if (!branchId) {
+      showCheckoutError('Please select a branch first.');
+      return;
+    }
+
+    var apiItems = items.map(function(it) {
+      return {
+        product_id: it.product_id,
+        quantity: it.quantity,
+        modifier_ids: (it.modifiers || []).map(function(m) { return m.id; }),
+        notes: it.notes || ''
+      };
+    });
+
+    var body = {
+      branch_id: branchId,
+      order_type: 'pickup',
+      payment_method: 'cash',
+      items: apiItems,
+      customer_notes: ''
+    };
+
+    var checkoutBtn = document.getElementById('cb-checkout-btn');
+    if (checkoutBtn) { checkoutBtn.disabled = true; checkoutBtn.textContent = 'Placing order...'; }
+
+    fetch('/api/storefront/orders', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + CustomerAuth.getAccessToken()
+      },
+      body: JSON.stringify(body)
+    })
+    .then(function(res) {
+      if (!res.ok) return res.json().then(function(d) { throw new Error(d.error || 'Failed to place order'); });
+      return res.json();
+    })
+    .then(function() {
+      TastiqoCart.clear();
+      window.location.href = '/account/orders';
+    })
+    .catch(function(err) {
+      showCheckoutError(err.message || 'Failed to place order. Please try again.');
+      if (checkoutBtn) { checkoutBtn.disabled = false; checkoutBtn.textContent = 'Checkout →'; }
+    });
+  }
+
+  function showCheckoutError(msg) {
+    var el = document.getElementById('cb-checkout-error');
+    if (el) { el.textContent = msg; el.style.display = 'block'; }
+  }
+
+  /* -----------------------------------------------
+     Add to Cart (Product Detail Page)
+  ----------------------------------------------- */
+  function initProductAddToCart() {
+    var addBtn = document.getElementById('cb-add-to-cart-btn');
+    if (!addBtn) return;
+
+    var dataEl = document.getElementById('product-data');
+    if (!dataEl) return;
+
+    var product;
+    try { product = JSON.parse(dataEl.textContent); } catch(e) { return; }
+
+    addBtn.addEventListener('click', function() {
+      var qtyInput = document.querySelector('[data-cb-qty] input');
+      var quantity = qtyInput ? (parseInt(qtyInput.value, 10) || 1) : 1;
+
+      // Collect selected modifiers
+      var modifiers = [];
+      var modInputs = document.querySelectorAll('.cb-modifier-groups input:checked');
+      modInputs.forEach(function(inp) {
+        modifiers.push({
+          id: inp.value,
+          group_name: inp.getAttribute('data-group-name') || '',
+          name: inp.getAttribute('data-option-name') || '',
+          price_adjustment: parseInt(inp.getAttribute('data-price-delta'), 10) || 0
+        });
+      });
+
+      // Calculate unit price = base price + modifier deltas
+      var unitPrice = product.price;
+      modifiers.forEach(function(m) { unitPrice += m.price_adjustment; });
+
+      var cartId = TastiqoCart._generateId(product.id, modifiers);
+
+      TastiqoCart.addItem({
+        id: cartId,
+        product_id: product.id,
+        name: product.name,
+        image_url: product.image_url || '',
+        quantity: quantity,
+        unit_price: unitPrice,
+        modifiers: modifiers,
+        notes: ''
+      });
+
+      // Visual feedback
+      var origText = addBtn.textContent;
+      addBtn.textContent = 'Added!';
+      addBtn.disabled = true;
+      setTimeout(function() {
+        addBtn.textContent = origText;
+        addBtn.disabled = false;
+      }, 1000);
+    });
+  }
+
+  /* -----------------------------------------------
+     Cart Page Rendering
+  ----------------------------------------------- */
+  function initCartPage() {
+    var cartPage = document.querySelector('[data-cb-cart-page]');
+    if (!cartPage) return;
+
+    renderCart();
+    window.addEventListener('cart:updated', renderCart);
+
+    var checkoutBtn = document.getElementById('cb-checkout-btn');
+    if (checkoutBtn) {
+      checkoutBtn.addEventListener('click', doCheckout);
+    }
+  }
+
+  function renderCart() {
+    var filledEl = document.getElementById('cb-cart-filled');
+    var emptyEl = document.getElementById('cb-cart-empty');
+    var itemsEl = document.getElementById('cb-cart-items');
+    var subtotalEl = document.getElementById('cb-cart-subtotal');
+    var totalEl = document.getElementById('cb-cart-total');
+    var errorEl = document.getElementById('cb-checkout-error');
+
+    if (!filledEl || !emptyEl || !itemsEl) return;
+
+    var items = TastiqoCart.getItems();
+
+    if (!items.length) {
+      filledEl.style.display = 'none';
+      emptyEl.style.display = '';
+      return;
+    }
+
+    filledEl.style.display = '';
+    emptyEl.style.display = 'none';
+    if (errorEl) errorEl.style.display = 'none';
+
+    var html = '';
+    items.forEach(function(item) {
+      var lineTotal = item.unit_price * item.quantity;
+      var modText = '';
+      if (item.modifiers && item.modifiers.length) {
+        modText = item.modifiers.map(function(m) { return m.name; }).join(', ');
+      }
+      html += '<div class="cb-cart-row">';
+      if (item.image_url) {
+        html += '<img src="' + escHTML(item.image_url) + '" alt="' + escHTML(item.name) + '">';
+      } else {
+        html += '<div class="cb-skeleton" style="width:80px;height:80px;border-radius:8px;"></div>';
+      }
+      html += '<div>';
+      html += '<div class="cb-cart-name">' + escHTML(item.name) + '</div>';
+      if (modText) html += '<div class="cb-cart-meta">' + escHTML(modText) + '</div>';
+      html += '<div class="cb-cart-qty-controls" style="display:flex;align-items:center;gap:8px;margin-top:8px;">';
+      html += '<button type="button" class="cb-qty-ctrl" data-cart-id="' + escHTML(item.id) + '" data-action="decrease" style="width:28px;height:28px;border:1px solid var(--cb-border);border-radius:6px;background:var(--cb-surface);color:var(--cb-text);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">−</button>';
+      html += '<span style="font-weight:600;min-width:20px;text-align:center;">' + item.quantity + '</span>';
+      html += '<button type="button" class="cb-qty-ctrl" data-cart-id="' + escHTML(item.id) + '" data-action="increase" style="width:28px;height:28px;border:1px solid var(--cb-border);border-radius:6px;background:var(--cb-surface);color:var(--cb-text);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>';
+      html += '<button type="button" class="cb-qty-ctrl" data-cart-id="' + escHTML(item.id) + '" data-action="remove" style="background:none;border:none;color:var(--cb-error,#dc2626);font-size:0.8rem;cursor:pointer;margin-left:8px;font-weight:600;">Remove</button>';
+      html += '</div>';
+      html += '</div>';
+      html += '<div style="font-weight:700;color:var(--cb-accent);white-space:nowrap;">' + formatMoney(lineTotal) + '</div>';
+      html += '</div>';
+    });
+
+    itemsEl.innerHTML = html;
+
+    var subtotal = TastiqoCart.getSubtotal();
+    if (subtotalEl) subtotalEl.textContent = formatMoney(subtotal);
+    if (totalEl) totalEl.textContent = formatMoney(subtotal);
+
+    // Wire up quantity controls
+    itemsEl.querySelectorAll('.cb-qty-ctrl').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var cartId = btn.getAttribute('data-cart-id');
+        var action = btn.getAttribute('data-action');
+        var current = TastiqoCart.getItems();
+        var found = null;
+        for (var i = 0; i < current.length; i++) {
+          if (current[i].id === cartId) { found = current[i]; break; }
+        }
+        if (!found) return;
+        if (action === 'increase') {
+          TastiqoCart.updateQuantity(cartId, found.quantity + 1);
+        } else if (action === 'decrease') {
+          TastiqoCart.updateQuantity(cartId, found.quantity - 1);
+        } else if (action === 'remove') {
+          TastiqoCart.removeItem(cartId);
+        }
+      });
+    });
+  }
+
   // ── Branch picker dropdown ────────────────────────────────────────────
   var branchTrigger = document.querySelector('[data-cb-branch-trigger]');
   var branchMenu    = document.querySelector('[data-cb-branch-menu]');
@@ -398,5 +705,12 @@
 
   var loadMoreBtn = document.getElementById('orders-load-more');
   if (loadMoreBtn) loadMoreBtn.addEventListener('click', function() { ordersOffset += ordersLimit; loadOrders(true); });
+
+  /* -----------------------------------------------
+     Initialize Cart Features
+  ----------------------------------------------- */
+  TastiqoCart._updateBadge();
+  initProductAddToCart();
+  initCartPage();
 
 })();

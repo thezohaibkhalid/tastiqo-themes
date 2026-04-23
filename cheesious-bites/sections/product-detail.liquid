@@ -33,16 +33,56 @@
             </div>
           {% endif %}
 
+          {% if product.modifier_groups and product.modifier_groups.size > 0 %}
+            <div class="cb-modifier-groups">
+              {% for group in product.modifier_groups %}
+                <div class="cb-modifier-group" data-group-id="{{ group.id }}" data-group-required="{{ group.required }}" data-group-min="{{ group.min }}" data-group-max="{{ group.max }}">
+                  <div class="cb-modifier-group-title">
+                    {{ group.title }}
+                    {% if group.required %}<span class="cb-modifier-required">Required</span>{% endif %}
+                  </div>
+                  <div class="cb-modifier-options">
+                    {% for option in group.options %}
+                      <label class="cb-modifier-option">
+                        {% if group.max == 1 %}
+                          <input type="radio" name="modifier_group_{{ group.id }}" value="{{ option.id }}" data-price-delta="{{ option.price_delta }}" data-option-name="{{ option.label }}" data-group-name="{{ group.title }}"{% if option.is_default %} checked{% endif %}>
+                        {% else %}
+                          <input type="checkbox" name="modifier_group_{{ group.id }}" value="{{ option.id }}" data-price-delta="{{ option.price_delta }}" data-option-name="{{ option.label }}" data-group-name="{{ group.title }}"{% if option.is_default %} checked{% endif %}>
+                        {% endif %}
+                        <span class="cb-modifier-option-label">
+                          <span class="cb-modifier-option-name">{{ option.label }}</span>
+                          {% if option.price_delta and option.price_delta > 0 %}
+                            <span class="cb-modifier-option-price">+{{ option.price_delta_money }}</span>
+                          {% endif %}
+                        </span>
+                      </label>
+                    {% endfor %}
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
           <div class="cb-product-actions">
             <div class="cb-qty" data-cb-qty>
               <button type="button" data-cb-qty-step="-1" aria-label="Decrease">−</button>
               <input type="text" value="1" readonly>
               <button type="button" data-cb-qty-step="1" aria-label="Increase">+</button>
             </div>
-            <button type="button" class="cb-btn cb-btn-primary cb-btn-lg">
+            <button type="button" class="cb-btn cb-btn-primary cb-btn-lg" id="cb-add-to-cart-btn">
               Add to cart · {{ product.price | money }}
             </button>
           </div>
+
+          <script type="application/json" id="product-data">
+          {
+            "id": "{{ product.id }}",
+            "name": {{ product.name | json }},
+            "price": {{ product.price }},
+            "image_url": {{ product.imageUrl | default: "" | json }},
+            "modifier_groups": {{ product.modifier_groups | json }}
+          }
+          </script>
 
           {% if ordering.whatsapp_order_enabled %}
             <a href="{{ ordering.whatsapp_order_href }}" target="_blank" rel="noopener" class="cb-btn cb-btn-outline cb-btn-block">
