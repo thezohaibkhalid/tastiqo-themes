@@ -88,11 +88,20 @@
   }
 
   /* -----------------------------------------------
-     Get branch ID from cookie
+     Storefront data (injected by server into layout)
   ----------------------------------------------- */
+  var _storefrontData = null;
+  function getStorefrontData() {
+    if (_storefrontData) return _storefrontData;
+    try {
+      var el = document.getElementById('storefront-data');
+      if (el) _storefrontData = JSON.parse(el.textContent);
+    } catch(e) {}
+    return _storefrontData || {};
+  }
+
   function getBranchId() {
-    var match = document.cookie.match(/(?:^|;\s*)storefront_branch_id=([^;]*)/);
-    return match ? decodeURIComponent(match[1]) : null;
+    return getStorefrontData().branch_id || null;
   }
 
   /* -----------------------------------------------
@@ -173,8 +182,99 @@
     var product;
     try { product = JSON.parse(dataEl.textContent); } catch(e) { return; }
 
+    // --- Real-time price updates ---
+    var priceDisplay = document.querySelector('.cb-product-price');
+    var qtyInput = document.querySelector('[data-cb-qty] input');
+
+    function recalcTotalPrice() {
+      var unitPrice = product.price;
+      var checkedInputs = document.querySelectorAll('.cb-modifier-groups input:checked');
+      checkedInputs.forEach(function(inp) {
+        unitPrice += parseInt(inp.getAttribute('data-price-delta'), 10) || 0;
+      });
+      var qty = qtyInput ? (parseInt(qtyInput.value, 10) || 1) : 1;
+      var lineTotal = unitPrice * qty;
+      if (priceDisplay) priceDisplay.textContent = formatMoney(unitPrice);
+      addBtn.textContent = 'Add to cart · ' + formatMoney(lineTotal);
+    }
+
+    // --- Enforce max selections on checkbox groups ---
+    function enforceMaxSelections(groupEl) {
+      var max = parseInt(groupEl.getAttribute('data-group-max'), 10) || 0;
+      if (max <= 1) return; // radio groups handle themselves
+      var checkboxes = groupEl.querySelectorAll('input[type="checkbox"]');
+      var checkedCount = 0;
+      checkboxes.forEach(function(cb) { if (cb.checked) checkedCount++; });
+      checkboxes.forEach(function(cb) {
+        if (!cb.checked && checkedCount >= max) {
+          cb.disabled = true;
+          cb.closest('.cb-modifier-option').classList.add('cb-modifier-disabled');
+        } else {
+          cb.disabled = false;
+          cb.closest('.cb-modifier-option').classList.remove('cb-modifier-disabled');
+        }
+      });
+    }
+
+    // Listen for modifier changes
+    var modifierInputs = document.querySelectorAll('.cb-modifier-option input[type="radio"], .cb-modifier-option input[type="checkbox"]');
+    modifierInputs.forEach(function(inp) {
+      inp.addEventListener('change', function() {
+        recalcTotalPrice();
+        var groupEl = inp.closest('.cb-modifier-group');
+        if (groupEl) enforceMaxSelections(groupEl);
+      });
+    });
+
+    // Enforce max on page load for pre-checked defaults
+    document.querySelectorAll('.cb-modifier-group').forEach(function(g) { enforceMaxSelections(g); });
+
+    // Listen for quantity changes
+    if (qtyInput) {
+      // Observe value changes from stepper buttons via MutationObserver on the input value
+      var qtyStepButtons = document.querySelectorAll('[data-cb-qty] button[data-cb-qty-step]');
+      qtyStepButtons.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          // Delay slightly so the stepper updates the value first
+          setTimeout(recalcTotalPrice, 0);
+        });
+      });
+      qtyInput.addEventListener('input', recalcTotalPrice);
+      qtyInput.addEventListener('change', recalcTotalPrice);
+    }
+
+    // Set initial button text with price
+    recalcTotalPrice();
+
     addBtn.addEventListener('click', function() {
-      var qtyInput = document.querySelector('[data-cb-qty] input');
+      // Validate required modifier groups
+      var requiredGroups = document.querySelectorAll('.cb-modifier-group[data-group-required="true"]');
+      var valid = true;
+      requiredGroups.forEach(function(groupEl) {
+        var groupId = groupEl.getAttribute('data-group-id');
+        var checked = groupEl.querySelectorAll('input:checked');
+        var min = parseInt(groupEl.getAttribute('data-group-min'), 10) || 1;
+        var errEl = groupEl.querySelector('.cb-modifier-error');
+        if (checked.length < min) {
+          valid = false;
+          groupEl.classList.add('cb-modifier-group-error');
+          if (!errEl) {
+            errEl = document.createElement('p');
+            errEl.className = 'cb-modifier-error';
+            errEl.style.cssText = 'color:#dc2626;font-size:0.8rem;margin-top:6px;';
+            groupEl.appendChild(errEl);
+          }
+          var title = groupEl.querySelector('.cb-modifier-group-title');
+          var name = title ? title.textContent.replace('Required', '').trim() : 'this option';
+          errEl.textContent = 'Please select ' + name;
+          errEl.style.display = 'block';
+        } else {
+          groupEl.classList.remove('cb-modifier-group-error');
+          if (errEl) errEl.style.display = 'none';
+        }
+      });
+      if (!valid) return;
+
       var quantity = qtyInput ? (parseInt(qtyInput.value, 10) || 1) : 1;
 
       // Collect selected modifiers
@@ -207,12 +307,11 @@
       });
 
       // Visual feedback
-      var origText = addBtn.textContent;
       addBtn.textContent = 'Added!';
       addBtn.disabled = true;
       setTimeout(function() {
-        addBtn.textContent = origText;
         addBtn.disabled = false;
+        recalcTotalPrice();
       }, 1000);
     });
   }
@@ -707,10 +806,63 @@
   if (loadMoreBtn) loadMoreBtn.addEventListener('click', function() { ordersOffset += ordersLimit; loadOrders(true); });
 
   /* -----------------------------------------------
+     Branch Selector Popup (first visit)
+  ----------------------------------------------- */
+  function initBranchPopup() {
+    var data = getStorefrontData();
+    if (!data.show_branch_popup) return;
+    if (data.branch_count <= 1) return;
+
+    // Build the popup HTML from the branch list already rendered in the header
+    var branchForms = document.querySelectorAll('.cb-branch-menu .cb-branch-row, .cb-mobile-branches .cb-mobile-branch-row');
+    if (!branchForms.length) return;
+
+    var overlay = document.createElement('div');
+    overlay.className = 'cb-branch-popup-overlay';
+
+    var modal = document.createElement('div');
+    modal.className = 'cb-branch-popup';
+
+    var html = '<div class="cb-branch-popup-icon">📍</div>';
+    html += '<h2 class="cb-branch-popup-title">Select Your Branch</h2>';
+    html += '<p class="cb-branch-popup-desc">Choose a branch near you for accurate menu and pricing.</p>';
+    html += '<div class="cb-branch-popup-list">';
+
+    branchForms.forEach(function(form) {
+      if (form.classList.contains('cb-mobile-branch-row')) return; // skip duplicates from mobile drawer
+      var branchId = form.querySelector('input[name="branch_id"]');
+      var nameEl = form.querySelector('.cb-branch-row-name');
+      var addrEl = form.querySelector('.cb-branch-row-addr');
+      var pillEl = form.querySelector('.cb-pill');
+      if (!branchId || !nameEl) return;
+
+      html += '<form method="post" action="/api/storefront/set-branch" class="cb-branch-popup-item">';
+      html += '<input type="hidden" name="branch_id" value="' + escHTML(branchId.value) + '">';
+      html += '<button type="submit">';
+      html += '<div class="cb-branch-popup-item-name">' + escHTML(nameEl.textContent) + '</div>';
+      if (addrEl) html += '<div class="cb-branch-popup-item-addr">' + escHTML(addrEl.textContent) + '</div>';
+      if (pillEl) html += '<span class="' + escHTML(pillEl.className) + '">' + escHTML(pillEl.textContent) + '</span>';
+      html += '</button>';
+      html += '</form>';
+    });
+
+    html += '</div>';
+    modal.innerHTML = html;
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    // Animate in
+    requestAnimationFrame(function() {
+      overlay.classList.add('is-open');
+    });
+  }
+
+  /* -----------------------------------------------
      Initialize Cart Features
   ----------------------------------------------- */
   TastiqoCart._updateBadge();
   initProductAddToCart();
   initCartPage();
+  initBranchPopup();
 
 })();

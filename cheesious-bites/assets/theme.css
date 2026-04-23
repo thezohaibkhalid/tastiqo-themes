@@ -818,3 +818,122 @@ html.cb-loaded  body { opacity: 1; transition: opacity 240ms ease; }
   margin-left: 8px;
   white-space: nowrap;
 }
+
+.cb-modifier-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.cb-modifier-group-error {
+  border-color: #dc2626 !important;
+  background: #fef2f2;
+}
+
+/* ── Branch Selector Popup ─────────────────────────────── */
+
+.cb-branch-popup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0);
+  backdrop-filter: blur(0px);
+  transition: background 0.3s ease, backdrop-filter 0.3s ease;
+  padding: 20px;
+}
+
+.cb-branch-popup-overlay.is-open {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.cb-branch-popup {
+  background: var(--cb-surface, #fff);
+  border-radius: var(--cb-radius, 14px);
+  padding: 32px;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+  transform: translateY(20px);
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.cb-branch-popup-overlay.is-open .cb-branch-popup {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.cb-branch-popup-icon {
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+}
+
+.cb-branch-popup-title {
+  font-family: var(--cb-font-heading);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--cb-text);
+  margin: 0 0 8px;
+}
+
+.cb-branch-popup-desc {
+  font-size: 0.9rem;
+  color: var(--cb-text-muted);
+  margin: 0 0 24px;
+  line-height: 1.5;
+}
+
+.cb-branch-popup-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cb-branch-popup-item button {
+  width: 100%;
+  display: block;
+  padding: 14px 18px;
+  border: 2px solid var(--cb-border);
+  border-radius: calc(var(--cb-radius, 14px) - 4px);
+  background: var(--cb-bg, #fafafa);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+  font-family: inherit;
+}
+
+.cb-branch-popup-item button:hover {
+  border-color: var(--cb-primary);
+  background: var(--cb-surface);
+  transform: translateY(-1px);
+}
+
+.cb-branch-popup-item button:active {
+  transform: translateY(0);
+}
+
+.cb-branch-popup-item-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--cb-text);
+  margin-bottom: 2px;
+}
+
+.cb-branch-popup-item-addr {
+  font-size: 0.8rem;
+  color: var(--cb-text-muted);
+  margin-bottom: 6px;
+}
+
+.cb-branch-popup-item .cb-pill {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 999px;
+}

@@ -162,6 +162,17 @@
     {{ content_for_layout }}
   </main>
 
+  <!-- Branch + storefront data for client-side JS (checkout, cart, etc.) -->
+  <script id="storefront-data" type="application/json">
+  {
+    "branch_id": {{ branch.id | json }},
+    "branch_name": {{ branch.name | json }},
+    "branch_count": {{ branch_selector.branches.size | default: 1 }},
+    "show_branch_popup": {{ branch_selector.show_popup | json }},
+    "currency_symbol": {{ localization.currency_symbol | default: "Rs." | json }}
+  }
+  </script>
+
   <!-- Loaded class flips after first paint for the body fade-in -->
   <script>
     (function () {
