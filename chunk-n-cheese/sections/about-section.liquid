@@ -1,0 +1,69 @@
+{% comment %} About section with stats. Image left or right. {% endcomment %}
+
+{%- assign image_pos = section.settings.image_position | default: 'left' -%}
+
+<section class="cnc-section" style="background: {{ section.settings.bg_color | default: 'var(--color-surface)' }};">
+  <div class="cnc-about-grid" style="{% if image_pos == 'right' %}direction: rtl;{% endif %}">
+    <div class="cnc-about-image cnc-anim-up" style="direction: ltr;">
+      {% if section.settings.image != blank %}
+        <img src="{{ section.settings.image }}" alt="{{ section.settings.title }}" loading="lazy">
+      {% else %}
+        <div class="cnc-skeleton" style="width:100%;height:100%;"></div>
+      {% endif %}
+    </div>
+    <div class="cnc-about-text cnc-anim-up delay-1" style="direction: ltr;">
+      {% if section.settings.eyebrow != blank %}<span class="cnc-eyebrow" style="display:inline-block;padding:4px 14px;border-radius:999px;background:var(--color-secondary);color:var(--color-accent);font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:14px;">{{ section.settings.eyebrow }}</span>{% endif %}
+      <h2>{{ section.settings.title | default: 'Born from the love of bold flavours.' }}</h2>
+      <p>{{ section.settings.body | default: 'It started with a grill, a dream, and an obsession with cheese. We believe every burger deserves a double stack, every pizza needs extra cheese, and every bite should be an experience. Three years and counting, we still chunk everything by hand.' }}</p>
+      {% if section.settings.cta_text != blank %}
+        <a href="{{ section.settings.cta_link | default: '/about' }}" class="cnc-btn cnc-btn-primary" style="margin-top: 12px;">{{ section.settings.cta_text }}</a>
+      {% endif %}
+      <div class="cnc-about-stats">
+        <div class="cnc-about-stat">
+          <strong>{{ section.settings.stat1_value | default: '3' }}</strong>
+          <span>{{ section.settings.stat1_label | default: 'Years serving' }}</span>
+        </div>
+        <div class="cnc-about-stat">
+          <strong>{{ section.settings.stat2_value | default: '30k+' }}</strong>
+          <span>{{ section.settings.stat2_label | default: 'Happy customers' }}</span>
+        </div>
+        <div class="cnc-about-stat">
+          <strong>{{ section.settings.stat3_value | default: '4.8★' }}</strong>
+          <span>{{ section.settings.stat3_label | default: 'Average rating' }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "About",
+  "settings": [
+    {
+      "type": "select",
+      "id": "image_position",
+      "label": "Image position",
+      "default": "left",
+      "options": [
+        { "value": "left",  "label": "Left" },
+        { "value": "right", "label": "Right" }
+      ]
+    },
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "Our story" },
+    { "type": "text", "id": "title", "label": "Title", "default": "Born from the love of bold flavours." },
+    { "type": "textarea", "id": "body", "label": "Body", "default": "It started with a grill, a dream, and an obsession with cheese. We believe every burger deserves a double stack, every pizza needs extra cheese, and every bite should be an experience." },
+    { "type": "image_picker", "id": "image", "label": "Image" },
+    { "type": "text", "id": "cta_text", "label": "Button text", "default": "Read our story" },
+    { "type": "url",  "id": "cta_link", "label": "Button link", "default": "/about" },
+    { "type": "color", "id": "bg_color", "label": "Background", "default": "#FFFFFF" },
+    { "type": "text", "id": "stat1_value", "label": "Stat 1 value", "default": "3" },
+    { "type": "text", "id": "stat1_label", "label": "Stat 1 label", "default": "Years serving" },
+    { "type": "text", "id": "stat2_value", "label": "Stat 2 value", "default": "30k+" },
+    { "type": "text", "id": "stat2_label", "label": "Stat 2 label", "default": "Happy customers" },
+    { "type": "text", "id": "stat3_value", "label": "Stat 3 value", "default": "4.8★" },
+    { "type": "text", "id": "stat3_label", "label": "Stat 3 label", "default": "Average rating" }
+  ],
+  "presets": [{ "name": "About", "settings": {} }]
+}
+{% endschema %}

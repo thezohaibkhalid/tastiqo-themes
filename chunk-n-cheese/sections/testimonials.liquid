@@ -1,0 +1,84 @@
+{% comment %} Customer testimonials grid. Reviews defined as blocks. {% endcomment %}
+
+<section class="cnc-section" style="background: {{ section.settings.bg_color | default: 'var(--color-bg)' }};">
+  <div class="cnc-container">
+    <div class="cnc-section-head cnc-anim-up">
+      {% if section.settings.eyebrow != blank %}<span class="cnc-eyebrow">{{ section.settings.eyebrow }}</span>{% endif %}
+      <h2>{{ section.settings.title | default: 'What our regulars say' }}</h2>
+      {% if section.settings.subtitle != blank %}<p>{{ section.settings.subtitle }}</p>{% endif %}
+    </div>
+
+    <div class="cnc-testimonials-grid">
+      {% if section.blocks.size > 0 %}
+        {% for block in section.blocks %}
+          {% if block.type == 'review' %}
+            <article class="cnc-testimonial cnc-anim-up delay-{{ forloop.index | minus: 1 }}">
+              <div class="cnc-testimonial-stars">
+                {%- assign stars = block.settings.rating | default: 5 -%}
+                {%- for i in (1..stars) -%}★{%- endfor -%}
+              </div>
+              <p class="cnc-testimonial-text">"{{ block.settings.text | default: 'Best smash burger in town. The cheese pull is insane.' }}"</p>
+              <div class="cnc-testimonial-author">
+                <div class="cnc-testimonial-avatar">
+                  {% if block.settings.avatar != blank %}
+                    <img src="{{ block.settings.avatar }}" alt="{{ block.settings.author }}" loading="lazy">
+                  {% else %}
+                    <div class="cnc-skeleton" style="width:100%;height:100%;"></div>
+                  {% endif %}
+                </div>
+                <div>
+                  <div class="cnc-testimonial-name">{{ block.settings.author | default: 'Anonymous' }}</div>
+                  <div class="cnc-testimonial-role">{{ block.settings.location | default: 'Karachi' }}</div>
+                </div>
+              </div>
+            </article>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        {%- assign defaults = "Ali Hassan|DHA Phase 5|5|The double smash burger is unreal. Juicy, cheesy, and perfectly chunky.;Fatima R.|Clifton|5|Their loaded fries should be illegal. Ordered twice this week already.;Zain M.|Gulshan|5|Fast delivery, piping hot. The BBQ chunk pizza is a game changer." -%}
+        {%- assign rows = defaults | split: ";" -%}
+        {%- for row in rows -%}
+          {%- assign parts = row | split: "|" -%}
+          <article class="cnc-testimonial cnc-anim-up delay-{{ forloop.index | minus: 1 }}">
+            <div class="cnc-testimonial-stars">★★★★★</div>
+            <p class="cnc-testimonial-text">"{{ parts[3] }}"</p>
+            <div class="cnc-testimonial-author">
+              <div class="cnc-testimonial-avatar"><div class="cnc-skeleton" style="width:100%;height:100%;"></div></div>
+              <div>
+                <div class="cnc-testimonial-name">{{ parts[0] }}</div>
+                <div class="cnc-testimonial-role">{{ parts[1] }}</div>
+              </div>
+            </div>
+          </article>
+        {%- endfor -%}
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Testimonials",
+  "max_blocks": 9,
+  "settings": [
+    { "type": "text", "id": "eyebrow",  "label": "Eyebrow",  "default": "Reviews" },
+    { "type": "text", "id": "title",    "label": "Title",    "default": "What our regulars say" },
+    { "type": "textarea", "id": "subtitle", "label": "Subtitle", "default": "" },
+    { "type": "color", "id": "bg_color", "label": "Background", "default": "#F0F2F8" }
+  ],
+  "blocks": [
+    {
+      "type": "review",
+      "name": "Review",
+      "settings": [
+        { "type": "text", "id": "author", "label": "Customer name", "default": "Ali Hassan" },
+        { "type": "text", "id": "location", "label": "Location", "default": "DHA, Karachi" },
+        { "type": "range", "id": "rating", "label": "Rating", "min": 1, "max": 5, "step": 1, "default": 5 },
+        { "type": "textarea", "id": "text", "label": "Review", "default": "The double smash burger is unreal. Juicy, cheesy, and perfectly chunky." },
+        { "type": "image_picker", "id": "avatar", "label": "Avatar" }
+      ]
+    }
+  ],
+  "presets": [{ "name": "Testimonials", "settings": {} }]
+}
+{% endschema %}

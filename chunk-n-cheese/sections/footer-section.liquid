@@ -1,0 +1,102 @@
+{% comment %}
+  Footer section — editable in the theme editor.
+  Three-column layout with brand, links, hours, and social.
+{% endcomment %}
+
+<footer class="cnc-footer">
+  <div class="cnc-footer-inner">
+
+    <div class="cnc-footer-brand">
+      <a href="/" class="cnc-footer-logo">
+        {% if theme.logo_image != blank %}
+          <img src="{{ theme.logo_image }}" alt="{{ restaurant.name }}">
+        {% elsif restaurant.logo %}
+          <img src="{{ restaurant.logo }}" alt="{{ restaurant.name }}">
+        {% else %}
+          <span class="cnc-logo-mark">🍔</span>
+          <span>{{ restaurant.name | default: "Chunk N Cheese" }}</span>
+        {% endif %}
+      </a>
+      <p class="cnc-footer-tagline">
+        {{ section.settings.tagline | default: restaurant.tagline | default: "Bold chunks. Melted cheese. Extreme flavours." }}
+      </p>
+    </div>
+
+    <div class="cnc-footer-col">
+      <h4>Explore</h4>
+      <ul>
+        {% if navigation.footer.size > 0 %}
+          {% for item in navigation.footer %}
+            <li><a href="{{ item.url }}">{{ item.title }}</a></li>
+          {% endfor %}
+        {% else %}
+          {% for item in navigation.primary %}
+            <li><a href="{{ item.url }}">{{ item.title }}</a></li>
+          {% endfor %}
+        {% endif %}
+      </ul>
+    </div>
+
+    <div class="cnc-footer-col">
+      <h4>Contact</h4>
+      <ul class="cnc-footer-contact">
+        {% if branch.address %}<li>📍 {{ branch.address }}</li>{% endif %}
+        {% if branch.phone %}<li>📞 <a href="tel:{{ branch.phone }}">{{ branch.phone }}</a></li>{% endif %}
+        {% if restaurant.email %}<li>✉️ <a href="mailto:{{ restaurant.email }}">{{ restaurant.email }}</a></li>{% endif %}
+      </ul>
+    </div>
+
+    {% if branch.hours and branch.hours.size > 0 %}
+      <div class="cnc-footer-col">
+        <h4>Hours</h4>
+        <ul class="cnc-footer-hours">
+          {% for h in branch.hours %}
+            <li>
+              <span class="cnc-day">{{ h.day }}</span>
+              <span class="cnc-time">{% if h.closed %}Closed{% else %}{{ h.open }} – {{ h.close }}{% endif %}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="cnc-footer-bottom">
+    <span>{{ section.settings.copyright | default: "© 2026 Chunk N Cheese. All rights reserved." }}</span>
+    {% if navigation.legal.size > 0 %}
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        {% for link in navigation.legal %}
+          <a href="{{ link.url }}" style="opacity:0.6;font-size:0.8rem;">{{ link.title }}</a>
+        {% endfor %}
+      </div>
+    {% endif %}
+    <span class="cnc-footer-credits">{{ section.settings.credits | default: "Crafted with ❤️ & extreme cheese." }}</span>
+  </div>
+</footer>
+
+{% schema %}
+{
+  "name": "Footer",
+  "settings": [
+    { "type": "text", "id": "tagline", "label": "Tagline", "default": "Bold chunks. Melted cheese. Extreme flavours." },
+    { "type": "text", "id": "copyright", "label": "Copyright text", "default": "© 2026 Chunk N Cheese. All rights reserved." },
+    { "type": "text", "id": "credits", "label": "Credits line", "default": "Crafted with ❤️ & extreme cheese." }
+  ],
+  "blocks": [
+    {
+      "type": "link_column",
+      "name": "Link Column",
+      "settings": [
+        { "type": "text", "id": "title", "label": "Column title", "default": "Links" },
+        { "type": "text", "id": "link_1_text", "label": "Link 1 text", "default": "Home" },
+        { "type": "url",  "id": "link_1_url",  "label": "Link 1 URL",  "default": "/" },
+        { "type": "text", "id": "link_2_text", "label": "Link 2 text", "default": "Menu" },
+        { "type": "url",  "id": "link_2_url",  "label": "Link 2 URL",  "default": "/menu" },
+        { "type": "text", "id": "link_3_text", "label": "Link 3 text", "default": "" },
+        { "type": "url",  "id": "link_3_url",  "label": "Link 3 URL",  "default": "" }
+      ]
+    }
+  ],
+  "presets": [{ "name": "Footer", "settings": {} }]
+}
+{% endschema %}

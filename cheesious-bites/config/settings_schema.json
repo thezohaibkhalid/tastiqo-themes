@@ -46,7 +46,9 @@
           { "value": "Manrope",   "label": "Manrope" },
           { "value": "Lato",      "label": "Lato" }
         ]
-      }
+      },
+      { "type": "range", "id": "base_font_size",  "label": "Base font size (px)", "min": 12, "max": 20, "step": 1, "default": 16, "info": "Controls body text size across the entire site" },
+      { "type": "range", "id": "heading_scale",    "label": "Heading size scale (%)", "min": 80, "max": 150, "step": 5, "default": 100, "info": "Scale all headings up or down" }
     ]
   },
   {

@@ -1,0 +1,49 @@
+{% comment %} Multi-branch location grid (Chunk N Cheese). {% endcomment %}
+
+<section class="cnc-section">
+  <div class="cnc-container">
+    {% if section.settings.title != blank %}
+      <div class="cnc-section-head cnc-anim-up">
+        {% if section.settings.eyebrow != blank %}<span class="cnc-eyebrow">{{ section.settings.eyebrow }}</span>{% endif %}
+        <h2>{{ section.settings.title }}</h2>
+        {% if section.settings.subtitle != blank %}<p>{{ section.settings.subtitle }}</p>{% endif %}
+      </div>
+    {% endif %}
+
+    <div class="cnc-loc-grid">
+      {% for b in branch_selector.branches %}
+        <div class="cnc-loc-card cnc-anim-up delay-{{ forloop.index0 | modulo: 4 }}">
+          <h3>{{ b.name }}</h3>
+          {% if b.address %}<div class="cnc-loc-addr">{{ b.address }}</div>{% endif %}
+          <div class="cnc-loc-meta">
+            {% if b.is_open %}
+              <span class="cnc-pill cnc-pill-open">Open now</span>
+            {% else %}
+              <span class="cnc-pill cnc-pill-closed">Closed</span>
+            {% endif %}
+            {% if b.phone %}<a href="tel:{{ b.phone }}" class="cnc-pill" style="background: var(--cnc-bg); color: var(--cnc-text);">📞 {{ b.phone }}</a>{% endif %}
+          </div>
+          {% if b.maps_url %}
+            <div style="margin-top: 16px;">
+              <a href="{{ b.maps_url }}" target="_blank" rel="noopener" class="cnc-btn cnc-btn-outline cnc-btn-sm">Get directions →</a>
+            </div>
+          {% endif %}
+        </div>
+      {% else %}
+        <p style="color: var(--cnc-text-muted);">No branches configured yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Locations",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "Find us" },
+    { "type": "text", "id": "title", "label": "Title", "default": "Chunk N Cheese near you" },
+    { "type": "textarea", "id": "subtitle", "label": "Subtitle", "default": "Multiple locations serving up chunky, cheesy goodness." }
+  ],
+  "presets": [{ "name": "Locations", "settings": {} }]
+}
+{% endschema %}

@@ -1,0 +1,177 @@
+{% comment %}
+  Featured items grid with five card design variants:
+    - minimal  — image, title, price (transparent)
+    - elevated — surface card with shadow, badge, description
+    - overlay  — image fills, text overlays on hover
+    - slide-cart — image with slide-in add to cart button
+    - compact  — horizontal card layout
+
+  Pulls items from menu_categories context.
+{% endcomment %}
+
+{%- assign style = section.settings.card_style | default: 'elevated' -%}
+{%- assign cols  = section.settings.columns    | default: 3 -%}
+{%- assign limit = section.settings.limit      | default: 6 -%}
+
+<section class="cnc-section">
+  <div class="cnc-container">
+
+    {% if section.settings.title != blank or section.settings.subtitle != blank %}
+      <div class="cnc-section-head cnc-anim-up">
+        {% if section.settings.eyebrow != blank %}<span class="cnc-eyebrow">{{ section.settings.eyebrow }}</span>{% endif %}
+        {% if section.settings.title != blank %}<h2>{{ section.settings.title }}</h2>{% endif %}
+        {% if section.settings.subtitle != blank %}<p>{{ section.settings.subtitle }}</p>{% endif %}
+      </div>
+    {% endif %}
+
+    <div class="cnc-grid" style="--cnc-cols: {{ cols }};">
+      {%- assign rendered = 0 -%}
+      {%- for cat in menu_categories -%}
+        {%- for item in cat.items -%}
+          {%- if rendered >= limit -%}{%- break -%}{%- endif -%}
+
+          {%- if style == 'minimal' -%}
+            <a href="{{ item.url }}" class="cnc-card--minimal cnc-anim-up">
+              <div class="cnc-card-img">
+                {% if item.imageUrl != blank %}
+                  <img src="{{ item.imageUrl }}" alt="{{ item.name }}" loading="lazy">
+                {% else %}
+                  <div class="cnc-skeleton" style="width:100%;height:100%;"></div>
+                {% endif %}
+              </div>
+              <div class="cnc-card-title">{{ item.name }}</div>
+              <div class="cnc-card-price">{{ item.price | money }}</div>
+            </a>
+
+          {%- elsif style == 'overlay' -%}
+            <a href="{{ item.url }}" class="cnc-card--overlay cnc-anim-up">
+              {% if item.imageUrl != blank %}
+                <img src="{{ item.imageUrl }}" alt="{{ item.name }}" loading="lazy">
+              {% else %}
+                <div class="cnc-skeleton" style="width:100%;height:100%;"></div>
+              {% endif %}
+              <div class="cnc-card-body">
+                <div class="cnc-card-title">{{ item.name }}</div>
+                {% if item.description != blank %}
+                  <p class="cnc-card-desc">{{ item.description | truncate: 90 }}</p>
+                {% endif %}
+                <div class="cnc-card-price">{{ item.price | money }}</div>
+              </div>
+            </a>
+
+          {%- elsif style == 'slide-cart' -%}
+            <a href="{{ item.url }}" class="cnc-card--slide-cart cnc-anim-up">
+              <div class="cnc-card-img">
+                {% if item.imageUrl != blank %}
+                  <img src="{{ item.imageUrl }}" alt="{{ item.name }}" loading="lazy">
+                {% else %}
+                  <div class="cnc-skeleton" style="width:100%;height:100%;"></div>
+                {% endif %}
+                <div class="cnc-card-tags">
+                  {% if item.featured %}<span class="cnc-pill cnc-pill-hot">🔥</span>{% endif %}
+                  {% if item.tags contains 'new' %}<span class="cnc-pill cnc-pill-new">New</span>{% endif %}
+                </div>
+              </div>
+              <div class="cnc-card-body">
+                <div class="cnc-card-title">{{ item.name }}</div>
+                {% if item.description != blank %}
+                  <p class="cnc-card-desc">{{ item.description | truncate: 80 }}</p>
+                {% endif %}
+                <div class="cnc-card-price">{{ item.price | money }}</div>
+              </div>
+              <div class="cnc-card-cart-btn">+ Add to Cart</div>
+            </a>
+
+          {%- elsif style == 'compact' -%}
+            <a href="{{ item.url }}" class="cnc-card--compact cnc-anim-up">
+              <div class="cnc-card-img">
+                {% if item.imageUrl != blank %}
+                  <img src="{{ item.imageUrl }}" alt="{{ item.name }}" loading="lazy">
+                {% else %}
+                  <div class="cnc-skeleton" style="width:100%;height:100%;"></div>
+                {% endif %}
+              </div>
+              <div class="cnc-card-body">
+                <div class="cnc-card-title">{{ item.name }}</div>
+                {% if item.description != blank %}
+                  <p class="cnc-card-desc">{{ item.description | truncate: 70 }}</p>
+                {% endif %}
+                <div class="cnc-card-foot">
+                  <span class="cnc-card-price">{{ item.price | money }}</span>
+                  <span class="cnc-btn cnc-btn-primary cnc-btn-sm">Add</span>
+                </div>
+              </div>
+            </a>
+
+          {%- else -%}
+            <a href="{{ item.url }}" class="cnc-card--elevated cnc-anim-up">
+              <div class="cnc-card-img">
+                {% if item.imageUrl != blank %}
+                  <img src="{{ item.imageUrl }}" alt="{{ item.name }}" loading="lazy">
+                {% else %}
+                  <div class="cnc-skeleton" style="width:100%;height:100%;"></div>
+                {% endif %}
+                <div class="cnc-card-tags">
+                  {% if item.featured %}<span class="cnc-pill cnc-pill-hot">🔥 Hot</span>{% endif %}
+                  {% if item.tags contains 'new' %}<span class="cnc-pill cnc-pill-new">New</span>{% endif %}
+                  {% if item.tags contains 'veg' %}<span class="cnc-pill cnc-pill-veg">Veg</span>{% endif %}
+                </div>
+              </div>
+              <div class="cnc-card-body">
+                <div class="cnc-card-title">{{ item.name }}</div>
+                {% if item.description != blank %}
+                  <p class="cnc-card-desc">{{ item.description | truncate: 100 }}</p>
+                {% endif %}
+                <div class="cnc-card-foot">
+                  <span class="cnc-card-price">{{ item.price | money }}</span>
+                  <span class="cnc-btn cnc-btn-primary cnc-btn-sm">Add</span>
+                </div>
+              </div>
+            </a>
+          {%- endif -%}
+
+          {%- assign rendered = rendered | plus: 1 -%}
+        {%- endfor -%}
+        {%- if rendered >= limit -%}{%- break -%}{%- endif -%}
+      {%- endfor -%}
+    </div>
+
+    {% if section.settings.show_view_all %}
+      <div style="text-align: center; margin-top: 40px;">
+        <a href="{{ section.settings.view_all_link | default: '/menu' }}" class="cnc-btn cnc-btn-outline cnc-btn-lg">
+          {{ section.settings.view_all_text | default: 'See full menu' }} →
+        </a>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Featured Items",
+  "settings": [
+    {
+      "type": "select",
+      "id": "card_style",
+      "label": "Card design",
+      "default": "elevated",
+      "options": [
+        { "value": "minimal",    "label": "Minimal" },
+        { "value": "elevated",   "label": "Elevated card with shadow" },
+        { "value": "overlay",    "label": "Overlay (text on image)" },
+        { "value": "slide-cart", "label": "Slide-in Add to Cart" },
+        { "value": "compact",   "label": "Compact (horizontal)" }
+      ]
+    },
+    { "type": "text", "id": "eyebrow",  "label": "Eyebrow",  "default": "Most loved" },
+    { "type": "text", "id": "title",    "label": "Title",    "default": "Fan favourites" },
+    { "type": "textarea", "id": "subtitle", "label": "Subtitle", "default": "The chunky hits our customers keep coming back for." },
+    { "type": "range", "id": "columns", "label": "Columns", "min": 2, "max": 4, "step": 1, "default": 3 },
+    { "type": "range", "id": "limit",   "label": "Number of items", "min": 2, "max": 12, "step": 1, "default": 6 },
+    { "type": "checkbox", "id": "show_view_all", "label": "Show 'view all' button", "default": true },
+    { "type": "text",     "id": "view_all_text", "label": "Button text", "default": "See full menu" },
+    { "type": "url",      "id": "view_all_link", "label": "Button link", "default": "/menu" }
+  ],
+  "presets": [{ "name": "Featured Items", "settings": {} }]
+}
+{% endschema %}

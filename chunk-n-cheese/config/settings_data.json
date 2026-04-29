@@ -1,0 +1,54 @@
+{
+  "current": {
+    "logo_image": "",
+    "logo_width": 160,
+    "favicon": "",
+
+    "color_primary":     "#111B47",
+    "color_secondary":   "#F5A623",
+    "color_accent":      "#0A1233",
+    "color_background":  "#FFFFFF",
+    "color_surface":     "#F8F9FC",
+    "color_text":        "#1A1A2E",
+    "color_text_muted":  "#6B7280",
+    "color_border":      "#E5E7EB",
+    "color_success":     "#16A34A",
+    "color_warning":     "#F59E0B",
+    "color_error":       "#DC2626",
+
+    "font_heading":   "Poppins",
+    "font_body":      "Inter",
+    "base_font_size": 16,
+    "heading_scale":  100,
+
+    "page_width":       1280,
+    "spacing_sections": 72,
+    "border_radius":    "10px",
+
+    "header_sticky":     true,
+    "show_search":       false,
+    "show_cart":         true,
+    "mobile_menu_style": "drawer",
+
+    "footer_copyright": "\u00a9 2026 Chunk N Cheese. All rights reserved.",
+    "footer_columns":   4,
+
+    "social_instagram":   "",
+    "social_facebook":    "",
+    "social_tiktok":      "",
+    "social_google_maps": "",
+    "social_whatsapp":    "",
+    "social_youtube":     "",
+
+    "seo_title":       "Chunk N Cheese \u2014 Extreme Flavours, Loaded Toppings",
+    "seo_description": "Cheesy crunches, extreme flavours, loaded pizzas. Order online for fast delivery.",
+    "seo_og_image":    "",
+
+    "button_style":            "rounded",
+    "button_border_thickness": 0,
+    "button_shadow":           "small",
+
+    "custom_css": "",
+    "custom_js":  ""
+  }
+}

@@ -18,11 +18,35 @@
   <link rel="icon" href="{{ restaurant.icon }}">
 
   <!-- Fonts -->
+  {%- assign fh_font_heading = theme.font_heading | default: 'Playfair Display' -%}
+  {%- assign fh_font_body    = theme.font_body    | default: 'DM Sans' -%}
+  {%- assign fh_heading_url  = fh_font_heading | replace: ' ', '+' -%}
+  {%- assign fh_body_url     = fh_font_body    | replace: ' ', '+' -%}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family={{ theme.font_heading | default: 'Playfair+Display' }}:wght@400;500;600;700;800&family={{ theme.font_body | default: 'DM+Sans' }}:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family={{ fh_heading_url }}:wght@400;500;600;700;800&family={{ fh_body_url }}:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
   {{ 'theme.css' | asset_url | stylesheet_tag }}
+
+  <style id="fh-theme-tokens">
+    :root {
+      /* Typography — editable from admin panel */
+      --font-heading: '{{ fh_font_heading }}', Georgia, serif;
+      --font-body:    '{{ fh_font_body }}', -apple-system, BlinkMacSystemFont, sans-serif;
+      --base-font-size: {{ theme.base_font_size | default: 16 }}px;
+      --heading-scale:  {{ theme.heading_scale | default: 100 | divided_by: 100.0 }};
+
+      /* Colors — editable from admin panel */
+      {% if theme.color_primary %}--color-primary: {{ theme.color_primary }};{% endif %}
+      {% if theme.color_secondary %}--color-secondary: {{ theme.color_secondary }};{% endif %}
+      {% if theme.color_background %}--color-background: {{ theme.color_background }};{% endif %}
+      {% if theme.color_dark %}--color-dark: {{ theme.color_dark }};{% endif %}
+
+      /* Layout — editable from admin panel */
+      {% if theme.max_width %}--max-width: {{ theme.max_width }};{% endif %}
+      {% if theme.border_radius %}--radius: {{ theme.border_radius }};{% endif %}
+    }
+  </style>
 </head>
 <body class="font-body bg-background text-foreground antialiased">
 

@@ -1,0 +1,114 @@
+{% comment %}
+  Account Section — Customer profile, addresses & quick links (Chunk N Cheese)
+{% endcomment %}
+
+<section class="cnc-section cnc-account-section">
+  <div class="cnc-container">
+    <div class="cnc-account-page" id="account-page" style="display:none;">
+      <div class="cnc-account-header">
+        <h1 class="cnc-heading-xl">My Account</h1>
+        <button class="cnc-btn cnc-btn-outline cnc-btn-sm" id="account-logout-btn">Sign Out</button>
+      </div>
+
+      <div class="cnc-account-card">
+        <div class="cnc-account-card-header">
+          <h3>Profile</h3>
+          <button class="cnc-btn-link" id="account-edit-toggle">Edit</button>
+        </div>
+        <div id="account-profile-display">
+          <div class="cnc-account-detail"><span class="cnc-account-label">Name</span><span id="account-name">—</span></div>
+          <div class="cnc-account-detail"><span class="cnc-account-label">Email</span><span id="account-email">—</span></div>
+          <div class="cnc-account-detail"><span class="cnc-account-label">Phone</span><span id="account-phone">—</span></div>
+        </div>
+        <form id="account-profile-form" style="display:none;" class="cnc-auth-form">
+          <div class="cnc-form-group">
+            <label for="profile-name">Name</label>
+            <input type="text" id="profile-name" name="full_name">
+          </div>
+          <div class="cnc-form-group">
+            <label for="profile-phone">Phone</label>
+            <input type="tel" id="profile-phone" name="phone">
+          </div>
+          <div style="display:flex;gap:0.5rem;">
+            <button type="submit" class="cnc-btn cnc-btn-primary cnc-btn-sm">Save</button>
+            <button type="button" class="cnc-btn cnc-btn-outline cnc-btn-sm" id="account-edit-cancel">Cancel</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="cnc-account-card">
+        <div class="cnc-account-card-header">
+          <h3>Saved Addresses</h3>
+          <button class="cnc-btn cnc-btn-outline cnc-btn-sm" id="account-add-address-btn">+ Add</button>
+        </div>
+        <div id="account-addresses-list" class="cnc-account-addresses">
+          <p style="color:var(--cnc-text-muted);">Loading addresses...</p>
+        </div>
+      </div>
+
+      <div class="cnc-account-card">
+        <a href="/account/orders" class="cnc-account-link-row">
+          <span>Order History</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <div id="account-not-logged-in" style="display:none;text-align:center;padding:4rem 0;">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--cnc-text-muted)" stroke-width="1.5" style="margin:0 auto 1rem;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <h2 class="cnc-heading-lg">Sign in to your account</h2>
+      <p style="color:var(--cnc-text-muted);margin-bottom:1.5rem;">View your orders, manage addresses, and more.</p>
+      <button class="cnc-btn cnc-btn-primary" data-open-auth>Sign In</button>
+    </div>
+  </div>
+</section>
+
+<!-- Address Form Modal -->
+<div class="cnc-auth-modal-backdrop" id="address-modal" style="display:none;">
+  <div class="cnc-auth-modal" style="max-width:480px;">
+    <button class="cnc-auth-modal-close" id="address-modal-close" aria-label="Close">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="cnc-auth-header">
+      <h2 id="address-modal-title">Add Address</h2>
+    </div>
+    <form id="address-form" class="cnc-auth-form">
+      <input type="hidden" id="addr-id" value="">
+      <div class="cnc-form-group">
+        <label for="addr-label">Label</label>
+        <input type="text" id="addr-label" placeholder="Home, Work, etc." required>
+      </div>
+      <div class="cnc-form-group">
+        <label for="addr-line1">Address Line 1</label>
+        <input type="text" id="addr-line1" placeholder="Street address" required>
+      </div>
+      <div class="cnc-form-group">
+        <label for="addr-line2">Address Line 2 <span style="color:var(--cnc-text-muted);">(optional)</span></label>
+        <input type="text" id="addr-line2" placeholder="Apt, suite, floor, etc.">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+        <div class="cnc-form-group">
+          <label for="addr-city">City</label>
+          <input type="text" id="addr-city" placeholder="City">
+        </div>
+        <div class="cnc-form-group">
+          <label for="addr-postal">Postal Code</label>
+          <input type="text" id="addr-postal" placeholder="Postal code">
+        </div>
+      </div>
+      <div class="cnc-form-group">
+        <label for="addr-notes">Delivery Notes <span style="color:var(--cnc-text-muted);">(optional)</span></label>
+        <input type="text" id="addr-notes" placeholder="Gate code, landmark, etc.">
+      </div>
+      <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">
+        <input type="checkbox" id="addr-default" style="width:auto;">
+        <label for="addr-default" style="margin:0;font-weight:500;">Set as default address</label>
+      </div>
+      <div class="cnc-auth-error" id="address-error" style="display:none;"></div>
+      <div style="display:flex;gap:0.5rem;margin-top:0.5rem;">
+        <button type="submit" class="cnc-btn cnc-btn-primary" style="flex:1;" id="address-submit-btn">Save Address</button>
+        <button type="button" class="cnc-btn cnc-btn-outline" id="address-cancel-btn">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>

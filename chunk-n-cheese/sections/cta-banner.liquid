@@ -1,0 +1,37 @@
+{% comment %} Big CTA banner — use as the last section before footer. {% endcomment %}
+
+<section class="cnc-section">
+  <div class="cnc-container">
+    <div class="cnc-cta-banner cnc-anim-up">
+      {% if section.settings.eyebrow != blank %}
+        <span class="cnc-hero-eyebrow">{{ section.settings.eyebrow }}</span>
+      {% endif %}
+      <h2>{{ section.settings.title | default: "Ready for the chunk?" }}</h2>
+      <p>{{ section.settings.subtitle | default: "Order online and we'll have it at your door in 30 minutes." }}</p>
+      <div class="cnc-hero-actions" style="justify-content: center;">
+        {% if section.settings.cta1_text != blank %}
+          <a href="{{ section.settings.cta1_link | default: '/menu' }}" class="cnc-btn cnc-btn-secondary cnc-btn-lg">{{ section.settings.cta1_text }}</a>
+        {% endif %}
+        {% if section.settings.cta2_text != blank %}
+          <a href="{{ section.settings.cta2_link | default: '/locations' }}" class="cnc-btn cnc-btn-outline cnc-btn-lg" style="border-color: rgba(255,255,255,0.6); color: #fff;">{{ section.settings.cta2_text }}</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "CTA Banner",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "" },
+    { "type": "text", "id": "title", "label": "Title", "default": "Ready for the chunk?" },
+    { "type": "textarea", "id": "subtitle", "label": "Subtitle", "default": "Order online and we'll have it at your door in 30 minutes." },
+    { "type": "text", "id": "cta1_text", "label": "Button 1 text", "default": "Order now" },
+    { "type": "url",  "id": "cta1_link", "label": "Button 1 link", "default": "/menu" },
+    { "type": "text", "id": "cta2_text", "label": "Button 2 text", "default": "Find a branch" },
+    { "type": "url",  "id": "cta2_link", "label": "Button 2 link", "default": "/locations" }
+  ],
+  "presets": [{ "name": "CTA Banner", "settings": {} }]
+}
+{% endschema %}

@@ -1,0 +1,19 @@
+{% comment %}
+  Account Login Section (Chunk N Cheese)
+{% endcomment %}
+
+<section class="cnc-section cnc-account-login-section">
+  <div class="cnc-container" style="max-width:28rem;margin:0 auto;text-align:center;padding:4rem 1rem;">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--cnc-primary)" stroke-width="1.5" style="margin:0 auto 1rem;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <h1 class="cnc-heading-xl" style="margin-bottom:0.5rem;">Sign In</h1>
+    <p style="color:var(--cnc-text-muted);margin-bottom:2rem;">Enter your email to sign in or create an account.</p>
+    <button class="cnc-btn cnc-btn-primary" style="width:100%;" data-open-auth id="login-page-cta">Sign In with Email</button>
+    <p style="color:var(--cnc-text-muted);margin-top:1.5rem;font-size:0.8rem;">We'll send you a verification code. No password needed.</p>
+  </div>
+</section>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof window.openAuthModal === 'function') window.openAuthModal();
+  });
+</script>

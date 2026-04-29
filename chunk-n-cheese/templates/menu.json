@@ -1,0 +1,1 @@
+{"name":"Menu","sections":{"menu_grid":{"type":"menu-grid","settings":{"title":"Our menu","subtitle":"Bold chunks, loaded toppings, extreme flavours.","card_style":"elevated","columns":3}},"header":{"type":"header-section","settings":{}},"footer":{"type":"footer-section","settings":{}}},"order":["menu_grid"],"header_order":["header"],"footer_order":["footer"]}

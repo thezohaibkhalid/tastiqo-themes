@@ -1,0 +1,37 @@
+{% comment %}
+  Account Orders Section — Order history (Chunk N Cheese)
+{% endcomment %}
+
+<section class="cnc-section cnc-account-orders-section">
+  <div class="cnc-container">
+    <div id="orders-page" style="display:none;">
+      <div class="cnc-account-header">
+        <div>
+          <h1 class="cnc-heading-xl">Order History</h1>
+          <p style="color:var(--cnc-text-muted);">Your past orders and their status.</p>
+        </div>
+        <a href="/account" class="cnc-btn cnc-btn-outline cnc-btn-sm">Back to Account</a>
+      </div>
+
+      <div id="orders-list" class="cnc-orders-list">
+        <div style="text-align:center;padding:3rem;color:var(--cnc-text-muted);">Loading orders...</div>
+      </div>
+
+      <div id="orders-empty" style="display:none;text-align:center;padding:4rem 0;">
+        <h2 class="cnc-heading-lg">No orders yet</h2>
+        <p style="color:var(--cnc-text-muted);margin-bottom:1.5rem;">Once you place an order, it will appear here.</p>
+        <a href="/menu" class="cnc-btn cnc-btn-primary">Browse Menu</a>
+      </div>
+
+      <div id="orders-pagination" class="cnc-orders-pagination" style="display:none;">
+        <button class="cnc-btn cnc-btn-outline cnc-btn-sm" id="orders-load-more">Load More</button>
+      </div>
+    </div>
+
+    <div id="orders-not-logged-in" style="display:none;text-align:center;padding:4rem 0;">
+      <h2 class="cnc-heading-lg">Sign in to view orders</h2>
+      <p style="color:var(--cnc-text-muted);margin-bottom:1.5rem;">You need to be signed in to see your order history.</p>
+      <button class="cnc-btn cnc-btn-primary" data-open-auth>Sign In</button>
+    </div>
+  </div>
+</section>

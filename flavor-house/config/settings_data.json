@@ -8,7 +8,9 @@
     },
     "typography": {
       "font_heading": "Playfair Display",
-      "font_body": "DM Sans"
+      "font_body": "DM Sans",
+      "base_font_size": 16,
+      "heading_scale": 100
     },
     "layout": {
       "max_width": "1280px",

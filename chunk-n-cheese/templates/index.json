@@ -1,0 +1,61 @@
+{
+  "name": "Homepage",
+  "sections": {
+    "header": {
+      "type": "header-section",
+      "settings": { "show_search": false, "show_cart": true, "mobile_style": "drawer" }
+    },
+    "announcement": {
+      "type": "announcement-bar",
+      "settings": {
+        "enabled": true,
+        "text": "Free delivery on orders above Rs.1,500 \u2014 try our new Extreme Cheese Burst!",
+        "link_text": "Order now",
+        "link": "/menu",
+        "bg_color": "#F5A623",
+        "text_color": "#111B47"
+      }
+    },
+    "hero": {
+      "type": "hero-section",
+      "settings": { "style": "classic" },
+      "blocks": [
+        { "id": "heading-1", "type": "heading", "settings": { "eyebrow": "Chunked since 2020", "text": "Extreme Flavours. Loaded Toppings." } },
+        { "id": "text-1", "type": "text", "settings": { "text": "Bold chunks, melted cheese, and flavours that hit different." } },
+        { "id": "buttons-1", "type": "buttons", "settings": { "button1_text": "Order now", "button1_link": "/menu", "button2_text": "Our story", "button2_link": "/about" } }
+      ],
+      "block_order": ["heading-1", "text-1", "buttons-1"]
+    },
+    "categories": {
+      "type": "menu-categories",
+      "settings": { "layout": "grid", "eyebrow": "Explore", "title": "Browse our menu", "subtitle": "Burgers, pizzas, loaded fries & more.", "columns": 3, "limit": 6 }
+    },
+    "featured": {
+      "type": "featured-items",
+      "settings": { "card_style": "elevated", "eyebrow": "Fan favourites", "title": "Most ordered", "subtitle": "The dishes our customers keep coming back for.", "columns": 3, "limit": 6, "show_view_all": true }
+    },
+    "about": {
+      "type": "about-section",
+      "settings": { "image_position": "left", "eyebrow": "Our story", "title": "Built on bold flavours.", "body": "It started with a grill, a deep fryer, and an obsession with making the chunkiest, cheesiest food in town.", "cta_text": "Read our story", "cta_link": "/about" }
+    },
+    "testimonials": {
+      "type": "testimonials",
+      "settings": { "eyebrow": "Reviews", "title": "What our regulars say" }
+    },
+    "locations": {
+      "type": "locations-section",
+      "settings": { "eyebrow": "Find us", "title": "Chunk N Cheese near you", "subtitle": "Multiple locations. Always chunky, always cheesy." }
+    },
+    "cta": {
+      "type": "cta-banner",
+      "settings": { "title": "Ready for the chunk?", "subtitle": "Order online and we'll have it at your door fast.", "cta1_text": "Order now", "cta1_link": "/menu", "cta2_text": "Find a branch", "cta2_link": "/locations" }
+    },
+    "footer": {
+      "type": "footer-section",
+      "settings": { "tagline": "Bold chunks. Melted cheese. Extreme flavours.", "copyright": "\u00a9 2026 Chunk N Cheese. All rights reserved.", "credits": "Powered by Tastiqo." }
+    }
+  },
+  "header_order": ["header", "announcement"],
+  "order": ["hero", "categories", "featured", "about", "testimonials", "locations", "cta"],
+  "footer_order": ["footer"]
+}

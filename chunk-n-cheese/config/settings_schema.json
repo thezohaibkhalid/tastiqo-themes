@@ -1,0 +1,69 @@
+[
+  {
+    "name": "theme_info",
+    "theme_name": "Chunk N Cheese",
+    "theme_version": "1.0.0",
+    "theme_author": "Tastiqo",
+    "theme_documentation_url": "",
+    "theme_support_url": ""
+  },
+  {
+    "name": "Colors",
+    "settings": [
+      { "type": "color", "id": "color_primary",   "label": "Primary (navy blue)",     "default": "#111B47" },
+      { "type": "color", "id": "color_secondary", "label": "Secondary (golden yellow)","default": "#F5A623" },
+      { "type": "color", "id": "color_accent",    "label": "Accent (deep navy)",      "default": "#0A1233" },
+      { "type": "color", "id": "color_bg",        "label": "Background",              "default": "#FFFFFF" },
+      { "type": "color", "id": "color_surface",   "label": "Surface",                 "default": "#F8F9FC" },
+      { "type": "color", "id": "color_text",      "label": "Body text",               "default": "#1A1A2E" },
+      { "type": "color", "id": "color_muted",     "label": "Muted text",              "default": "#6B7280" },
+      { "type": "color", "id": "color_border",    "label": "Border",                  "default": "#E5E7EB" }
+    ]
+  },
+  {
+    "name": "Typography",
+    "settings": [
+      {
+        "type": "select",
+        "id": "font_heading",
+        "label": "Heading font",
+        "default": "Poppins",
+        "options": [
+          { "value": "Poppins",          "label": "Poppins (bold modern)" },
+          { "value": "Montserrat",       "label": "Montserrat" },
+          { "value": "Raleway",          "label": "Raleway" },
+          { "value": "DM Serif Display", "label": "DM Serif Display" }
+        ]
+      },
+      {
+        "type": "select",
+        "id": "font_body",
+        "label": "Body font",
+        "default": "Inter",
+        "options": [
+          { "value": "Inter",     "label": "Inter" },
+          { "value": "DM Sans",   "label": "DM Sans" },
+          { "value": "Manrope",   "label": "Manrope" },
+          { "value": "Lato",      "label": "Lato" }
+        ]
+      },
+      { "type": "range", "id": "base_font_size",  "label": "Base font size (px)", "min": 12, "max": 20, "step": 1, "default": 16, "info": "Controls body text size across the entire site" },
+      { "type": "range", "id": "heading_scale",    "label": "Heading size scale (%)", "min": 80, "max": 150, "step": 5, "default": 100, "info": "Scale all headings up or down" }
+    ]
+  },
+  {
+    "name": "Layout",
+    "settings": [
+      { "type": "range", "id": "page_width", "label": "Max page width (px)", "min": 1100, "max": 1600, "step": 20, "default": 1280 },
+      { "type": "range", "id": "radius_sm",  "label": "Small radius (px)",   "min": 2,   "max": 16, "step": 2, "default": 6  },
+      { "type": "range", "id": "radius_md",  "label": "Medium radius (px)",  "min": 4,   "max": 24, "step": 2, "default": 10 },
+      { "type": "range", "id": "radius_lg",  "label": "Large radius (px)",   "min": 8,   "max": 36, "step": 4, "default": 16 }
+    ]
+  },
+  {
+    "name": "Custom CSS",
+    "settings": [
+      { "type": "html", "id": "custom_css", "label": "Custom CSS", "default": "" }
+    ]
+  }
+]

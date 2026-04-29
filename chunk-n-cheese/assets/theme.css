@@ -1,0 +1,718 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Chunk N Cheese — theme.css
+
+   Deep navy + golden yellow palette inspired by the Chunk N Cheese brand.
+   All tokens via --cnc-* CSS variables set in layout/theme.liquid.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* ── Reset & base ─────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: var(--cnc-font-body);
+  color: var(--cnc-text);
+  background: var(--cnc-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.55;
+  font-size: var(--cnc-base-font-size, 16px);
+}
+img { max-width: 100%; height: auto; display: block; }
+a { color: inherit; text-decoration: none; }
+a:hover { color: var(--cnc-secondary); }
+button { font: inherit; cursor: pointer; }
+ul { padding: 0; margin: 0; list-style: none; }
+
+h1, h2, h3, h4, h5 {
+  font-family: var(--cnc-font-heading);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.5em;
+  color: var(--cnc-primary);
+  line-height: 1.1;
+}
+h1 { font-size: calc(clamp(2.2rem, 4.5vw, 3.6rem) * var(--cnc-heading-scale, 1)); line-height: 1.05; font-weight: 800; }
+h2 { font-size: calc(clamp(1.7rem, 3vw, 2.4rem)   * var(--cnc-heading-scale, 1)); line-height: 1.15; font-weight: 700; }
+h3 { font-size: calc(clamp(1.25rem, 2vw, 1.5rem)  * var(--cnc-heading-scale, 1)); font-weight: 600; }
+h4 { font-size: calc(1.1rem * var(--cnc-heading-scale, 1)); font-weight: 600; }
+p  { margin: 0 0 1em; color: var(--cnc-text); }
+
+/* ── Page-load fade ──────────────────────────────────────────────────── */
+html.cnc-loading body { opacity: 0; }
+html.cnc-loaded  body { opacity: 1; transition: opacity 200ms ease; }
+
+/* ── Top loading bar ─────────────────────────────────────────────────── */
+.cnc-load-bar {
+  position: fixed; top: 0; left: 0;
+  height: 3px; width: 0%;
+  background: linear-gradient(90deg, var(--cnc-secondary), var(--cnc-primary));
+  z-index: 9999; transition: width 200ms ease, opacity 200ms ease;
+  opacity: 0; pointer-events: none;
+}
+.cnc-load-bar.is-loading { opacity: 1; }
+.cnc-load-bar.is-done    { width: 100% !important; opacity: 0; transition: opacity 300ms 200ms ease; }
+
+/* ── Container ───────────────────────────────────────────────────────── */
+.cnc-container { max-width: var(--cnc-page-width); margin: 0 auto; padding: 0 24px; }
+@media (max-width: 640px) { .cnc-container { padding: 0 16px; } }
+
+/* ── Buttons ─────────────────────────────────────────────────────────── */
+.cnc-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 8px; padding: 12px 24px;
+  border-radius: var(--cnc-btn-radius);
+  border: var(--cnc-btn-border) solid transparent;
+  font-weight: 600; font-size: 0.9rem;
+  font-family: var(--cnc-font-body);
+  transition: transform 140ms ease, background 140ms ease, color 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+  white-space: nowrap;
+  box-shadow: var(--cnc-btn-shadow);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.cnc-btn:hover  { transform: translateY(-1px); }
+.cnc-btn:active { transform: translateY(0); }
+
+.cnc-btn-primary {
+  background: var(--cnc-secondary); color: var(--cnc-primary);
+  border-color: var(--cnc-secondary);
+}
+.cnc-btn-primary:hover { background: #e69a1e; border-color: #e69a1e; color: var(--cnc-primary); }
+
+.cnc-btn-secondary {
+  background: var(--cnc-primary); color: #fff;
+  border-color: var(--cnc-primary);
+}
+.cnc-btn-secondary:hover { background: var(--cnc-accent); color: #fff; border-color: var(--cnc-accent); }
+
+.cnc-btn-outline {
+  background: transparent; color: var(--cnc-primary); border-color: var(--cnc-primary);
+  box-shadow: none;
+}
+.cnc-btn-outline:hover { background: var(--cnc-primary); color: #fff; }
+
+.cnc-btn-ghost { background: transparent; color: var(--cnc-text); border-color: transparent; box-shadow: none; }
+.cnc-btn-ghost:hover { background: var(--cnc-border); }
+
+.cnc-btn-lg    { padding: 14px 32px; font-size: 0.95rem; }
+.cnc-btn-sm    { padding: 8px 16px;  font-size: 0.8rem; }
+.cnc-btn-block { width: 100%; }
+
+/* ── Pills / badges ──────────────────────────────────────────────────── */
+.cnc-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 999px;
+  font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.cnc-pill-open    { background: color-mix(in srgb, var(--cnc-success) 18%, transparent); color: var(--cnc-success); }
+.cnc-pill-closed  { background: color-mix(in srgb, var(--cnc-error)   18%, transparent); color: var(--cnc-error); }
+.cnc-pill-hot     { background: var(--cnc-secondary);   color: var(--cnc-primary); }
+.cnc-pill-new     { background: var(--cnc-primary); color: #fff; }
+.cnc-pill-veg     { background: color-mix(in srgb, var(--cnc-success) 18%, transparent); color: var(--cnc-success); }
+
+/* ── Header (dark navy bar) ─────────────────────────────────────────── */
+.cnc-header {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--cnc-primary);
+  border-bottom: 2px solid var(--cnc-secondary);
+}
+.cnc-header-static .cnc-header { position: static; }
+.cnc-header-inner {
+  max-width: var(--cnc-page-width);
+  margin: 0 auto; padding: 12px 24px;
+  display: flex; align-items: center; gap: 24px;
+}
+.cnc-logo {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--cnc-font-heading);
+  font-weight: 800; font-size: 1.35rem;
+  color: #fff; flex-shrink: 0;
+}
+.cnc-logo-mark { font-size: 1.75rem; }
+.cnc-logo-img  { height: auto; width: var(--cnc-logo-width, 160px); max-height: 48px; object-fit: contain; }
+.cnc-logo-text { letter-spacing: -0.01em; }
+
+.cnc-nav { display: flex; gap: 28px; flex: 1; justify-content: center; }
+.cnc-nav-link {
+  font-size: 0.9rem; font-weight: 500; color: rgba(255,255,255,0.8);
+  position: relative; padding: 6px 0;
+  transition: color 140ms ease;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.cnc-nav-link::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -2px;
+  height: 2px; background: var(--cnc-secondary);
+  transform: scaleX(0); transform-origin: left;
+  transition: transform 200ms ease;
+}
+.cnc-nav-link:hover { color: #fff; }
+.cnc-nav-link:hover::after, .cnc-nav-link.is-active::after { transform: scaleX(1); }
+.cnc-nav-link.is-active { color: var(--cnc-secondary); }
+
+.cnc-header-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+.cnc-icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px;
+  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+  border-radius: var(--cnc-radius);
+  color: rgba(255,255,255,0.85);
+  transition: background 140ms ease, color 140ms ease;
+}
+.cnc-icon-btn:hover { background: var(--cnc-secondary); color: var(--cnc-primary); border-color: var(--cnc-secondary); }
+
+.cnc-branch-trigger {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+  padding: 8px 14px; border-radius: var(--cnc-radius);
+  font-size: 0.85rem; font-weight: 500; color: rgba(255,255,255,0.85);
+  transition: background 140ms ease;
+  position: relative;
+}
+.cnc-branch-trigger:hover { background: rgba(255,255,255,0.15); }
+.cnc-branch-icon { font-size: 0.9rem; }
+.cnc-branch-name { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cnc-branch-caret { font-size: 0.7rem; margin-left: 2px; }
+
+.cnc-branch-menu {
+  position: absolute; top: calc(100% + 8px); right: 24px;
+  min-width: 280px; max-width: 320px;
+  background: var(--cnc-bg);
+  border: 1px solid var(--cnc-border);
+  border-radius: var(--cnc-radius);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+  padding: 6px;
+  z-index: 200;
+  animation: cnc-fade-up 180ms ease;
+}
+.cnc-branch-menu-head {
+  font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--cnc-text-muted); padding: 10px 12px 6px;
+}
+.cnc-branch-row { padding: 0; margin: 0; }
+.cnc-branch-row button {
+  display: block; width: 100%; text-align: left;
+  background: transparent; border: none; padding: 10px 12px;
+  border-radius: calc(var(--cnc-radius) * 0.5); color: var(--cnc-text);
+  transition: background 140ms ease;
+}
+.cnc-branch-row button:hover { background: var(--cnc-surface); }
+.cnc-branch-row.is-selected button { background: var(--cnc-surface); }
+.cnc-branch-row-name { font-weight: 600; color: var(--cnc-primary); margin-bottom: 2px; }
+.cnc-branch-row-addr { font-size: 0.78rem; color: var(--cnc-text-muted); margin-bottom: 4px; }
+
+.cnc-cart-link {
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: var(--cnc-radius);
+  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.85); transition: background 140ms ease;
+}
+.cnc-cart-link:hover { background: var(--cnc-secondary); color: var(--cnc-primary); border-color: var(--cnc-secondary); }
+.cnc-cart-badge {
+  position: absolute; top: -4px; right: -4px;
+  background: var(--cnc-secondary); color: var(--cnc-primary);
+  font-size: 0.65rem; font-weight: 700;
+  min-width: 18px; height: 18px; padding: 0 5px;
+  border-radius: 999px; display: flex; align-items: center; justify-content: center;
+}
+
+.cnc-mobile-toggle { display: none; background: transparent; border: none; padding: 8px; flex-direction: column; gap: 4px; }
+.cnc-mobile-toggle span { display: block; width: 22px; height: 2px; background: #fff; border-radius: 2px; transition: transform 200ms ease, opacity 200ms ease; }
+
+.cnc-mobile-drawer {
+  display: none;
+  background: var(--cnc-primary); border-top: 1px solid rgba(255,255,255,0.1);
+  padding: 16px 24px;
+  animation: cnc-fade-up 200ms ease;
+}
+.cnc-mobile-drawer.cnc-mobile-fullscreen[hidden] { display: none; }
+.cnc-mobile-drawer.cnc-mobile-fullscreen:not([hidden]) {
+  display: block; position: fixed; inset: 0; z-index: 200;
+  background: var(--cnc-primary); padding: 80px 32px 32px;
+  overflow-y: auto;
+}
+.cnc-mobile-nav { display: flex; flex-direction: column; gap: 4px; margin-bottom: 16px; }
+.cnc-mobile-link { padding: 12px 0; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,0.1); font-family: var(--cnc-font-heading); font-size: 1.1rem; color: rgba(255,255,255,0.85); text-transform: uppercase; letter-spacing: 0.04em; }
+.cnc-mobile-link.is-active { color: var(--cnc-secondary); }
+.cnc-mobile-branches-head { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.5); margin-bottom: 8px; }
+.cnc-mobile-branch-row { display: block; margin-bottom: 4px; }
+.cnc-mobile-branch-row button { width: 100%; text-align: left; background: rgba(255,255,255,0.08); border: none; padding: 10px 12px; border-radius: calc(var(--cnc-radius) * 0.5); color: rgba(255,255,255,0.85); }
+.cnc-mobile-branch-row.is-selected button { background: var(--cnc-secondary); color: var(--cnc-primary); }
+
+@media (max-width: 900px) {
+  .cnc-nav { display: none; }
+  .cnc-mobile-toggle { display: flex; }
+}
+
+/* ── Main + sections ─────────────────────────────────────────────────── */
+.cnc-main { min-height: 60vh; }
+.cnc-section { padding: var(--cnc-section-space) 0; }
+.cnc-section-head { text-align: center; margin-bottom: 48px; }
+.cnc-section-head .cnc-eyebrow {
+  display: inline-block; padding: 4px 14px; border-radius: 999px;
+  background: var(--cnc-secondary); color: var(--cnc-primary);
+  font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+  margin-bottom: 14px;
+}
+.cnc-section-head h2 { margin-bottom: 12px; }
+.cnc-section-head p { color: var(--cnc-text-muted); max-width: 560px; margin: 0 auto; font-size: 1.05rem; }
+
+/* ── Announcement bar ─────────────────────────────────────────────────── */
+.cnc-announce {
+  background: var(--cnc-secondary); color: var(--cnc-primary);
+  text-align: center; padding: 10px 16px;
+  font-size: 0.85rem; font-weight: 600;
+}
+.cnc-announce a { text-decoration: underline; font-weight: 700; }
+
+/* ── Hero (3 style variants) ──────────────────────────────────────────── */
+.cnc-hero { position: relative; overflow: hidden; }
+.cnc-hero-eyebrow {
+  display: inline-block; padding: 5px 16px; border-radius: 999px;
+  background: var(--cnc-secondary); color: var(--cnc-primary);
+  font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+  margin-bottom: 18px;
+}
+.cnc-hero-title { color: #fff; margin: 0 0 14px; text-transform: uppercase; }
+.cnc-hero-sub { color: rgba(255,255,255,0.88); font-size: 1.15rem; max-width: 540px; margin: 0 0 32px; }
+.cnc-hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+.cnc-hero--classic {
+  min-height: clamp(440px, 70vh, 720px);
+  display: flex; align-items: center; justify-content: center;
+  text-align: center;
+  background-size: cover; background-position: center;
+  background-color: var(--cnc-primary);
+}
+.cnc-hero--classic .cnc-hero-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(17,27,71,0.4) 0%, rgba(10,18,51,0.92) 100%);
+}
+.cnc-hero--classic .cnc-hero-inner { position: relative; z-index: 2; padding: 0 24px; max-width: 760px; }
+.cnc-hero--classic .cnc-hero-actions { justify-content: center; }
+
+.cnc-hero--split { padding: clamp(56px, 8vw, 110px) 0; background: var(--cnc-surface); }
+.cnc-hero--split .cnc-hero-grid {
+  max-width: var(--cnc-page-width); margin: 0 auto; padding: 0 24px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center;
+}
+.cnc-hero--split .cnc-hero-eyebrow { background: var(--cnc-secondary); color: var(--cnc-primary); }
+.cnc-hero--split .cnc-hero-title { color: var(--cnc-primary); }
+.cnc-hero--split .cnc-hero-sub { color: var(--cnc-text); }
+.cnc-hero--split .cnc-hero-image {
+  aspect-ratio: 4/5; border-radius: var(--cnc-radius); overflow: hidden;
+  background: var(--cnc-border);
+  box-shadow: 0 24px 60px rgba(17,27,71,0.25);
+  transform: rotate(2deg);
+}
+.cnc-hero--split .cnc-hero-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 600ms ease; }
+.cnc-hero--split .cnc-hero-image:hover img { transform: scale(1.04); }
+@media (max-width: 768px) {
+  .cnc-hero--split .cnc-hero-grid { grid-template-columns: 1fr; gap: 32px; }
+  .cnc-hero--split .cnc-hero-image { transform: none; }
+}
+
+.cnc-hero--minimal {
+  text-align: center; padding: clamp(80px, 12vw, 160px) 0;
+  background: linear-gradient(180deg, var(--cnc-primary) 0%, var(--cnc-accent) 100%);
+}
+.cnc-hero--minimal .cnc-hero-title { color: #fff; font-size: clamp(2.5rem, 6vw, 4.5rem); text-transform: uppercase; }
+.cnc-hero--minimal .cnc-hero-sub { color: rgba(255,255,255,0.8); margin: 0 auto 32px; }
+.cnc-hero--minimal .cnc-hero-actions { justify-content: center; }
+
+/* ── Card grids ──────────────────────────────────────────────────────── */
+.cnc-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cnc-cols, 3), 1fr);
+  gap: 24px;
+}
+@media (max-width: 1024px) { .cnc-grid { grid-template-columns: repeat(2, 1fr); gap: 20px; } }
+@media (max-width: 600px)  { .cnc-grid { grid-template-columns: 1fr; } }
+
+/* Variant: minimal */
+.cnc-card--minimal {
+  background: transparent;
+  display: flex; flex-direction: column;
+  transition: transform 200ms ease;
+}
+.cnc-card--minimal:hover { transform: translateY(-3px); }
+.cnc-card--minimal .cnc-card-img {
+  aspect-ratio: 1/1; border-radius: var(--cnc-radius); overflow: hidden;
+  background: var(--cnc-surface); margin-bottom: 14px;
+}
+.cnc-card--minimal .cnc-card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 500ms ease; }
+.cnc-card--minimal:hover .cnc-card-img img { transform: scale(1.05); }
+.cnc-card--minimal .cnc-card-title { font-family: var(--cnc-font-heading); font-weight: 600; color: var(--cnc-text); margin-bottom: 4px; font-size: 1.05rem; }
+.cnc-card--minimal .cnc-card-price { color: var(--cnc-secondary); font-weight: 700; }
+
+/* Variant: elevated */
+.cnc-card--elevated {
+  background: var(--cnc-bg);
+  border-radius: var(--cnc-radius); overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  display: flex; flex-direction: column;
+  transition: transform 220ms ease, box-shadow 220ms ease;
+  border: 1px solid var(--cnc-border);
+}
+.cnc-card--elevated:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(17,27,71,0.14); }
+.cnc-card--elevated .cnc-card-img { aspect-ratio: 4/3; overflow: hidden; background: var(--cnc-surface); position: relative; }
+.cnc-card--elevated .cnc-card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 500ms ease; }
+.cnc-card--elevated:hover .cnc-card-img img { transform: scale(1.05); }
+.cnc-card--elevated .cnc-card-body { padding: 16px 18px 20px; flex: 1; display: flex; flex-direction: column; }
+.cnc-card--elevated .cnc-card-title { font-family: var(--cnc-font-heading); font-weight: 600; color: var(--cnc-text); font-size: 1.1rem; margin-bottom: 6px; }
+.cnc-card--elevated .cnc-card-desc { color: var(--cnc-text-muted); font-size: 0.85rem; flex: 1; margin: 0 0 14px; line-height: 1.5; }
+.cnc-card--elevated .cnc-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.cnc-card--elevated .cnc-card-price { color: var(--cnc-primary); font-weight: 700; font-size: 1.05rem; }
+.cnc-card--elevated .cnc-card-tags { display: flex; gap: 6px; position: absolute; top: 12px; left: 12px; }
+
+/* Variant: overlay */
+.cnc-card--overlay {
+  position: relative; aspect-ratio: 1/1; border-radius: var(--cnc-radius); overflow: hidden;
+  cursor: pointer;
+}
+.cnc-card--overlay img { width: 100%; height: 100%; object-fit: cover; transition: transform 600ms ease; }
+.cnc-card--overlay:hover img { transform: scale(1.08); }
+.cnc-card--overlay .cnc-card-body {
+  position: absolute; inset: 0; padding: 22px;
+  background: linear-gradient(0deg, rgba(10,18,51,0.92) 0%, rgba(10,18,51,0) 60%);
+  display: flex; flex-direction: column; justify-content: flex-end;
+  color: #fff;
+  transition: background 280ms ease;
+}
+.cnc-card--overlay .cnc-card-title { color: #fff; font-family: var(--cnc-font-heading); margin-bottom: 4px; font-size: 1.2rem; }
+.cnc-card--overlay .cnc-card-desc { color: rgba(255,255,255,0.85); font-size: 0.85rem; max-height: 0; overflow: hidden; transition: max-height 320ms ease; margin: 0; }
+.cnc-card--overlay:hover .cnc-card-desc { max-height: 80px; }
+.cnc-card--overlay .cnc-card-price { color: var(--cnc-secondary); font-weight: 700; margin-top: 6px; }
+
+/* ── Slide-cart card ───────────────────────────────────────────── */
+.cnc-card--slide-cart {
+  display: flex; flex-direction: column;
+  background: var(--cnc-bg); border-radius: var(--cnc-radius);
+  overflow: hidden; text-decoration: none; color: inherit;
+  border: 1px solid var(--cnc-border);
+  transition: transform 260ms ease, box-shadow 260ms ease;
+  position: relative;
+}
+.cnc-card--slide-cart:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(17,27,71,0.12); }
+.cnc-card--slide-cart .cnc-card-img { aspect-ratio: 4/3; overflow: hidden; background: var(--cnc-surface); position: relative; }
+.cnc-card--slide-cart .cnc-card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 500ms ease; }
+.cnc-card--slide-cart:hover .cnc-card-img img { transform: scale(1.05); }
+.cnc-card--slide-cart .cnc-card-tags { display: flex; gap: 6px; position: absolute; top: 12px; left: 12px; }
+.cnc-card--slide-cart .cnc-card-body { padding: 14px 16px 16px; flex: 1; display: flex; flex-direction: column; }
+.cnc-card--slide-cart .cnc-card-title { font-family: var(--cnc-font-heading); font-weight: 600; color: var(--cnc-text); font-size: 1rem; margin-bottom: 4px; }
+.cnc-card--slide-cart .cnc-card-desc { color: var(--cnc-text-muted); font-size: 0.82rem; flex: 1; margin: 0 0 10px; line-height: 1.5; }
+.cnc-card--slide-cart .cnc-card-price { color: var(--cnc-primary); font-weight: 700; font-size: 1rem; }
+.cnc-card--slide-cart .cnc-card-cart-btn {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: var(--cnc-secondary); color: var(--cnc-primary);
+  text-align: center; font-weight: 700; font-size: 0.85rem;
+  padding: 12px; letter-spacing: 0.04em; text-transform: uppercase;
+  transform: translateY(100%); opacity: 0;
+  transition: transform 260ms cubic-bezier(0.22,1,0.36,1), opacity 200ms ease;
+}
+.cnc-card--slide-cart:hover .cnc-card-cart-btn { transform: translateY(0); opacity: 1; }
+
+/* ── Compact card (horizontal — matches PDF layout) ────────────────── */
+.cnc-card--compact {
+  display: flex; flex-direction: row; align-items: stretch;
+  background: var(--cnc-bg); border-radius: var(--cnc-radius);
+  overflow: hidden; text-decoration: none; color: inherit;
+  border: 1px solid var(--cnc-border);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+  min-height: 110px;
+}
+.cnc-card--compact:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(17,27,71,0.10); }
+.cnc-card--compact .cnc-card-img { width: 130px; min-height: 100%; flex-shrink: 0; overflow: hidden; background: var(--cnc-surface); }
+@media (max-width: 540px) { .cnc-card--compact .cnc-card-img { width: 100px; } }
+.cnc-card--compact .cnc-card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 400ms ease; }
+.cnc-card--compact:hover .cnc-card-img img { transform: scale(1.06); }
+.cnc-card--compact .cnc-card-body { padding: 12px 16px; flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.cnc-card--compact .cnc-card-title { font-family: var(--cnc-font-heading); font-weight: 600; color: var(--cnc-text); font-size: 0.95rem; margin-bottom: 4px; }
+.cnc-card--compact .cnc-card-desc { color: var(--cnc-text-muted); font-size: 0.8rem; margin: 0 0 8px; line-height: 1.4; }
+.cnc-card--compact .cnc-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.cnc-card--compact .cnc-card-price { color: var(--cnc-primary); font-weight: 700; font-size: 0.95rem; }
+
+/* ── Menu category cards ─────────────────────────────────────────────── */
+.cnc-cat-grid { display: grid; grid-template-columns: repeat(var(--cnc-cols, 3), 1fr); gap: 24px; }
+@media (max-width: 900px) { .cnc-cat-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 540px) { .cnc-cat-grid { grid-template-columns: 1fr; } }
+
+.cnc-cat-card {
+  display: block; position: relative;
+  aspect-ratio: 4/3; border-radius: var(--cnc-radius); overflow: hidden;
+  background: var(--cnc-primary);
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+.cnc-cat-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(17,27,71,0.22); }
+.cnc-cat-card img { width: 100%; height: 100%; object-fit: cover; transition: transform 600ms ease; }
+.cnc-cat-card:hover img { transform: scale(1.06); }
+.cnc-cat-card .cnc-cat-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(0deg, rgba(10,18,51,0.88) 0%, rgba(10,18,51,0) 55%);
+  display: flex; flex-direction: column; justify-content: flex-end; padding: 22px;
+}
+.cnc-cat-card h3 { color: #fff; margin: 0 0 4px; font-size: 1.4rem; }
+.cnc-cat-card .cnc-cat-count { color: var(--cnc-secondary); font-size: 0.85rem; font-weight: 600; }
+
+/* ── About section ───────────────────────────────────────────────────── */
+.cnc-about-grid {
+  max-width: var(--cnc-page-width); margin: 0 auto; padding: 0 24px;
+  display: grid; grid-template-columns: 1.1fr 1fr; gap: 64px; align-items: center;
+}
+.cnc-about-image { aspect-ratio: 4/5; border-radius: var(--cnc-radius); overflow: hidden; background: var(--cnc-surface); box-shadow: 0 24px 60px rgba(17,27,71,0.18); }
+.cnc-about-image img { width: 100%; height: 100%; object-fit: cover; }
+.cnc-about-text h2 { margin-bottom: 18px; }
+.cnc-about-text p { color: var(--cnc-text); font-size: 1.05rem; line-height: 1.7; }
+.cnc-about-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 32px; padding-top: 32px; border-top: 2px solid var(--cnc-secondary); }
+.cnc-about-stat strong { display: block; font-family: var(--cnc-font-heading); font-size: 2rem; color: var(--cnc-secondary); }
+.cnc-about-stat span { font-size: 0.85rem; color: var(--cnc-text-muted); }
+@media (max-width: 768px) { .cnc-about-grid { grid-template-columns: 1fr; gap: 32px; } }
+
+/* ── Testimonials ────────────────────────────────────────────────────── */
+.cnc-testimonials-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.cnc-testimonial {
+  background: var(--cnc-bg); border-radius: var(--cnc-radius); padding: 28px;
+  border: 1px solid var(--cnc-border); position: relative;
+}
+.cnc-testimonial::before {
+  content: '\201C'; position: absolute; top: 0; right: 24px;
+  font-size: 6rem; line-height: 1; color: var(--cnc-secondary); font-family: var(--cnc-font-heading);
+  opacity: 0.5;
+}
+.cnc-testimonial-stars { color: var(--cnc-secondary); margin-bottom: 12px; font-size: 1.1rem; letter-spacing: 2px; }
+.cnc-testimonial-text { font-style: italic; color: var(--cnc-text); margin-bottom: 18px; }
+.cnc-testimonial-author { display: flex; align-items: center; gap: 12px; }
+.cnc-testimonial-avatar { width: 44px; height: 44px; border-radius: 50%; overflow: hidden; background: var(--cnc-surface); }
+.cnc-testimonial-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.cnc-testimonial-name { font-weight: 600; color: var(--cnc-primary); }
+.cnc-testimonial-role { font-size: 0.8rem; color: var(--cnc-text-muted); }
+@media (max-width: 900px) { .cnc-testimonials-grid { grid-template-columns: 1fr; } }
+
+/* ── Locations ───────────────────────────────────────────────────────── */
+.cnc-loc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+.cnc-loc-card {
+  background: var(--cnc-bg); border: 1px solid var(--cnc-border);
+  border-radius: var(--cnc-radius); padding: 24px;
+  transition: border-color 200ms ease, transform 200ms ease;
+}
+.cnc-loc-card:hover { border-color: var(--cnc-secondary); transform: translateY(-3px); }
+.cnc-loc-card h3 { font-size: 1.2rem; margin-bottom: 4px; }
+.cnc-loc-card .cnc-loc-addr { color: var(--cnc-text-muted); font-size: 0.9rem; margin-bottom: 12px; }
+.cnc-loc-card .cnc-loc-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ── CTA banner ──────────────────────────────────────────────────────── */
+.cnc-cta-banner {
+  background: linear-gradient(135deg, var(--cnc-primary) 0%, var(--cnc-accent) 100%);
+  border-radius: var(--cnc-radius);
+  padding: clamp(40px, 6vw, 72px); text-align: center; color: #fff;
+  position: relative; overflow: hidden;
+  max-width: var(--cnc-page-width); margin: 0 auto;
+}
+.cnc-cta-banner::before, .cnc-cta-banner::after {
+  content: ''; position: absolute; border-radius: 50%;
+  background: rgba(245,166,35,0.08);
+}
+.cnc-cta-banner::before { width: 300px; height: 300px; top: -120px; right: -80px; }
+.cnc-cta-banner::after  { width: 200px; height: 200px; bottom: -80px; left: -60px; }
+.cnc-cta-banner h2 { color: #fff; margin-bottom: 12px; }
+.cnc-cta-banner p  { color: rgba(255,255,255,0.88); font-size: 1.05rem; max-width: 480px; margin: 0 auto 28px; }
+
+/* ── Product detail page ─────────────────────────────────────────────── */
+.cnc-product { display: grid; grid-template-columns: 1.1fr 1fr; gap: 56px; padding: clamp(48px,6vw,80px) 0; }
+.cnc-product-gallery { aspect-ratio: 1/1; border-radius: var(--cnc-radius); overflow: hidden; background: var(--cnc-surface); }
+.cnc-product-gallery img { width: 100%; height: 100%; object-fit: cover; }
+.cnc-product-info h1 { margin-bottom: 8px; }
+.cnc-product-info .cnc-product-tagline { color: var(--cnc-text-muted); font-size: 1rem; margin-bottom: 18px; }
+.cnc-product-info .cnc-product-price { font-family: var(--cnc-font-heading); font-size: 2rem; color: var(--cnc-secondary); font-weight: 700; margin-bottom: 22px; }
+.cnc-product-info .cnc-product-desc { color: var(--cnc-text); line-height: 1.7; margin-bottom: 28px; }
+.cnc-product-actions { display: flex; gap: 12px; align-items: center; margin-bottom: 24px; }
+.cnc-qty { display: inline-flex; align-items: center; border: 1px solid var(--cnc-border); border-radius: var(--cnc-radius); overflow: hidden; }
+.cnc-qty button { background: transparent; border: none; padding: 12px 16px; font-size: 1rem; color: var(--cnc-text); }
+.cnc-qty button:hover { background: var(--cnc-surface); }
+.cnc-qty input { width: 40px; text-align: center; border: none; background: transparent; font-weight: 600; color: var(--cnc-text); font-size: 1rem; }
+@media (max-width: 768px) { .cnc-product { grid-template-columns: 1fr; gap: 32px; } }
+
+/* ── Cart page ───────────────────────────────────────────────────────── */
+.cnc-cart { display: grid; grid-template-columns: 1.6fr 1fr; gap: 40px; padding: clamp(40px, 6vw, 72px) 0; }
+.cnc-cart-list { background: var(--cnc-bg); border-radius: var(--cnc-radius); border: 1px solid var(--cnc-border); padding: 8px; }
+.cnc-cart-row { display: grid; grid-template-columns: 80px 1fr auto; gap: 16px; padding: 16px; align-items: center; border-bottom: 1px solid var(--cnc-border); }
+.cnc-cart-row:last-child { border-bottom: none; }
+.cnc-cart-row img { width: 80px; height: 80px; object-fit: cover; border-radius: calc(var(--cnc-radius) * 0.5); }
+.cnc-cart-row .cnc-cart-name { font-weight: 600; color: var(--cnc-primary); }
+.cnc-cart-row .cnc-cart-meta { font-size: 0.8rem; color: var(--cnc-text-muted); }
+.cnc-cart-summary { background: var(--cnc-bg); border-radius: var(--cnc-radius); border: 1px solid var(--cnc-border); padding: 24px; height: max-content; }
+.cnc-cart-summary h3 { font-size: 1.15rem; margin-bottom: 18px; }
+.cnc-cart-summary .cnc-summary-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 0.95rem; }
+.cnc-cart-summary .cnc-summary-row.cnc-total { border-top: 2px solid var(--cnc-secondary); padding-top: 16px; margin-top: 12px; font-weight: 700; font-size: 1.1rem; color: var(--cnc-primary); }
+@media (max-width: 900px) { .cnc-cart { grid-template-columns: 1fr; } }
+
+/* ── Footer (dark navy) ─────────────────────────────────────────────── */
+.cnc-footer { background: var(--cnc-primary); color: rgba(255,255,255,0.85); margin-top: 80px; }
+.cnc-footer-inner {
+  max-width: var(--cnc-page-width); margin: 0 auto; padding: 56px 24px 28px;
+  display: grid; grid-template-columns: var(--cnc-footer-cols, 1.4fr 1fr 1fr 1fr); gap: 48px;
+}
+.cnc-footer-brand .cnc-footer-logo {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-family: var(--cnc-font-heading); font-weight: 800; font-size: 1.4rem;
+  color: #fff; margin-bottom: 14px;
+}
+.cnc-footer-brand img { height: auto; width: var(--cnc-logo-width, 160px); max-height: 48px; object-fit: contain; }
+.cnc-footer-tagline { color: rgba(255,255,255,0.6); font-size: 0.92rem; margin-bottom: 18px; max-width: 320px; }
+.cnc-footer-social { display: flex; gap: 8px; }
+.cnc-footer-social a {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: rgba(255,255,255,0.08); color: #fff;
+  font-size: 0.8rem; font-weight: 700;
+  transition: background 200ms ease;
+}
+.cnc-footer-social a:hover { background: var(--cnc-secondary); color: var(--cnc-primary); }
+.cnc-footer-col h4 { color: var(--cnc-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 18px; font-family: var(--cnc-font-body); font-weight: 600; }
+.cnc-footer-col ul li { padding: 6px 0; }
+.cnc-footer-col ul a { color: rgba(255,255,255,0.6); font-size: 0.92rem; transition: color 140ms ease; }
+.cnc-footer-col ul a:hover { color: var(--cnc-secondary); }
+.cnc-footer-contact li { font-size: 0.92rem; padding: 6px 0; color: rgba(255,255,255,0.6); }
+.cnc-footer-hours li { display: flex; justify-content: space-between; padding: 4px 0; font-size: 0.85rem; color: rgba(255,255,255,0.6); }
+.cnc-footer-hours .cnc-day { font-weight: 500; }
+.cnc-footer-bottom {
+  max-width: var(--cnc-page-width); margin: 0 auto; padding: 20px 24px;
+  display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  font-size: 0.82rem; color: rgba(255,255,255,0.45);
+}
+@media (max-width: 900px) { .cnc-footer-inner { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 540px) { .cnc-footer-inner { grid-template-columns: 1fr; } .cnc-footer-bottom { flex-direction: column; align-items: flex-start; } }
+
+.cnc-footer-cols-1 .cnc-footer-inner { --cnc-footer-cols: 1fr; }
+.cnc-footer-cols-2 .cnc-footer-inner { --cnc-footer-cols: 1fr 1fr; }
+.cnc-footer-cols-3 .cnc-footer-inner { --cnc-footer-cols: 1.6fr 1fr 1fr; }
+.cnc-footer-cols-4 .cnc-footer-inner { --cnc-footer-cols: 1.4fr 1fr 1fr 1fr; }
+
+/* ── Animations ──────────────────────────────────────────────────────── */
+@keyframes cnc-fade-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes cnc-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes cnc-skeleton { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.cnc-anim-up    { animation: cnc-fade-up 500ms ease both; }
+.cnc-anim-up.delay-1 { animation-delay: 80ms; }
+.cnc-anim-up.delay-2 { animation-delay: 160ms; }
+.cnc-anim-up.delay-3 { animation-delay: 240ms; }
+.cnc-anim-up.delay-4 { animation-delay: 320ms; }
+.cnc-anim-fade  { animation: cnc-fade-in 700ms ease both; }
+.cnc-skeleton   { background: linear-gradient(90deg, var(--cnc-border) 25%, var(--cnc-surface) 50%, var(--cnc-border) 75%); background-size: 200% 100%; animation: cnc-skeleton 1.4s infinite; }
+
+/* ── Auth & Account styles ───────────────────────────────────────────── */
+.cnc-auth-modal-backdrop {
+  display: none; position: fixed; inset: 0; z-index: 400;
+  background: rgba(0,0,0,0.55); align-items: center; justify-content: center; padding: 1rem;
+}
+.cnc-auth-modal-backdrop.is-open { display: flex; }
+.cnc-auth-modal {
+  background: var(--cnc-bg); border-radius: var(--cnc-radius); width: 100%;
+  max-width: 26rem; padding: 2rem; position: relative;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.2); animation: cnc-auth-slide 0.2s ease-out;
+}
+@keyframes cnc-auth-slide { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+.cnc-auth-modal-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none; cursor: pointer; color: var(--cnc-text-muted); padding: 0.25rem; }
+.cnc-auth-modal-close:hover { color: var(--cnc-text); }
+.cnc-auth-header { margin-bottom: 1.5rem; }
+.cnc-auth-header h2 { font-family: var(--cnc-font-heading); font-size: 1.5rem; margin-bottom: 0.25rem; }
+.cnc-auth-header p { color: var(--cnc-text-muted); font-size: 0.875rem; }
+.cnc-auth-form { display: flex; flex-direction: column; gap: 1rem; }
+.cnc-auth-footer { text-align: center; margin-top: 0.75rem; font-size: 0.8rem; }
+.cnc-auth-error { background: #FEF2F2; color: var(--cnc-error); padding: 0.625rem 0.875rem; border-radius: 8px; font-size: 0.8rem; }
+.cnc-form-group { display: flex; flex-direction: column; gap: 0.375rem; }
+.cnc-form-group label { font-size: 0.8rem; font-weight: 600; color: var(--cnc-text); }
+.cnc-form-group input {
+  padding: 0.625rem 0.875rem; border: 1px solid var(--cnc-border); border-radius: 8px;
+  font-size: 0.9rem; font-family: var(--cnc-font-body); background: var(--cnc-bg);
+  transition: border-color 0.15s;
+}
+.cnc-form-group input:focus { outline: none; border-color: var(--cnc-secondary); box-shadow: 0 0 0 3px rgba(245,166,35,0.15); }
+.cnc-btn-link { background: none; border: none; color: var(--cnc-secondary); cursor: pointer; font-size: inherit; text-decoration: underline; padding: 0; }
+.cnc-btn-link:hover { color: var(--cnc-primary); }
+.cnc-btn-spinner { display: inline-flex; align-items: center; }
+.cnc-spin { animation: cnc-spin-anim 0.8s linear infinite; }
+@keyframes cnc-spin-anim { to { transform: rotate(360deg); } }
+
+/* Account pages */
+.cnc-account-section, .cnc-account-orders-section, .cnc-account-login-section { min-height: 60vh; }
+.cnc-account-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.5rem; }
+.cnc-account-card { background: var(--cnc-bg); border: 1px solid var(--cnc-border); border-radius: var(--cnc-radius); padding: 1.25rem; margin-bottom: 1rem; }
+.cnc-account-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.cnc-account-card-header h3 { font-family: var(--cnc-font-heading); font-size: 1.1rem; }
+.cnc-account-detail { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--cnc-border); font-size: 0.9rem; }
+.cnc-account-detail:last-child { border-bottom: none; }
+.cnc-account-label { color: var(--cnc-text-muted); font-weight: 500; }
+.cnc-account-link-row { display: flex; align-items: center; justify-content: space-between; padding: 0.25rem 0; color: var(--cnc-text); text-decoration: none; font-weight: 500; }
+.cnc-account-link-row:hover { color: var(--cnc-secondary); }
+.cnc-account-addresses { display: flex; flex-direction: column; gap: 0.75rem; }
+.cnc-address-card { background: var(--cnc-surface); border-radius: 8px; padding: 0.875rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
+.cnc-address-card-info { flex: 1; font-size: 0.85rem; line-height: 1.5; }
+.cnc-address-card-label { display: inline-block; background: var(--cnc-secondary); color: var(--cnc-primary); font-size: 0.65rem; padding: 0.125rem 0.5rem; border-radius: 999px; text-transform: uppercase; font-weight: 600; margin-bottom: 0.25rem; }
+
+/* Orders */
+.cnc-orders-list { display: flex; flex-direction: column; gap: 0.75rem; }
+.cnc-order-card { background: var(--cnc-bg); border: 1px solid var(--cnc-border); border-radius: var(--cnc-radius); padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; text-decoration: none; color: var(--cnc-text); transition: border-color 0.15s; }
+.cnc-order-card:hover { border-color: var(--cnc-secondary); }
+.cnc-order-card-info { flex: 1; }
+.cnc-order-card-number { font-weight: 700; font-size: 0.95rem; }
+.cnc-order-card-meta { font-size: 0.8rem; color: var(--cnc-text-muted); margin-top: 0.125rem; }
+.cnc-order-card-total { font-weight: 700; white-space: nowrap; }
+.cnc-order-status-badge { display: inline-block; padding: 0.2rem 0.625rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; text-transform: capitalize; }
+.cnc-order-status-badge.pending { background: #FEF3C7; color: #92400E; }
+.cnc-order-status-badge.confirmed { background: #DBEAFE; color: #1E40AF; }
+.cnc-order-status-badge.preparing { background: #E0E7FF; color: #3730A3; }
+.cnc-order-status-badge.ready { background: #D1FAE5; color: #065F46; }
+.cnc-order-status-badge.completed { background: #D1FAE5; color: #065F46; }
+.cnc-order-status-badge.cancelled { background: #FEE2E2; color: #991B1B; }
+.cnc-orders-pagination { text-align: center; padding: 1.5rem 0; }
+
+/* ── Modifier picker ─────────────────────────────────────────────────── */
+.cnc-modifier-groups { margin-bottom: 24px; display: flex; flex-direction: column; gap: 20px; }
+.cnc-modifier-group { background: var(--cnc-bg); border: 1px solid var(--cnc-border); border-radius: var(--cnc-radius); padding: 16px 18px; }
+.cnc-modifier-group-title { font-family: var(--cnc-font-heading); font-weight: 600; font-size: 0.95rem; color: var(--cnc-primary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.cnc-modifier-required { display: inline-block; background: var(--cnc-secondary); color: var(--cnc-primary); font-size: 0.6rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.04em; font-family: var(--cnc-font-body); }
+.cnc-modifier-options { display: flex; flex-direction: column; gap: 6px; }
+.cnc-modifier-option { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: calc(var(--cnc-radius) * 0.5); cursor: pointer; transition: background 140ms ease; }
+.cnc-modifier-option:hover { background: var(--cnc-surface); }
+.cnc-modifier-option input[type="radio"], .cnc-modifier-option input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--cnc-secondary); cursor: pointer; flex-shrink: 0; }
+.cnc-modifier-option-label { display: flex; align-items: center; justify-content: space-between; flex: 1; font-size: 0.9rem; color: var(--cnc-text); }
+.cnc-modifier-option-name { font-weight: 500; }
+.cnc-modifier-option-price { font-size: 0.8rem; font-weight: 600; color: var(--cnc-secondary); margin-left: 8px; white-space: nowrap; }
+.cnc-modifier-disabled { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
+.cnc-modifier-group-error { border-color: #dc2626 !important; background: #fef2f2; }
+
+/* ── Branch Selector Popup ─────────────────────────────── */
+.cnc-branch-popup-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0, 0, 0, 0); backdrop-filter: blur(0px);
+  transition: background 0.3s ease, backdrop-filter 0.3s ease; padding: 20px;
+}
+.cnc-branch-popup-overlay.is-open { background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(4px); }
+.cnc-branch-popup {
+  background: var(--cnc-bg); border-radius: var(--cnc-radius); padding: 32px;
+  max-width: 420px; width: 100%; text-align: center;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+  transform: translateY(20px); opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+.cnc-branch-popup-overlay.is-open .cnc-branch-popup { transform: translateY(0); opacity: 1; }
+.cnc-branch-popup-icon { font-size: 2.5rem; margin-bottom: 12px; }
+.cnc-branch-popup-title { font-family: var(--cnc-font-heading); font-size: 1.4rem; font-weight: 700; color: var(--cnc-text); margin: 0 0 8px; }
+.cnc-branch-popup-desc { font-size: 0.9rem; color: var(--cnc-text-muted); margin: 0 0 24px; line-height: 1.5; }
+.cnc-branch-popup-list { display: flex; flex-direction: column; gap: 10px; }
+.cnc-branch-popup-item button {
+  width: 100%; display: block; padding: 14px 18px;
+  border: 2px solid var(--cnc-border); border-radius: calc(var(--cnc-radius) - 4px);
+  background: var(--cnc-surface); cursor: pointer; text-align: left;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease; font-family: inherit;
+}
+.cnc-branch-popup-item button:hover { border-color: var(--cnc-secondary); background: var(--cnc-bg); transform: translateY(-1px); }
+.cnc-branch-popup-item button:active { transform: translateY(0); }
+.cnc-branch-popup-item-name { font-weight: 600; font-size: 0.95rem; color: var(--cnc-text); margin-bottom: 2px; }
+.cnc-branch-popup-item-addr { font-size: 0.8rem; color: var(--cnc-text-muted); margin-bottom: 6px; }
+.cnc-branch-popup-item .cnc-pill { display: inline-block; font-size: 0.7rem; font-weight: 600; padding: 2px 10px; border-radius: 999px; }

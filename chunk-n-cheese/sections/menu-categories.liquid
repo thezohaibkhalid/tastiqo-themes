@@ -1,0 +1,73 @@
+{% comment %} Browse menu by category. Two layout variants: grid (default) and list. {% endcomment %}
+
+{%- assign style = section.settings.layout | default: 'grid' -%}
+{%- assign cols  = section.settings.columns | default: 3 -%}
+
+<section class="cnc-section">
+  <div class="cnc-container">
+    {% if section.settings.title != blank %}
+      <div class="cnc-section-head cnc-anim-up">
+        {% if section.settings.eyebrow != blank %}<span class="cnc-eyebrow">{{ section.settings.eyebrow }}</span>{% endif %}
+        <h2>{{ section.settings.title }}</h2>
+        {% if section.settings.subtitle != blank %}<p>{{ section.settings.subtitle }}</p>{% endif %}
+      </div>
+    {% endif %}
+
+    {%- if style == 'grid' -%}
+      <div class="cnc-cat-grid" style="--cnc-cols: {{ cols }};">
+        {% for cat in menu_categories limit: section.settings.limit %}
+          <a href="{{ cat.url }}" class="cnc-cat-card cnc-anim-up">
+            {% if cat.image != blank %}
+              <img src="{{ cat.image }}" alt="{{ cat.title }}" loading="lazy">
+            {% else %}
+              <div class="cnc-skeleton" style="width:100%;height:100%;"></div>
+            {% endif %}
+            <div class="cnc-cat-overlay">
+              <h3>{{ cat.title }}</h3>
+              <span class="cnc-cat-count">{{ cat.items.size }} items</span>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    {%- else -%}
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        {% for cat in menu_categories limit: section.settings.limit %}
+          <a href="{{ cat.url }}" class="cnc-anim-up" style="display: flex; align-items: center; gap: 20px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 16px; transition: border-color 200ms ease;">
+            {% if cat.image != blank %}
+              <img src="{{ cat.image }}" alt="{{ cat.title }}" style="width: 80px; height: 80px; object-fit: cover; border-radius: var(--radius-sm);" loading="lazy">
+            {% endif %}
+            <div style="flex: 1;">
+              <h3 style="margin: 0 0 4px; font-size: 1.15rem;">{{ cat.title }}</h3>
+              <div style="color: var(--color-muted); font-size: 0.85rem;">{{ cat.items.size }} items</div>
+            </div>
+            <span style="color: var(--color-primary); font-size: 1.5rem;">→</span>
+          </a>
+        {% endfor %}
+      </div>
+    {%- endif -%}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Menu Categories",
+  "settings": [
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "Layout",
+      "default": "grid",
+      "options": [
+        { "value": "grid", "label": "Grid" },
+        { "value": "list", "label": "List" }
+      ]
+    },
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "Explore" },
+    { "type": "text", "id": "title", "label": "Title", "default": "Browse our menu" },
+    { "type": "textarea", "id": "subtitle", "label": "Subtitle", "default": "Burgers, pizzas, loaded fries & more." },
+    { "type": "range", "id": "columns", "label": "Columns (grid only)", "min": 2, "max": 4, "step": 1, "default": 3 },
+    { "type": "range", "id": "limit", "label": "Number of categories", "min": 2, "max": 12, "step": 1, "default": 6 }
+  ],
+  "presets": [{ "name": "Menu Categories", "settings": {} }]
+}
+{% endschema %}

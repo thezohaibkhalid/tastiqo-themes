@@ -1,0 +1,172 @@
+{%- comment -%}
+  Chunk N Cheese — root layout.
+
+  Reads EVERY field exposed by the editor's Theme Settings panel and
+  emits them as CSS variables on :root so that changing any value in
+  the editor immediately re-skins the entire site.
+
+  Field names mirror `tastiqo-front/src/components/editor/ThemeSettingsPanel.tsx`
+  exactly — do NOT rename them or the editor's settings will silently
+  stop applying.
+{%- endcomment -%}
+
+{%- assign t_logo_image     = theme.logo_image                                     -%}
+{%- assign t_logo_width     = theme.logo_width            | default: 160           -%}
+{%- assign t_favicon        = theme.favicon                                        -%}
+
+{%- assign t_color_primary    = theme.color_primary       | default: '#111B47'     -%}
+{%- assign t_color_secondary  = theme.color_secondary     | default: '#F5A623'     -%}
+{%- assign t_color_accent     = theme.color_accent        | default: '#0A1233'     -%}
+{%- assign t_color_background = theme.color_background    | default: '#FFFFFF'     -%}
+{%- assign t_color_surface    = theme.color_surface       | default: '#F8F9FC'     -%}
+{%- assign t_color_text       = theme.color_text          | default: '#1A1A2E'     -%}
+{%- assign t_color_text_muted = theme.color_text_muted    | default: '#6B7280'     -%}
+{%- assign t_color_border     = theme.color_border        | default: '#E5E7EB'     -%}
+{%- assign t_color_success    = theme.color_success       | default: '#16A34A'     -%}
+{%- assign t_color_warning    = theme.color_warning       | default: '#F59E0B'     -%}
+{%- assign t_color_error      = theme.color_error         | default: '#DC2626'     -%}
+
+{%- assign t_font_heading   = theme.font_heading          | default: 'Poppins'    -%}
+{%- assign t_font_body      = theme.font_body             | default: 'Inter'      -%}
+{%- assign t_base_font_size = theme.base_font_size        | default: 16            -%}
+{%- assign t_heading_scale  = theme.heading_scale         | default: 100           -%}
+
+{%- assign t_page_width        = theme.page_width         | default: 1280          -%}
+{%- assign t_spacing_sections  = theme.spacing_sections   | default: 72            -%}
+{%- assign t_border_radius     = theme.border_radius      | default: '10px'        -%}
+
+{%- assign t_header_sticky     = theme.header_sticky                               -%}
+{%- assign t_show_search       = theme.show_search                                 -%}
+{%- assign t_show_cart         = theme.show_cart                                   -%}
+{%- assign t_mobile_menu_style = theme.mobile_menu_style  | default: 'drawer'      -%}
+
+{%- assign t_footer_copyright = theme.footer_copyright    | default: ''            -%}
+{%- assign t_footer_columns   = theme.footer_columns      | default: 4             -%}
+
+{%- assign t_button_style              = theme.button_style              | default: 'rounded' -%}
+{%- assign t_button_border_thickness   = theme.button_border_thickness   | default: 0         -%}
+{%- assign t_button_shadow             = theme.button_shadow             | default: 'small'   -%}
+
+{%- assign t_seo_title       = theme.seo_title                                      -%}
+{%- assign t_seo_description = theme.seo_description                                -%}
+{%- assign t_seo_og_image    = theme.seo_og_image                                   -%}
+
+{%- assign font_heading_url = t_font_heading | replace: ' ', '+' -%}
+{%- assign font_body_url    = t_font_body    | replace: ' ', '+' -%}
+
+<!DOCTYPE html>
+<html lang="{{ localization.locale | default: 'en' }}" dir="{% if localization.rtl %}rtl{% else %}ltr{% endif %}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>{{ t_seo_title | default: seo.title | default: restaurant.name }}</title>
+  <meta name="description" content="{{ t_seo_description | default: seo.description | default: restaurant.tagline }}">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="{{ t_seo_title | default: seo.title | default: restaurant.name }}">
+  <meta property="og:description" content="{{ t_seo_description | default: seo.description | default: restaurant.tagline }}">
+  <meta property="og:type" content="{{ seo.og_type | default: 'website' }}">
+  {% if t_seo_og_image %}
+    <meta property="og:image" content="{{ t_seo_og_image }}">
+  {% elsif seo.og_image %}
+    <meta property="og:image" content="{{ seo.og_image }}">
+  {% endif %}
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="icon" href="{{ t_favicon | default: restaurant.icon | default: restaurant.logo }}">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family={{ font_heading_url }}:wght@400;500;600;700;800;900&family={{ font_body_url }}:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Theme stylesheet -->
+  {{ 'theme.css' | asset_url | stylesheet_tag }}
+
+  <style id="cnc-theme-tokens">
+    :root {
+      --cnc-primary:        {{ t_color_primary }};
+      --cnc-secondary:      {{ t_color_secondary }};
+      --cnc-accent:         {{ t_color_accent }};
+
+      --cnc-bg:             {{ t_color_background }};
+      --cnc-surface:        {{ t_color_surface }};
+      --cnc-text:           {{ t_color_text }};
+      --cnc-text-muted:     {{ t_color_text_muted }};
+      --cnc-border:         {{ t_color_border }};
+
+      --cnc-success:        {{ t_color_success }};
+      --cnc-warning:        {{ t_color_warning }};
+      --cnc-error:          {{ t_color_error }};
+
+      --cnc-font-heading:   '{{ t_font_heading }}', system-ui, sans-serif;
+      --cnc-font-body:      '{{ t_font_body }}', system-ui, sans-serif;
+      --cnc-base-font-size: {{ t_base_font_size }}px;
+      --cnc-heading-scale:  {{ t_heading_scale | divided_by: 100.0 }};
+
+      --cnc-page-width:     {{ t_page_width }}px;
+      --cnc-section-space:  {{ t_spacing_sections }}px;
+      --cnc-radius:         {{ t_border_radius }};
+
+      --cnc-btn-radius:
+        {%- if t_button_style == 'pill' %} 999px
+        {%- elsif t_button_style == 'square' %} 0px
+        {%- else %} {{ t_border_radius }}
+        {%- endif -%};
+      --cnc-btn-border:     {{ t_button_border_thickness }}px;
+      --cnc-btn-shadow:
+        {%- if t_button_shadow == 'medium' %} 0 8px 24px rgba(0, 0, 0, 0.18)
+        {%- elsif t_button_shadow == 'small' %} 0 4px 14px rgba(0, 0, 0, 0.10)
+        {%- else %} none
+        {%- endif -%};
+
+      --cnc-logo-width:     {{ t_logo_width }}px;
+    }
+
+    {% if theme.custom_css %}
+      {{ theme.custom_css }}
+    {% endif %}
+  </style>
+</head>
+<body class="cnc-body{% if t_header_sticky == false %} cnc-header-static{% endif %}">
+
+  <div id="cnc-load-bar" class="cnc-load-bar" aria-hidden="true"></div>
+
+  <main id="cnc-main" class="cnc-main">
+    {{ content_for_layout }}
+  </main>
+
+  <script id="storefront-data" type="application/json">
+  {
+    "branch_id": {{ branch.id | json }},
+    "branch_name": {{ branch.name | json }},
+    "branch_count": {{ branch_selector.branches.size | default: 1 }},
+    "show_branch_popup": {{ branch_selector.show_popup | json }},
+    "currency_symbol": {{ localization.currency_symbol | default: "Rs." | json }}
+  }
+  </script>
+
+  <script>
+    (function () {
+      document.documentElement.classList.add('cnc-loading');
+      window.addEventListener('load', function () {
+        requestAnimationFrame(function () {
+          document.documentElement.classList.remove('cnc-loading');
+          document.documentElement.classList.add('cnc-loaded');
+        });
+      });
+    })();
+  </script>
+
+  {% render 'customer-auth' %}
+
+  {{ 'theme.js' | asset_url | script_tag }}
+
+  {% if theme.custom_js %}
+    <script>
+      try { {{ theme.custom_js }} } catch (e) { console.error('[cnc] custom_js error', e); }
+    </script>
+  {% endif %}
+</body>
+</html>

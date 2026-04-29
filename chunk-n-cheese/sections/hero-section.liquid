@@ -1,0 +1,180 @@
+{% comment %}
+  Hero section with three style variants + editable blocks.
+  Blocks: heading, text, buttons — each clickable in the editor.
+{% endcomment %}
+
+{%- assign style = section.settings.style | default: 'classic' -%}
+{%- assign bg_image = section.settings.background_image -%}
+
+<section class="cnc-hero cnc-hero--{{ style }}"
+  {% if style == 'classic' and bg_image != blank %}
+    style="background-image: url('{{ bg_image }}');"
+  {% endif %}
+>
+
+  {%- if style == 'classic' -%}
+    <div class="cnc-hero-overlay"></div>
+    <div class="cnc-hero-inner">
+      {% for block in section.blocks %}
+        {% if block.type == 'heading' %}
+          <div data-block-id="{{ block.id }}" data-block-type="heading">
+            {% if block.settings.eyebrow != blank %}
+              <span class="cnc-hero-eyebrow">{{ block.settings.eyebrow }}</span>
+            {% endif %}
+            <h1 class="cnc-hero-title">{{ block.settings.text | default: 'Bold chunks. Extreme flavours. Zero compromise.' }}</h1>
+          </div>
+        {% elsif block.type == 'text' %}
+          <div data-block-id="{{ block.id }}" data-block-type="text">
+            <p class="cnc-hero-sub">{{ block.settings.text | default: 'Smashed burgers, loaded fries, and pizza that hits different.' }}</p>
+          </div>
+        {% elsif block.type == 'buttons' %}
+          <div data-block-id="{{ block.id }}" data-block-type="buttons" class="cnc-hero-actions" style="{% if style == 'classic' or style == 'minimal' %}justify-content: center;{% endif %}">
+            {% if block.settings.button1_text != blank %}
+              <a href="{{ block.settings.button1_link | default: '/menu' }}" class="cnc-btn cnc-btn-primary cnc-btn-lg">{{ block.settings.button1_text }}</a>
+            {% endif %}
+            {% if block.settings.button2_text != blank %}
+              <a href="{{ block.settings.button2_link | default: '/about' }}" class="cnc-btn cnc-btn-outline cnc-btn-lg" style="{% if style == 'classic' %}border-color: rgba(255,255,255,0.6); color: #fff;{% endif %}">{{ block.settings.button2_text }}</a>
+            {% endif %}
+          </div>
+        {% endif %}
+      {% endfor %}
+
+      {% if section.blocks.size == 0 %}
+        <h1 class="cnc-hero-title">{{ section.settings.title | default: 'Bold chunks. Extreme flavours. Zero compromise.' }}</h1>
+        <p class="cnc-hero-sub">{{ section.settings.subtitle | default: 'Smashed burgers, loaded fries, and pizza that hits different.' }}</p>
+        <div class="cnc-hero-actions" style="justify-content: center;">
+          <a href="/menu" class="cnc-btn cnc-btn-primary cnc-btn-lg">Order now</a>
+        </div>
+      {% endif %}
+    </div>
+
+  {%- elsif style == 'split' -%}
+    <div class="cnc-hero-grid">
+      <div>
+        {% for block in section.blocks %}
+          {% if block.type == 'heading' %}
+            <div data-block-id="{{ block.id }}" data-block-type="heading">
+              {% if block.settings.eyebrow != blank %}
+                <span class="cnc-hero-eyebrow" style="background: var(--cnc-secondary); color: var(--cnc-accent);">{{ block.settings.eyebrow }}</span>
+              {% endif %}
+              <h1 class="cnc-hero-title" style="color: var(--cnc-accent);">{{ block.settings.text | default: 'Burgers done bold.' }}</h1>
+            </div>
+          {% elsif block.type == 'text' %}
+            <div data-block-id="{{ block.id }}" data-block-type="text">
+              <p class="cnc-hero-sub" style="color: var(--cnc-text);">{{ block.settings.text | default: 'Double-stacked patties. House-smoked cheese. Brioche buns.' }}</p>
+            </div>
+          {% elsif block.type == 'buttons' %}
+            <div data-block-id="{{ block.id }}" data-block-type="buttons" class="cnc-hero-actions">
+              {% if block.settings.button1_text != blank %}
+                <a href="{{ block.settings.button1_link | default: '/menu' }}" class="cnc-btn cnc-btn-primary cnc-btn-lg">{{ block.settings.button1_text }}</a>
+              {% endif %}
+              {% if block.settings.button2_text != blank %}
+                <a href="{{ block.settings.button2_link | default: '/about' }}" class="cnc-btn cnc-btn-outline cnc-btn-lg">{{ block.settings.button2_text }}</a>
+              {% endif %}
+            </div>
+          {% endif %}
+        {% endfor %}
+
+        {% if section.blocks.size == 0 %}
+          <h1 class="cnc-hero-title" style="color: var(--cnc-accent);">{{ section.settings.title | default: 'Burgers done bold.' }}</h1>
+          <p class="cnc-hero-sub" style="color: var(--cnc-text);">{{ section.settings.subtitle }}</p>
+        {% endif %}
+      </div>
+      <div class="cnc-hero-image">
+        {% if bg_image != blank %}
+          <img src="{{ bg_image }}" alt="">
+        {% else %}
+          <div class="cnc-skeleton" style="width: 100%; height: 100%;"></div>
+        {% endif %}
+      </div>
+    </div>
+
+  {%- else -%}
+    <div class="cnc-container" style="text-align: center;">
+      {% for block in section.blocks %}
+        {% if block.type == 'heading' %}
+          <div data-block-id="{{ block.id }}" data-block-type="heading">
+            {% if block.settings.eyebrow != blank %}
+              <span class="cnc-hero-eyebrow" style="background: var(--cnc-secondary); color: var(--cnc-accent);">{{ block.settings.eyebrow }}</span>
+            {% endif %}
+            <h1 class="cnc-hero-title" style="color: var(--cnc-accent);">{{ block.settings.text | default: 'Chunk N Cheese' }}</h1>
+          </div>
+        {% elsif block.type == 'text' %}
+          <div data-block-id="{{ block.id }}" data-block-type="text">
+            <p class="cnc-hero-sub" style="margin-left: auto; margin-right: auto;">{{ block.settings.text | default: 'Smashed burgers, loaded pizzas, insane cheese pulls.' }}</p>
+          </div>
+        {% elsif block.type == 'buttons' %}
+          <div data-block-id="{{ block.id }}" data-block-type="buttons" class="cnc-hero-actions" style="justify-content: center;">
+            {% if block.settings.button1_text != blank %}
+              <a href="{{ block.settings.button1_link | default: '/menu' }}" class="cnc-btn cnc-btn-primary cnc-btn-lg">{{ block.settings.button1_text }}</a>
+            {% endif %}
+          </div>
+        {% endif %}
+      {% endfor %}
+
+      {% if section.blocks.size == 0 %}
+        <h1 class="cnc-hero-title" style="color: var(--cnc-accent);">{{ section.settings.title | default: 'Chunk N Cheese' }}</h1>
+        <p class="cnc-hero-sub" style="margin-left: auto; margin-right: auto;">{{ section.settings.subtitle }}</p>
+      {% endif %}
+    </div>
+  {%- endif -%}
+
+</section>
+
+{% schema %}
+{
+  "name": "Hero",
+  "max_blocks": 6,
+  "settings": [
+    {
+      "type": "select",
+      "id": "style",
+      "label": "Layout style",
+      "default": "classic",
+      "options": [
+        { "value": "classic", "label": "Classic — full-bleed image" },
+        { "value": "split",   "label": "Split — text + image card" },
+        { "value": "minimal", "label": "Minimal — big type, no image" }
+      ]
+    },
+    { "type": "image_picker", "id": "background_image", "label": "Background / hero image" },
+    { "type": "text", "id": "title", "label": "Fallback title (used when no blocks)", "default": "Bold chunks. Extreme flavours. Zero compromise." },
+    { "type": "textarea", "id": "subtitle", "label": "Fallback subtitle", "default": "Smashed burgers, loaded fries, and pizza that hits different." }
+  ],
+  "blocks": [
+    {
+      "type": "heading",
+      "name": "Heading",
+      "settings": [
+        { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "Chunked since 2020" },
+        { "type": "text", "id": "text", "label": "Heading text", "default": "Bold chunks. Extreme flavours. Zero compromise." }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "Text",
+      "settings": [
+        { "type": "textarea", "id": "text", "label": "Text", "default": "Smashed burgers, loaded fries, and pizza that hits different." }
+      ]
+    },
+    {
+      "type": "buttons",
+      "name": "Buttons",
+      "settings": [
+        { "type": "text", "id": "button1_text", "label": "Button 1 text", "default": "Order now" },
+        { "type": "url",  "id": "button1_link", "label": "Button 1 link", "default": "/menu" },
+        { "type": "text", "id": "button2_text", "label": "Button 2 text", "default": "Our story" },
+        { "type": "url",  "id": "button2_link", "label": "Button 2 link", "default": "/about" }
+      ]
+    }
+  ],
+  "presets": [{
+    "name": "Hero",
+    "blocks": [
+      { "type": "heading", "settings": { "eyebrow": "Chunked since 2020", "text": "Bold chunks. Extreme flavours. Zero compromise." } },
+      { "type": "text", "settings": { "text": "Smashed burgers, loaded fries, and pizza that hits different." } },
+      { "type": "buttons", "settings": { "button1_text": "Order now", "button1_link": "/menu", "button2_text": "Our story", "button2_link": "/about" } }
+    ]
+  }]
+}
+{% endschema %}

@@ -1,0 +1,49 @@
+{% comment %} Cart page — JS-rendered from localStorage (Chunk N Cheese). {% endcomment %}
+
+<section data-cnc-cart-page>
+  <div class="cnc-container">
+    <h1 style="margin: 32px 0 24px;">Your cart</h1>
+
+    <div class="cnc-cart" id="cnc-cart-filled" style="display:none;">
+      <div class="cnc-cart-list cnc-anim-up" id="cnc-cart-items">
+        <!-- JS renders cart items here -->
+      </div>
+
+      <aside class="cnc-cart-summary cnc-anim-up delay-1" id="cnc-cart-summary">
+        <h3>Order summary</h3>
+        <div class="cnc-summary-row">
+          <span>Subtotal</span>
+          <span id="cnc-cart-subtotal">Rs. 0</span>
+        </div>
+        <div class="cnc-summary-row cnc-total">
+          <span>Total</span>
+          <span id="cnc-cart-total">Rs. 0</span>
+        </div>
+        <div id="cnc-checkout-error" style="display:none;background:#FEF2F2;color:var(--cnc-error,#dc2626);padding:0.625rem 0.875rem;border-radius:8px;font-size:0.8rem;margin-top:12px;"></div>
+        <button type="button" class="cnc-btn cnc-btn-primary cnc-btn-block cnc-btn-lg" style="margin-top: 18px;" id="cnc-checkout-btn">
+          Checkout →
+        </button>
+        {% if ordering.whatsapp_order_enabled %}
+          <a href="{{ ordering.whatsapp_order_href }}" target="_blank" rel="noopener" class="cnc-btn cnc-btn-outline cnc-btn-block" style="margin-top: 8px;">
+            Order on WhatsApp
+          </a>
+        {% endif %}
+      </aside>
+    </div>
+
+    <div id="cnc-cart-empty" style="display:none; padding: 80px 24px; text-align: center; background: var(--cnc-surface); border-radius: var(--cnc-radius); border: 1px solid var(--cnc-border);">
+      <div style="font-size: 4rem; margin-bottom: 16px;">🧀</div>
+      <h2>Your cart is empty</h2>
+      <p style="color: var(--cnc-text-muted); margin-bottom: 24px;">Add some chunky cheesy goodness to get started.</p>
+      <a href="/menu" class="cnc-btn cnc-btn-primary cnc-btn-lg">Browse the menu</a>
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Cart",
+  "settings": [],
+  "presets": [{ "name": "Cart", "settings": {} }]
+}
+{% endschema %}
