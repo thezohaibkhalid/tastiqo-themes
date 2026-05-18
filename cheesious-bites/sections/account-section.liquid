@@ -18,7 +18,13 @@
         <div id="account-profile-display">
           <div class="cb-account-detail"><span class="cb-account-label">Name</span><span id="account-name">—</span></div>
           <div class="cb-account-detail"><span class="cb-account-label">Email</span><span id="account-email">—</span></div>
-          <div class="cb-account-detail"><span class="cb-account-label">Phone</span><span id="account-phone">—</span></div>
+          <div class="cb-account-detail">
+            <span class="cb-account-label">Phone</span>
+            <span style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;justify-content:flex-end;">
+              <span id="account-phone">—</span>
+              <span id="account-phone-status"></span>
+            </span>
+          </div>
         </div>
         <form id="account-profile-form" style="display:none;" class="cb-auth-form">
           <div class="cb-form-group">

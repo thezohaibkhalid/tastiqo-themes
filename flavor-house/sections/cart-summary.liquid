@@ -38,9 +38,11 @@
     </div>
   {% endif %}
 
-  <a href="/checkout" class="btn btn-primary btn-lg" style="width:100%;margin-bottom:0.75rem;">
-    Proceed to Checkout
-  </a>
+  <div id="fh-checkout-error" style="display:none;background:#FEF2F2;color:var(--color-error,#dc2626);padding:0.625rem 0.875rem;border-radius:8px;font-size:0.8rem;margin-bottom:0.75rem;"></div>
+
+  <button type="button" class="btn btn-primary btn-lg" style="width:100%;margin-bottom:0.75rem;" id="fh-checkout-btn">
+    Proceed to Checkout →
+  </button>
 
   {% if ordering.whatsappOrderEnabled %}
     <a href="{{ ordering.whatsappOrderHref }}" target="_blank" rel="noopener" class="btn btn-lg" style="width:100%;background:#25D366;color:#fff;">

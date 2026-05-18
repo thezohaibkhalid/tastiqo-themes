@@ -42,47 +42,66 @@
             {% endif %}
           </div>
 
-          <!-- Variants -->
-          {% if section.settings.show_variants and product.hasVariants %}
-            <div class="product-variants">
-              <h3>Select Size</h3>
-              <div class="variant-options">
-                {% for variant in product.variants %}
-                  <button class="variant-btn {% if variant.isDefault %}selected{% endif %}" data-variant-id="{{ variant.id }}" data-price="{{ variant.priceMoney }}">
-                    {{ variant.title }} — {{ variant.priceMoney }}
-                  </button>
-                {% endfor %}
-              </div>
-            </div>
-          {% endif %}
-
-          <!-- Toppings -->
-          {% if section.settings.show_toppings and product.hasToppings %}
-            <div class="product-toppings">
-              <h3>Add Toppings</h3>
-              {% for topping in product.toppings %}
-                <label class="topping-option">
-                  <input type="checkbox" value="{{ topping.id }}" name="topping">
-                  <span>{{ topping.name }}</span>
-                  <span class="topping-price">+{{ topping.priceMoney }}</span>
-                </label>
+          <!-- Modifier groups (variants, toppings, sauces…) -->
+          {% if product.modifier_groups and product.modifier_groups.size > 0 %}
+            <div class="product-modifier-groups">
+              {% for group in product.modifier_groups %}
+                <div class="modifier-group" data-group-id="{{ group.id }}" data-group-required="{{ group.required }}" data-group-min="{{ group.min }}" data-group-max="{{ group.max }}">
+                  <div class="modifier-group-title">
+                    {{ group.title }}
+                    {% if group.required %}<span class="modifier-required">Required</span>{% endif %}
+                  </div>
+                  <div class="modifier-options">
+                    {% for option in group.options %}
+                      <label class="modifier-option">
+                        {% if group.max == 1 %}
+                          <input type="radio" name="modifier_group_{{ group.id }}" value="{{ option.id }}" data-price-delta="{{ option.price_delta }}" data-option-name="{{ option.label }}" data-group-name="{{ group.title }}"{% if option.is_default %} checked{% endif %}>
+                        {% else %}
+                          <input type="checkbox" name="modifier_group_{{ group.id }}" value="{{ option.id }}" data-price-delta="{{ option.price_delta }}" data-option-name="{{ option.label }}" data-group-name="{{ group.title }}"{% if option.is_default %} checked{% endif %}>
+                        {% endif %}
+                        <span class="modifier-option-label">
+                          <span class="modifier-option-name">{{ option.label }}</span>
+                          {% if option.price_delta and option.price_delta > 0 %}
+                            <span class="modifier-option-price">+{{ option.price_delta_money }}</span>
+                          {% endif %}
+                        </span>
+                      </label>
+                    {% endfor %}
+                  </div>
+                </div>
               {% endfor %}
             </div>
           {% endif %}
 
-          <!-- Quantity -->
+          <!-- Quantity + Add to Cart -->
           {% unless product.isSoldOut %}
             <div class="product-quantity">
-              <div class="quantity-control">
-                <button data-qty-minus>−</button>
-                <span data-qty-value>1</span>
-                <button data-qty-plus>+</button>
+              <div class="quantity-control" data-fh-qty>
+                <button type="button" data-qty-minus data-fh-qty-step="-1">−</button>
+                <span data-qty-value data-fh-qty-value>1</span>
+                <button type="button" data-qty-plus data-fh-qty-step="1">+</button>
               </div>
-              <button class="btn btn-primary btn-lg" style="flex:1;">
+              <button type="button" class="btn btn-primary btn-lg" style="flex:1;" id="fh-add-to-cart-btn">
                 Add to Cart
               </button>
             </div>
           {% endunless %}
+
+          <script type="application/json" id="product-data">
+          {
+            "id": "{{ product.id }}",
+            "name": {{ product.name | json }},
+            "price": {{ product.price }},
+            "image_url": {{ product.imageUrl | default: "" | json }},
+            "modifier_groups": {{ product.modifier_groups | json }}
+          }
+          </script>
+
+          {% if ordering.whatsappOrderEnabled %}
+            <a href="{{ ordering.whatsappOrderHref }}" target="_blank" rel="noopener" class="btn btn-outline btn-lg" style="width:100%;margin-top:0.75rem;">
+              💬 Order via WhatsApp
+            </a>
+          {% endif %}
 
           <!-- Meta -->
           <div class="product-meta">

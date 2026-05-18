@@ -71,3 +71,68 @@
     </div>
   </div>
 </div>
+
+{% comment %} Phone Verification Modal — Verifies a customer phone via SMS OTP {% endcomment %}
+<div class="cb-auth-modal-backdrop" id="phone-verify-modal">
+  <div class="cb-auth-modal">
+    <button class="cb-auth-modal-close" data-close-phone-verify aria-label="Close">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+
+    <!-- Step 1: Phone entry -->
+    <div class="cb-auth-step" id="phone-verify-step-phone">
+      <div class="cb-auth-header">
+        <h2>Verify your phone</h2>
+        <p>Enter your phone number and we'll text you a 6-digit code.</p>
+      </div>
+      <form id="phone-verify-phone-form" class="cb-auth-form">
+        <div class="cb-form-group">
+          <label for="phone-verify-phone">Phone number</label>
+          <input type="tel" id="phone-verify-phone" name="phone" placeholder="+92 300 1234567" required autocomplete="tel">
+        </div>
+        <div class="cb-auth-error" id="phone-verify-phone-error" style="display:none;"></div>
+        <button type="submit" class="cb-btn cb-btn-primary" style="width:100%;" id="phone-verify-send-btn">
+          <span>Send code</span>
+          <span class="cb-btn-spinner" style="display:none;">
+            <svg width="16" height="16" viewBox="0 0 24 24" class="cb-spin"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="32" stroke-linecap="round"/></svg>
+          </span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Step 2: OTP entry -->
+    <div class="cb-auth-step" id="phone-verify-step-otp" style="display:none;">
+      <div class="cb-auth-header">
+        <h2>Enter the code</h2>
+        <p>We sent a 6-digit code to <strong id="phone-verify-phone-display"></strong></p>
+      </div>
+      <form id="phone-verify-otp-form" class="cb-auth-form">
+        <div class="cb-form-group">
+          <label for="phone-verify-otp">Verification code</label>
+          <input type="text" id="phone-verify-otp" name="otp" placeholder="000000" required maxlength="6" inputmode="numeric" autocomplete="one-time-code" style="text-align:center;font-size:1.5rem;letter-spacing:0.5rem;">
+        </div>
+        <div class="cb-auth-error" id="phone-verify-otp-error" style="display:none;"></div>
+        <button type="submit" class="cb-btn cb-btn-primary" style="width:100%;" id="phone-verify-otp-btn">
+          <span>Verify phone</span>
+          <span class="cb-btn-spinner" style="display:none;">
+            <svg width="16" height="16" viewBox="0 0 24 24" class="cb-spin"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="32" stroke-linecap="round"/></svg>
+          </span>
+        </button>
+        <div class="cb-auth-footer">
+          <button type="button" class="cb-btn-link" id="phone-verify-resend-btn">Resend code</button>
+          <span style="color:var(--cb-text-muted);"> &middot; </span>
+          <button type="button" class="cb-btn-link" id="phone-verify-back-btn">Change number</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Step 3: Success -->
+    <div class="cb-auth-step" id="phone-verify-step-success" style="display:none;">
+      <div class="cb-auth-header" style="text-align:center;padding:2rem 0;">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--cb-success)" stroke-width="2" style="margin:0 auto 1rem;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <h2>Phone verified!</h2>
+        <p style="color:var(--cb-text-muted);">Your phone number is now confirmed.</p>
+      </div>
+    </div>
+  </div>
+</div>

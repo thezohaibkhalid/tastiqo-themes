@@ -6,6 +6,103 @@
   'use strict';
 
   /* -----------------------------------------------
+     TastiqoCart — client-side cart (localStorage)
+  ----------------------------------------------- */
+  const CART_KEY = 'tastiqo_cart';
+
+  const TastiqoCart = {
+    _read() {
+      try { return JSON.parse(localStorage.getItem(CART_KEY)) || []; }
+      catch { return []; }
+    },
+    _write(items) {
+      localStorage.setItem(CART_KEY, JSON.stringify(items));
+      this._notify();
+    },
+    _notify() {
+      window.dispatchEvent(new CustomEvent('cart:updated'));
+      this._updateBadge();
+    },
+    _updateBadge() {
+      const count = this.getCount();
+      const badges = document.querySelectorAll('#header-cart-count, #mobile-cart-count, [data-fh-cart-count]');
+      badges.forEach(b => {
+        b.textContent = count;
+        b.style.display = count > 0 ? '' : 'none';
+      });
+    },
+    _generateId(product_id, modifiers) {
+      const modIds = (modifiers || []).map(m => m.id).sort();
+      return product_id + ':' + modIds.join(',');
+    },
+    getItems() { return this._read(); },
+    addItem(item) {
+      const items = this._read();
+      const existing = items.find(it => it.id === item.id);
+      if (existing) {
+        existing.quantity += item.quantity;
+      } else {
+        items.push(item);
+      }
+      this._write(items);
+    },
+    updateQuantity(id, qty) {
+      let items = this._read();
+      if (qty <= 0) {
+        items = items.filter(it => it.id !== id);
+      } else {
+        const it = items.find(i => i.id === id);
+        if (it) it.quantity = qty;
+      }
+      this._write(items);
+    },
+    removeItem(id) {
+      this._write(this._read().filter(it => it.id !== id));
+    },
+    clear() {
+      localStorage.removeItem(CART_KEY);
+      this._notify();
+    },
+    getCount() {
+      return this._read().reduce((s, it) => s + it.quantity, 0);
+    },
+    getSubtotal() {
+      return this._read().reduce((s, it) => s + (it.unit_price * it.quantity), 0);
+    }
+  };
+
+  window.TastiqoCart = TastiqoCart;
+
+  /* -----------------------------------------------
+     Storefront data + helpers
+  ----------------------------------------------- */
+  let _storefrontData = null;
+  function getStorefrontData() {
+    if (_storefrontData) return _storefrontData;
+    try {
+      const el = document.getElementById('storefront-data');
+      if (el) _storefrontData = JSON.parse(el.textContent);
+    } catch {}
+    return _storefrontData || {};
+  }
+
+  function getBranchId() {
+    return getStorefrontData().branch_id || null;
+  }
+
+  function getCurrencySymbol() {
+    return getStorefrontData().currency_symbol || 'Rs.';
+  }
+
+  function formatMoney(paisa) {
+    let amount = (paisa / 100).toFixed(2);
+    if (amount.endsWith('.00')) amount = amount.slice(0, -3);
+    return getCurrencySymbol() + ' ' + amount;
+  }
+
+  function escH(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+
+  /* -----------------------------------------------
      Mobile Menu
   ----------------------------------------------- */
   const menuToggle = document.getElementById('mobile-menu-toggle');
@@ -114,30 +211,6 @@
       const price = btn.dataset.price;
       const priceEl = document.getElementById('product-active-price');
       if (priceEl && price) priceEl.textContent = price;
-    });
-  });
-
-  /* -----------------------------------------------
-     Quantity Controls
-  ----------------------------------------------- */
-  document.querySelectorAll('.quantity-control').forEach(control => {
-    const minus = control.querySelector('[data-qty-minus]');
-    const plus = control.querySelector('[data-qty-plus]');
-    const display = control.querySelector('[data-qty-value]');
-    if (!minus || !plus || !display) return;
-
-    let qty = parseInt(display.textContent) || 1;
-
-    minus.addEventListener('click', () => {
-      if (qty > 1) {
-        qty--;
-        display.textContent = qty;
-      }
-    });
-
-    plus.addEventListener('click', () => {
-      qty++;
-      display.textContent = qty;
     });
   });
 
@@ -408,18 +481,34 @@
     }
   }
 
+  let _currentProfile = null;
   async function loadProfile() {
     try {
       const res = await CustomerAuth.apiRequest('GET', '/me');
       if (!res.ok) throw new Error();
       const c = await res.json();
+      _currentProfile = c;
       document.getElementById('account-name').textContent = c.full_name || '—';
       document.getElementById('account-email').textContent = c.email || '—';
       document.getElementById('account-phone').textContent = c.phone || '—';
+      renderPhoneStatus(c);
       if (document.getElementById('profile-name')) document.getElementById('profile-name').value = c.full_name || '';
       if (document.getElementById('profile-phone')) document.getElementById('profile-phone').value = c.phone || '';
     } catch {
       // Token might be invalid
+    }
+  }
+
+  function renderPhoneStatus(c) {
+    const statusEl = document.getElementById('account-phone-status');
+    if (!statusEl) return;
+    if (!c || !c.phone) { statusEl.innerHTML = ''; return; }
+    if (c.phone_verified) {
+      statusEl.innerHTML = '<span style="display:inline-flex;align-items:center;gap:4px;background:var(--color-success,#16a34a);color:#fff;padding:2px 8px;border-radius:10px;font-size:0.7rem;font-weight:600;">✓ Verified</span>';
+    } else {
+      statusEl.innerHTML = '<span style="background:var(--color-warning,#F59E0B);color:#fff;padding:2px 8px;border-radius:10px;font-size:0.7rem;font-weight:600;">Unverified</span> <button type="button" class="btn-link" id="account-verify-phone-btn" style="font-size:0.8rem;">Verify now</button>';
+      const b = document.getElementById('account-verify-phone-btn');
+      if (b) b.addEventListener('click', () => openPhoneVerifyModal(c.phone));
     }
   }
 
@@ -549,13 +638,110 @@
     profileForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const name = document.getElementById('profile-name').value;
-      const phone = document.getElementById('profile-phone').value || null;
+      const phone = (document.getElementById('profile-phone').value || '').trim() || null;
+      const prevPhone = _currentProfile ? (_currentProfile.phone || null) : null;
       await CustomerAuth.apiRequest('PUT', '/me', { full_name: name, phone });
       if (profileDisplay) profileDisplay.style.display = 'block';
       if (profileForm) profileForm.style.display = 'none';
-      loadProfile();
+      await loadProfile();
+      if (phone && phone !== prevPhone) {
+        setTimeout(() => openPhoneVerifyModal(phone), 200);
+      }
     });
   }
+
+  /* -----------------------------------------------
+     Phone Verification Modal
+  ----------------------------------------------- */
+  const phoneVerifyModal = document.getElementById('phone-verify-modal');
+  const phoneVerifyCloseBtns = document.querySelectorAll('[data-close-phone-verify]');
+
+  function openPhoneVerifyModal(phone) {
+    if (!phoneVerifyModal) return;
+    const input = document.getElementById('phone-verify-phone');
+    if (input && phone) input.value = phone;
+    phoneVerifyShowStep('phone');
+    const errP = document.getElementById('phone-verify-phone-error'); if (errP) errP.style.display = 'none';
+    const errO = document.getElementById('phone-verify-otp-error'); if (errO) errO.style.display = 'none';
+    phoneVerifyModal.classList.add('is-open');
+  }
+  function closePhoneVerifyModal() { if (phoneVerifyModal) phoneVerifyModal.classList.remove('is-open'); }
+  function phoneVerifyShowStep(s) {
+    ['phone', 'otp', 'success'].forEach(name => {
+      const el = document.getElementById('phone-verify-step-' + name);
+      if (el) el.style.display = (name === s) ? 'block' : 'none';
+    });
+  }
+  window.openPhoneVerifyModal = openPhoneVerifyModal;
+  window.closePhoneVerifyModal = closePhoneVerifyModal;
+
+  phoneVerifyCloseBtns.forEach(b => b.addEventListener('click', closePhoneVerifyModal));
+  if (phoneVerifyModal) phoneVerifyModal.addEventListener('click', (e) => { if (e.target === phoneVerifyModal) closePhoneVerifyModal(); });
+
+  const phoneSendForm = document.getElementById('phone-verify-phone-form');
+  if (phoneSendForm) phoneSendForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('phone-verify-send-btn');
+    const errEl = document.getElementById('phone-verify-phone-error');
+    const phone = document.getElementById('phone-verify-phone').value.trim();
+    if (!phone) return;
+    btn.querySelector('.btn-spinner').style.display = 'inline-flex';
+    errEl.style.display = 'none';
+    try {
+      const res = await CustomerAuth.apiRequest('POST', '/phone/send-otp', { phone });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send code');
+      document.getElementById('phone-verify-phone-display').textContent = phone;
+      phoneVerifyShowStep('otp');
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+    } finally {
+      btn.querySelector('.btn-spinner').style.display = 'none';
+    }
+  });
+
+  const phoneOtpForm = document.getElementById('phone-verify-otp-form');
+  if (phoneOtpForm) phoneOtpForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('phone-verify-otp-btn');
+    const errEl = document.getElementById('phone-verify-otp-error');
+    const phone = document.getElementById('phone-verify-phone').value.trim();
+    const otp = document.getElementById('phone-verify-otp').value.trim();
+    if (!otp) return;
+    btn.querySelector('.btn-spinner').style.display = 'inline-flex';
+    errEl.style.display = 'none';
+    try {
+      const res = await CustomerAuth.apiRequest('POST', '/phone/verify', { phone, otp });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Invalid code');
+      phoneVerifyShowStep('success');
+      loadProfile();
+      setTimeout(closePhoneVerifyModal, 1500);
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+    } finally {
+      btn.querySelector('.btn-spinner').style.display = 'none';
+    }
+  });
+
+  const phoneResendBtn = document.getElementById('phone-verify-resend-btn');
+  if (phoneResendBtn) phoneResendBtn.addEventListener('click', async () => {
+    const phone = document.getElementById('phone-verify-phone').value.trim();
+    if (!phone) return;
+    phoneResendBtn.textContent = 'Sending...';
+    try {
+      await CustomerAuth.apiRequest('POST', '/phone/send-otp', { phone });
+      phoneResendBtn.textContent = 'Code resent!';
+      setTimeout(() => { phoneResendBtn.textContent = 'Resend code'; }, 3000);
+    } catch {
+      phoneResendBtn.textContent = 'Resend code';
+    }
+  });
+
+  const phoneBackBtn = document.getElementById('phone-verify-back-btn');
+  if (phoneBackBtn) phoneBackBtn.addEventListener('click', () => phoneVerifyShowStep('phone'));
 
   // Logout
   const logoutBtn = document.getElementById('account-logout-btn');
@@ -641,5 +827,300 @@
       loadOrders(true);
     });
   }
+
+  /* -----------------------------------------------
+     Checkout flow
+  ----------------------------------------------- */
+  async function doCheckout() {
+    if (!CustomerAuth.isLoggedIn()) {
+      openAuthModal();
+      return;
+    }
+
+    const items = TastiqoCart.getItems();
+    if (!items.length) return;
+
+    const branchId = getBranchId();
+    if (!branchId) {
+      showCheckoutError('Please select a branch first.');
+      return;
+    }
+
+    const apiItems = items.map(it => ({
+      product_id: it.product_id,
+      quantity: it.quantity,
+      modifier_ids: (it.modifiers || []).map(m => m.id),
+      notes: it.notes || ''
+    }));
+
+    const body = {
+      branch_id: branchId,
+      order_type: 'pickup',
+      payment_method: 'cash',
+      items: apiItems,
+      customer_notes: ''
+    };
+
+    const checkoutBtn = document.getElementById('fh-checkout-btn');
+    if (checkoutBtn) { checkoutBtn.disabled = true; checkoutBtn.textContent = 'Placing order...'; }
+
+    try {
+      const res = await fetch('/api/storefront/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + CustomerAuth.getAccessToken()
+        },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error || 'Failed to place order');
+      }
+      TastiqoCart.clear();
+      window.location.href = '/account/orders';
+    } catch (err) {
+      showCheckoutError(err.message || 'Failed to place order. Please try again.');
+      if (checkoutBtn) { checkoutBtn.disabled = false; checkoutBtn.textContent = 'Proceed to Checkout →'; }
+    }
+  }
+
+  function showCheckoutError(msg) {
+    const el = document.getElementById('fh-checkout-error');
+    if (el) { el.textContent = msg; el.style.display = 'block'; }
+  }
+
+  /* -----------------------------------------------
+     Quantity stepper (data-fh-qty)
+  ----------------------------------------------- */
+  document.querySelectorAll('[data-fh-qty]').forEach(qty => {
+    const valueEl = qty.querySelector('[data-fh-qty-value]');
+    qty.querySelectorAll('button[data-fh-qty-step]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const step = parseInt(btn.getAttribute('data-fh-qty-step'), 10);
+        let v = parseInt(valueEl.textContent, 10) || 1;
+        v += step;
+        if (v < 1) v = 1;
+        if (v > 99) v = 99;
+        valueEl.textContent = v;
+        qty.dispatchEvent(new CustomEvent('qty:changed', { detail: { value: v } }));
+      });
+    });
+  });
+
+  /* -----------------------------------------------
+     Add to Cart (Product Detail Page)
+  ----------------------------------------------- */
+  function initProductAddToCart() {
+    const addBtn = document.getElementById('fh-add-to-cart-btn');
+    if (!addBtn) return;
+
+    const dataEl = document.getElementById('product-data');
+    if (!dataEl) return;
+
+    let product;
+    try { product = JSON.parse(dataEl.textContent); } catch { return; }
+
+    const priceDisplay = document.getElementById('product-active-price');
+    const qtyEl = document.querySelector('[data-fh-qty]');
+    const qtyValueEl = qtyEl ? qtyEl.querySelector('[data-fh-qty-value]') : null;
+
+    function getQuantity() {
+      return qtyValueEl ? (parseInt(qtyValueEl.textContent, 10) || 1) : 1;
+    }
+
+    function recalcTotalPrice() {
+      let unitPrice = product.price;
+      document.querySelectorAll('.product-modifier-groups input:checked').forEach(inp => {
+        unitPrice += parseInt(inp.getAttribute('data-price-delta'), 10) || 0;
+      });
+      const qty = getQuantity();
+      const lineTotal = unitPrice * qty;
+      if (priceDisplay) priceDisplay.textContent = formatMoney(unitPrice);
+      addBtn.textContent = 'Add to Cart · ' + formatMoney(lineTotal);
+    }
+
+    function enforceMaxSelections(groupEl) {
+      const max = parseInt(groupEl.getAttribute('data-group-max'), 10) || 0;
+      if (max <= 1) return;
+      const checkboxes = groupEl.querySelectorAll('input[type="checkbox"]');
+      let checkedCount = 0;
+      checkboxes.forEach(cb => { if (cb.checked) checkedCount++; });
+      checkboxes.forEach(cb => {
+        const opt = cb.closest('.modifier-option');
+        if (!cb.checked && checkedCount >= max) {
+          cb.disabled = true;
+          if (opt) opt.classList.add('modifier-disabled');
+        } else {
+          cb.disabled = false;
+          if (opt) opt.classList.remove('modifier-disabled');
+        }
+      });
+    }
+
+    document.querySelectorAll('.product-modifier-groups input').forEach(inp => {
+      inp.addEventListener('change', () => {
+        recalcTotalPrice();
+        const groupEl = inp.closest('.modifier-group');
+        if (groupEl) enforceMaxSelections(groupEl);
+      });
+    });
+
+    document.querySelectorAll('.modifier-group').forEach(g => enforceMaxSelections(g));
+
+    if (qtyEl) qtyEl.addEventListener('qty:changed', recalcTotalPrice);
+    recalcTotalPrice();
+
+    addBtn.addEventListener('click', () => {
+      // Validate required modifier groups
+      let valid = true;
+      document.querySelectorAll('.modifier-group[data-group-required="true"]').forEach(groupEl => {
+        const checked = groupEl.querySelectorAll('input:checked');
+        const min = parseInt(groupEl.getAttribute('data-group-min'), 10) || 1;
+        let errEl = groupEl.querySelector('.modifier-error');
+        if (checked.length < min) {
+          valid = false;
+          groupEl.classList.add('modifier-group-error');
+          if (!errEl) {
+            errEl = document.createElement('p');
+            errEl.className = 'modifier-error';
+            errEl.style.cssText = 'color:var(--color-error,#dc2626);font-size:0.8rem;margin-top:6px;';
+            groupEl.appendChild(errEl);
+          }
+          const titleEl = groupEl.querySelector('.modifier-group-title');
+          const name = titleEl ? titleEl.textContent.replace('Required', '').trim() : 'this option';
+          errEl.textContent = 'Please select ' + name;
+          errEl.style.display = 'block';
+        } else {
+          groupEl.classList.remove('modifier-group-error');
+          if (errEl) errEl.style.display = 'none';
+        }
+      });
+      if (!valid) return;
+
+      const quantity = getQuantity();
+      const modifiers = [];
+      document.querySelectorAll('.product-modifier-groups input:checked').forEach(inp => {
+        modifiers.push({
+          id: inp.value,
+          group_name: inp.getAttribute('data-group-name') || '',
+          name: inp.getAttribute('data-option-name') || '',
+          price_adjustment: parseInt(inp.getAttribute('data-price-delta'), 10) || 0
+        });
+      });
+
+      let unitPrice = product.price;
+      modifiers.forEach(m => { unitPrice += m.price_adjustment; });
+
+      const cartId = TastiqoCart._generateId(product.id, modifiers);
+
+      TastiqoCart.addItem({
+        id: cartId,
+        product_id: product.id,
+        name: product.name,
+        image_url: product.image_url || '',
+        quantity,
+        unit_price: unitPrice,
+        modifiers,
+        notes: ''
+      });
+
+      const originalText = addBtn.textContent;
+      addBtn.textContent = 'Added to Cart ✓';
+      addBtn.disabled = true;
+      setTimeout(() => {
+        addBtn.disabled = false;
+        recalcTotalPrice();
+      }, 1000);
+    });
+  }
+
+  /* -----------------------------------------------
+     Cart Page Rendering
+  ----------------------------------------------- */
+  function initCartPage() {
+    const cartPage = document.querySelector('[data-fh-cart-page]');
+    if (!cartPage) return;
+
+    renderCart();
+    window.addEventListener('cart:updated', renderCart);
+
+    const checkoutBtn = document.getElementById('fh-checkout-btn');
+    if (checkoutBtn) checkoutBtn.addEventListener('click', doCheckout);
+  }
+
+  function renderCart() {
+    const filledEl = document.getElementById('fh-cart-filled');
+    const emptyEl = document.getElementById('fh-cart-empty');
+    const itemsEl = document.getElementById('cart-items-list');
+    const subtotalEl = document.getElementById('cart-subtotal');
+    const totalEl = document.getElementById('cart-total');
+    const errorEl = document.getElementById('fh-checkout-error');
+
+    if (!filledEl || !emptyEl || !itemsEl) return;
+
+    const items = TastiqoCart.getItems();
+
+    if (!items.length) {
+      filledEl.style.display = 'none';
+      emptyEl.style.display = '';
+      return;
+    }
+
+    filledEl.style.display = '';
+    emptyEl.style.display = 'none';
+    if (errorEl) errorEl.style.display = 'none';
+
+    itemsEl.innerHTML = items.map(item => {
+      const lineTotal = item.unit_price * item.quantity;
+      const modText = item.modifiers && item.modifiers.length
+        ? item.modifiers.map(m => escH(m.name)).join(', ')
+        : '';
+      const imgHtml = item.image_url
+        ? `<img src="${escH(item.image_url)}" alt="${escH(item.name)}" class="cart-item-image">`
+        : `<div class="cart-item-image cart-item-image-placeholder"></div>`;
+      return `
+        <div class="cart-item" data-cart-id="${escH(item.id)}">
+          ${imgHtml}
+          <div class="cart-item-info">
+            <div class="cart-item-name">${escH(item.name)}</div>
+            ${modText ? `<div class="cart-item-variant">${modText}</div>` : ''}
+            <div class="cart-item-bottom">
+              <div class="quantity-control">
+                <button type="button" data-fh-cart-action="decrease" data-cart-id="${escH(item.id)}">−</button>
+                <span>${item.quantity}</span>
+                <button type="button" data-fh-cart-action="increase" data-cart-id="${escH(item.id)}">+</button>
+                <button type="button" class="cart-item-remove" data-fh-cart-action="remove" data-cart-id="${escH(item.id)}">Remove</button>
+              </div>
+              <span class="cart-item-price">${formatMoney(lineTotal)}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    const subtotal = TastiqoCart.getSubtotal();
+    if (subtotalEl) subtotalEl.textContent = formatMoney(subtotal);
+    if (totalEl) totalEl.textContent = formatMoney(subtotal);
+
+    itemsEl.querySelectorAll('[data-fh-cart-action]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-cart-id');
+        const action = btn.getAttribute('data-fh-cart-action');
+        const current = TastiqoCart.getItems().find(it => it.id === id);
+        if (!current) return;
+        if (action === 'increase') TastiqoCart.updateQuantity(id, current.quantity + 1);
+        else if (action === 'decrease') TastiqoCart.updateQuantity(id, current.quantity - 1);
+        else if (action === 'remove') TastiqoCart.removeItem(id);
+      });
+    });
+  }
+
+  /* -----------------------------------------------
+     Init
+  ----------------------------------------------- */
+  TastiqoCart._updateBadge();
+  initProductAddToCart();
+  initCartPage();
 
 })();

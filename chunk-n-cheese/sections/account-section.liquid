@@ -18,7 +18,13 @@
         <div id="account-profile-display">
           <div class="cnc-account-detail"><span class="cnc-account-label">Name</span><span id="account-name">—</span></div>
           <div class="cnc-account-detail"><span class="cnc-account-label">Email</span><span id="account-email">—</span></div>
-          <div class="cnc-account-detail"><span class="cnc-account-label">Phone</span><span id="account-phone">—</span></div>
+          <div class="cnc-account-detail">
+            <span class="cnc-account-label">Phone</span>
+            <span style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;justify-content:flex-end;">
+              <span id="account-phone">—</span>
+              <span id="account-phone-status"></span>
+            </span>
+          </div>
         </div>
         <form id="account-profile-form" style="display:none;" class="cnc-auth-form">
           <div class="cnc-form-group">

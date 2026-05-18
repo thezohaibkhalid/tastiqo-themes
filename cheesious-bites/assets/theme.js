@@ -638,15 +638,31 @@
     }
   }
 
+  var _currentProfile = null;
   function loadProfile() {
     CustomerAuth.apiRequest('GET', '/me').then(function(r) { if (!r.ok) return; return r.json(); }).then(function(c) {
       if (!c) return;
+      _currentProfile = c;
       document.getElementById('account-name').textContent = c.full_name || '—';
       document.getElementById('account-email').textContent = c.email || '—';
       document.getElementById('account-phone').textContent = c.phone || '—';
+      renderPhoneStatus(c);
       var pn = document.getElementById('profile-name'); if (pn) pn.value = c.full_name || '';
       var pp = document.getElementById('profile-phone'); if (pp) pp.value = c.phone || '';
     });
+  }
+
+  function renderPhoneStatus(c) {
+    var statusEl = document.getElementById('account-phone-status');
+    if (!statusEl) return;
+    if (!c || !c.phone) { statusEl.innerHTML = ''; return; }
+    if (c.phone_verified) {
+      statusEl.innerHTML = '<span style="display:inline-flex;align-items:center;gap:4px;background:var(--cb-success);color:#fff;padding:2px 8px;border-radius:10px;font-size:0.7rem;font-weight:600;">✓ Verified</span>';
+    } else {
+      statusEl.innerHTML = '<span style="background:var(--cb-warning,#F59E0B);color:#fff;padding:2px 8px;border-radius:10px;font-size:0.7rem;font-weight:600;">Unverified</span> <button type="button" class="cb-btn-link" id="account-verify-phone-btn" style="font-size:0.8rem;">Verify now</button>';
+      var b = document.getElementById('account-verify-phone-btn');
+      if (b) b.addEventListener('click', function() { openPhoneVerifyModal(c.phone); });
+    }
   }
 
   function loadAddresses() {
@@ -758,13 +774,100 @@
   if (profileForm) profileForm.addEventListener('submit', function(e) {
     e.preventDefault();
     var name = document.getElementById('profile-name').value;
-    var phone = document.getElementById('profile-phone').value || null;
-    CustomerAuth.apiRequest('PUT', '/me', { full_name: name, phone: phone }).then(function() {
+    var phone = (document.getElementById('profile-phone').value || '').trim() || null;
+    var prevPhone = _currentProfile ? (_currentProfile.phone || null) : null;
+    CustomerAuth.apiRequest('PUT', '/me', { full_name: name, phone: phone }).then(function(r) {
       if (profileDisplay) profileDisplay.style.display = 'block';
       if (profileForm) profileForm.style.display = 'none';
-      loadProfile();
+      if (phone && phone !== prevPhone) {
+        loadProfile();
+        setTimeout(function() { openPhoneVerifyModal(phone); }, 200);
+      } else {
+        loadProfile();
+      }
     });
   });
+
+  /* -----------------------------------------------
+     Phone Verification Modal
+  ----------------------------------------------- */
+  var phoneVerifyModal = document.getElementById('phone-verify-modal');
+  var phoneVerifyCloseBtns = document.querySelectorAll('[data-close-phone-verify]');
+
+  function openPhoneVerifyModal(phone) {
+    if (!phoneVerifyModal) return;
+    var input = document.getElementById('phone-verify-phone');
+    if (input && phone) input.value = phone;
+    phoneVerifyShowStep('phone');
+    var errP = document.getElementById('phone-verify-phone-error'); if (errP) errP.style.display = 'none';
+    var errO = document.getElementById('phone-verify-otp-error'); if (errO) errO.style.display = 'none';
+    phoneVerifyModal.classList.add('is-open');
+  }
+  function closePhoneVerifyModal() { if (phoneVerifyModal) phoneVerifyModal.classList.remove('is-open'); }
+  function phoneVerifyShowStep(s) {
+    ['phone', 'otp', 'success'].forEach(function(name) {
+      var el = document.getElementById('phone-verify-step-' + name);
+      if (el) el.style.display = (name === s) ? 'block' : 'none';
+    });
+  }
+  window.openPhoneVerifyModal = openPhoneVerifyModal;
+  window.closePhoneVerifyModal = closePhoneVerifyModal;
+
+  phoneVerifyCloseBtns.forEach(function(b) { b.addEventListener('click', closePhoneVerifyModal); });
+  if (phoneVerifyModal) phoneVerifyModal.addEventListener('click', function(e) { if (e.target === phoneVerifyModal) closePhoneVerifyModal(); });
+
+  var phoneSendForm = document.getElementById('phone-verify-phone-form');
+  if (phoneSendForm) phoneSendForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    var btn = document.getElementById('phone-verify-send-btn');
+    var errEl = document.getElementById('phone-verify-phone-error');
+    var phone = document.getElementById('phone-verify-phone').value.trim();
+    if (!phone) return;
+    btn.querySelector('.cb-btn-spinner').style.display = 'inline-flex';
+    errEl.style.display = 'none';
+    CustomerAuth.apiRequest('POST', '/phone/send-otp', { phone: phone })
+      .then(function(r) { return r.json().then(function(d) {
+        if (!r.ok) throw new Error(d.error || 'Failed to send code');
+        document.getElementById('phone-verify-phone-display').textContent = phone;
+        phoneVerifyShowStep('otp');
+      }); })
+      .catch(function(err) { errEl.textContent = err.message; errEl.style.display = 'block'; })
+      .finally(function() { btn.querySelector('.cb-btn-spinner').style.display = 'none'; });
+  });
+
+  var phoneOtpForm = document.getElementById('phone-verify-otp-form');
+  if (phoneOtpForm) phoneOtpForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    var btn = document.getElementById('phone-verify-otp-btn');
+    var errEl = document.getElementById('phone-verify-otp-error');
+    var phone = document.getElementById('phone-verify-phone').value.trim();
+    var otp = document.getElementById('phone-verify-otp').value.trim();
+    if (!otp) return;
+    btn.querySelector('.cb-btn-spinner').style.display = 'inline-flex';
+    errEl.style.display = 'none';
+    CustomerAuth.apiRequest('POST', '/phone/verify', { phone: phone, otp: otp })
+      .then(function(r) { return r.json().then(function(d) {
+        if (!r.ok) throw new Error(d.error || 'Invalid code');
+        phoneVerifyShowStep('success');
+        loadProfile();
+        setTimeout(closePhoneVerifyModal, 1500);
+      }); })
+      .catch(function(err) { errEl.textContent = err.message; errEl.style.display = 'block'; })
+      .finally(function() { btn.querySelector('.cb-btn-spinner').style.display = 'none'; });
+  });
+
+  var phoneResendBtn = document.getElementById('phone-verify-resend-btn');
+  if (phoneResendBtn) phoneResendBtn.addEventListener('click', function() {
+    var phone = document.getElementById('phone-verify-phone').value.trim();
+    if (!phone) return;
+    phoneResendBtn.textContent = 'Sending...';
+    CustomerAuth.apiRequest('POST', '/phone/send-otp', { phone: phone })
+      .then(function() { phoneResendBtn.textContent = 'Code resent!'; setTimeout(function() { phoneResendBtn.textContent = 'Resend code'; }, 3000); })
+      .catch(function() { phoneResendBtn.textContent = 'Resend code'; });
+  });
+
+  var phoneBackBtn = document.getElementById('phone-verify-back-btn');
+  if (phoneBackBtn) phoneBackBtn.addEventListener('click', function() { phoneVerifyShowStep('phone'); });
 
   // Logout
   var logoutBtn = document.getElementById('account-logout-btn');

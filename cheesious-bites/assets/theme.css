@@ -937,3 +937,45 @@ html.cb-loaded  body { opacity: 1; transition: opacity 240ms ease; }
   padding: 2px 10px;
   border-radius: 999px;
 }
+
+/* ============================================
+   MOBILE RESPONSIVE REFINEMENTS
+   ============================================ */
+
+/* Tablet and below — keep auth modal scrollable when content is tall */
+@media (max-width: 768px) {
+  .cb-auth-modal-backdrop { padding: 0.5rem; align-items: flex-start; padding-top: 2rem; }
+  .cb-auth-modal { max-height: calc(100vh - 4rem); overflow-y: auto; padding: 1.5rem; }
+  .cb-auth-header h2 { font-size: 1.25rem; }
+  .cb-account-header h1 { font-size: 1.5rem; }
+  .cb-account-card { padding: 1rem; }
+  .cb-order-card { flex-wrap: wrap; padding: 0.875rem 1rem; gap: 0.5rem 0.75rem; }
+  .cb-order-card-total { width: 100%; text-align: right; }
+  .cb-cart-row { grid-template-columns: 64px 1fr; gap: 12px; padding: 12px; }
+  .cb-cart-row img,
+  .cb-cart-row .cb-skeleton { width: 64px !important; height: 64px !important; }
+  .cb-cart-row > div:last-child { grid-column: 2; text-align: right; }
+}
+
+/* Phones — tighter spacing, smaller modal padding */
+@media (max-width: 480px) {
+  .cb-auth-modal { padding: 1.25rem; border-radius: 12px; }
+  .cb-auth-modal-close { top: 0.5rem; right: 0.5rem; }
+  .cb-account-detail { font-size: 0.85rem; gap: 0.5rem; }
+  .cb-account-card { padding: 0.875rem; }
+  .cb-account-card-header h3 { font-size: 1rem; }
+  .cb-account-section, .cb-account-orders-section, .cb-account-login-section { padding-top: 1.5rem; }
+  .cb-address-card { flex-wrap: wrap; }
+  .cb-orders-list { gap: 0.5rem; }
+  .cb-btn-lg { padding: 14px 20px; font-size: 1rem; }
+  .cb-modifier-group { padding: 12px 14px; }
+  .cb-product-actions { flex-direction: column; align-items: stretch; gap: 12px; }
+  .cb-product-actions .cb-qty { align-self: flex-start; }
+}
+
+/* Very small phones — last-resort tightening */
+@media (max-width: 360px) {
+  .cb-container { padding: 0 12px; }
+  .cb-auth-modal { padding: 1rem; }
+  .cb-auth-header h2 { font-size: 1.15rem; }
+}
