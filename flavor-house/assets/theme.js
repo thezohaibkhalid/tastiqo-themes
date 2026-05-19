@@ -74,6 +74,110 @@
   window.TastiqoCart = TastiqoCart;
 
   /* -----------------------------------------------
+     TastiqoMap — Google Maps address picker
+  ----------------------------------------------- */
+  const DEFAULT_MAP_CENTER = { lat: 24.8607, lng: 67.0011 };
+
+  const TastiqoMap = {
+    _ready: false,
+    _readyCallbacks: [],
+    _addrMap: null,
+    _addrMarker: null,
+    _addrGeocoder: null,
+    _ckMap: null,
+    _ckMarker: null,
+    onReady(cb) { if (this._ready) { cb(); return; } this._readyCallbacks.push(cb); },
+    _fireReady() {
+      this._ready = true;
+      this._readyCallbacks.forEach(cb => { try { cb(); } catch {} });
+      this._readyCallbacks = [];
+    },
+    attachAddressPicker(initial) {
+      const container = document.getElementById('addr-map');
+      if (!container || !window.google || !window.google.maps) return;
+      const hasInitial = typeof initial.lat === 'number' && typeof initial.lng === 'number';
+      const center = hasInitial ? { lat: initial.lat, lng: initial.lng } : DEFAULT_MAP_CENTER;
+      this._addrMap = new google.maps.Map(container, {
+        center, zoom: hasInitial ? 16 : 12,
+        disableDefaultUI: true, zoomControl: true, gestureHandling: 'greedy',
+      });
+      this._addrMarker = new google.maps.Marker({ position: center, map: this._addrMap, draggable: true });
+      this._addrGeocoder = new google.maps.Geocoder();
+      this._addrMap.addListener('click', (e) => { this._addrMarker.setPosition(e.latLng); this._onAddrPinChanged(); });
+      this._addrMarker.addListener('dragend', () => this._onAddrPinChanged());
+      if (hasInitial) {
+        this._writeAddrInputs(initial.lat, initial.lng);
+        this._showCoords(initial.lat, initial.lng);
+      } else {
+        this._writeAddrInputs('', '');
+        this._showCoords(null, null);
+      }
+    },
+    locateMe() {
+      const hint = document.getElementById('addr-map-hint');
+      if (!navigator.geolocation) {
+        if (hint) hint.textContent = 'Your browser does not support location sharing.';
+        return;
+      }
+      if (hint) hint.textContent = 'Getting your location…';
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude, lng = pos.coords.longitude;
+          if (this._addrMap && this._addrMarker) {
+            this._addrMap.setCenter({ lat, lng });
+            this._addrMap.setZoom(17);
+            this._addrMarker.setPosition({ lat, lng });
+            this._onAddrPinChanged();
+          }
+          if (hint) hint.textContent = 'Drag the pin to fine-tune.';
+        },
+        (err) => {
+          if (hint) hint.textContent = err.code === 1
+            ? 'Permission denied — pin the location manually instead.'
+            : 'Could not get your location — pin it manually.';
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    },
+    _onAddrPinChanged() {
+      if (!this._addrMarker) return;
+      const pos = this._addrMarker.getPosition();
+      const lat = pos.lat(), lng = pos.lng();
+      this._writeAddrInputs(lat, lng);
+      this._showCoords(lat, lng);
+      const line1El = document.getElementById('addr-line1');
+      if (this._addrGeocoder && line1El && !line1El.value.trim()) {
+        this._addrGeocoder.geocode({ location: { lat, lng } }, (results, status) => {
+          if (status === 'OK' && results && results[0]) line1El.value = results[0].formatted_address;
+        });
+      }
+    },
+    _writeAddrInputs(lat, lng) {
+      const latEl = document.getElementById('addr-lat');
+      const lngEl = document.getElementById('addr-lng');
+      if (latEl) latEl.value = lat === '' ? '' : String(lat);
+      if (lngEl) lngEl.value = lng === '' ? '' : String(lng);
+    },
+    _showCoords(lat, lng) {
+      const el = document.getElementById('addr-map-coords');
+      if (!el) return;
+      if (typeof lat !== 'number' || typeof lng !== 'number') { el.textContent = ''; return; }
+      el.textContent = '📍 ' + lat.toFixed(6) + ', ' + lng.toFixed(6);
+    },
+    showCheckoutPin(containerId, lat, lng) {
+      const container = document.getElementById(containerId);
+      if (!container || !window.google || !window.google.maps) return;
+      const pos = { lat, lng };
+      this._ckMap = new google.maps.Map(container, {
+        center: pos, zoom: 16, disableDefaultUI: true, gestureHandling: 'none', clickableIcons: false,
+      });
+      this._ckMarker = new google.maps.Marker({ position: pos, map: this._ckMap });
+    },
+  };
+  window.__tqMapsReady = () => TastiqoMap._fireReady();
+  window.TastiqoMap = TastiqoMap;
+
+  /* -----------------------------------------------
      Storefront data + helpers
   ----------------------------------------------- */
   let _storefrontData = null;
@@ -570,6 +674,14 @@
     const errorEl = document.getElementById('address-error');
     if (errorEl) errorEl.style.display = 'none';
     addressModal.style.display = 'flex';
+
+    const initial = {
+      lat: addr && typeof addr.lat === 'number' ? addr.lat : null,
+      lng: addr && typeof addr.lng === 'number' ? addr.lng : null,
+    };
+    TastiqoMap.onReady(() => {
+      requestAnimationFrame(() => TastiqoMap.attachAddressPicker(initial));
+    });
   }
 
   function closeAddressModal() { if (addressModal) addressModal.style.display = 'none'; }
@@ -578,6 +690,9 @@
   if (addressCloseBtn) addressCloseBtn.addEventListener('click', closeAddressModal);
   if (addressCancelBtn) addressCancelBtn.addEventListener('click', closeAddressModal);
   if (addressModal) addressModal.addEventListener('click', e => { if (e.target === addressModal) closeAddressModal(); });
+
+  const addrLocateBtn = document.getElementById('addr-locate-btn');
+  if (addrLocateBtn) addrLocateBtn.addEventListener('click', () => TastiqoMap.locateMe());
 
   window._editAddress = function(id) {
     const addr = _addressCache.find(a => a.id === id);
@@ -593,6 +708,10 @@
     e.preventDefault();
     const addrId = document.getElementById('addr-id').value;
     const errorEl = document.getElementById('address-error');
+    const latRaw = document.getElementById('addr-lat').value;
+    const lngRaw = document.getElementById('addr-lng').value;
+    const lat = latRaw === '' ? null : parseFloat(latRaw);
+    const lng = lngRaw === '' ? null : parseFloat(lngRaw);
     const body = {
       label: document.getElementById('addr-label').value.trim(),
       address_line1: document.getElementById('addr-line1').value.trim(),
@@ -600,9 +719,15 @@
       city: document.getElementById('addr-city').value.trim() || null,
       postal_code: document.getElementById('addr-postal').value.trim() || null,
       delivery_notes: document.getElementById('addr-notes').value.trim() || null,
-      is_default: document.getElementById('addr-default').checked
+      is_default: document.getElementById('addr-default').checked,
+      lat,
+      lng,
     };
     if (!body.address_line1) { if (errorEl) { errorEl.textContent = 'Address line 1 is required'; errorEl.style.display = 'block'; } return; }
+    if (lat === null || lng === null) {
+      if (errorEl) { errorEl.textContent = 'Please drop a pin on the map so the rider can find you.'; errorEl.style.display = 'block'; }
+      return;
+    }
     const method = addrId ? 'PUT' : 'POST';
     const url = addrId ? '/addresses/' + addrId : '/addresses';
     const btn = document.getElementById('address-submit-btn');
@@ -610,7 +735,9 @@
     try {
       const r = await CustomerAuth.apiRequest(method, url, body);
       if (!r.ok) { const d = await r.json(); throw new Error(d.error || 'Failed'); }
-      closeAddressModal(); loadAddresses();
+      closeAddressModal();
+      loadAddresses();
+      if (typeof renderDeliveryPicker === 'function') renderDeliveryPicker();
     } catch (err) {
       if (errorEl) { errorEl.textContent = err.message || 'Failed to save'; errorEl.style.display = 'block'; }
     } finally {
@@ -846,6 +973,17 @@
       return;
     }
 
+    const addrId = window._fhSelectedAddressId;
+    if (!addrId) {
+      showCheckoutError('Please choose a delivery address before placing the order.');
+      return;
+    }
+    const selectedAddr = (window._addressCache || []).find(a => a.id === addrId);
+    if (!selectedAddr || typeof selectedAddr.lat !== 'number' || typeof selectedAddr.lng !== 'number') {
+      showCheckoutError('This address has no map pin. Tap "Adjust pin / edit" to drop one — the rider needs it to find you.');
+      return;
+    }
+
     const apiItems = items.map(it => ({
       product_id: it.product_id,
       quantity: it.quantity,
@@ -855,9 +993,10 @@
 
     const body = {
       branch_id: branchId,
-      order_type: 'pickup',
+      order_type: 'delivery',
       payment_method: 'cash',
       items: apiItems,
+      address_id: addrId,
       customer_notes: ''
     };
 
@@ -1043,10 +1182,102 @@
     if (!cartPage) return;
 
     renderCart();
+    renderDeliveryPicker();
     window.addEventListener('cart:updated', renderCart);
 
     const checkoutBtn = document.getElementById('fh-checkout-btn');
     if (checkoutBtn) checkoutBtn.addEventListener('click', doCheckout);
+  }
+
+  window._fhSelectedAddressId = null;
+
+  function renderDeliveryPicker() {
+    const container = document.getElementById('fh-delivery-picker');
+    if (!container) return;
+    if (!CustomerAuth.isLoggedIn()) {
+      container.innerHTML =
+        '<div style="border:1px solid var(--color-border);border-radius:10px;padding:0.875rem;font-size:0.85rem;line-height:1.5;">' +
+        '<strong>Sign in to add a delivery address.</strong><br>' +
+        '<button type="button" class="btn-link" id="fh-delivery-signin">Sign in</button>' +
+        '</div>';
+      const btn = document.getElementById('fh-delivery-signin');
+      if (btn) btn.addEventListener('click', openAuthModal);
+      return;
+    }
+    container.innerHTML = '<div style="font-size:0.85rem;color:var(--color-text-muted);">Loading delivery addresses…</div>';
+    CustomerAuth.apiRequest('GET', '/addresses').then(r => {
+      if (!r.ok) throw new Error();
+      return r.json();
+    }).then(addrs => {
+      window._addressCache = addrs || [];
+      if (!addrs || !addrs.length) {
+        container.innerHTML =
+          '<div class="checkout-addr-card no-pin">' +
+          '<strong>No delivery address yet.</strong>' +
+          '<div style="font-size:0.8rem;color:var(--color-text-muted);margin:4px 0 8px;">Save an address with a map pin so the rider knows where to deliver.</div>' +
+          '<button type="button" class="btn btn-primary btn-sm" id="fh-delivery-add">Add delivery address</button>' +
+          '</div>';
+        const addBtn = document.getElementById('fh-delivery-add');
+        if (addBtn) addBtn.addEventListener('click', () => openAddressModal(null));
+        window._fhSelectedAddressId = null;
+        return;
+      }
+      const defaultAddr = addrs.find(a => a.is_default) || addrs[0];
+      window._fhSelectedAddressId = defaultAddr.id;
+      let html = '<div style="font-size:0.85rem;font-weight:600;margin-bottom:0.5rem;">Deliver to</div>';
+      html += '<div style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.5rem;">';
+      addrs.forEach(a => {
+        const checked = a.id === window._fhSelectedAddressId ? 'checked' : '';
+        const pinBadge = (typeof a.lat === 'number' && typeof a.lng === 'number')
+          ? '<span style="color:var(--color-success,#10b981);font-size:0.7rem;font-weight:700;">📍 PINNED</span>'
+          : '<span style="color:var(--color-warning,#F59E0B);font-size:0.7rem;font-weight:700;">⚠ NO PIN</span>';
+        html +=
+          `<label style="display:flex;gap:0.5rem;align-items:flex-start;padding:0.625rem;border:1px solid var(--color-border);border-radius:8px;cursor:pointer;">` +
+            `<input type="radio" name="fh-delivery-addr" value="${escH(a.id)}" ${checked} style="margin-top:3px;">` +
+            `<div style="flex:1;font-size:0.85rem;line-height:1.4;">` +
+              `<div style="font-weight:600;">${escH(a.label || 'Address')} ${pinBadge}</div>` +
+              `<div>${escH(a.address_line1 || '')}</div>` +
+              `<button type="button" class="btn-link" data-fh-adjust-pin="${escH(a.id)}" style="font-size:0.75rem;margin-top:4px;">Adjust pin / edit</button>` +
+            `</div>` +
+          `</label>`;
+      });
+      html += '</div>';
+      html += '<button type="button" class="btn btn-outline btn-sm" id="fh-delivery-add" style="width:100%;">+ Add another address</button>';
+      html += '<div id="fh-checkout-map" class="checkout-map" style="display:none;"></div>';
+      container.innerHTML = html;
+      container.querySelectorAll('input[name="fh-delivery-addr"]').forEach(input => {
+        input.addEventListener('change', () => {
+          window._fhSelectedAddressId = input.value;
+          showSelectedAddrPin();
+        });
+      });
+      container.querySelectorAll('[data-fh-adjust-pin]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-fh-adjust-pin');
+          const addr = (window._addressCache || []).find(a => a.id === id);
+          if (addr) openAddressModal(addr);
+        });
+      });
+      const addBtn = document.getElementById('fh-delivery-add');
+      if (addBtn) addBtn.addEventListener('click', () => openAddressModal(null));
+      showSelectedAddrPin();
+    }).catch(() => {
+      container.innerHTML = '<div style="font-size:0.85rem;color:var(--color-text-muted);">Could not load addresses.</div>';
+    });
+  }
+
+  function showSelectedAddrPin() {
+    const mapEl = document.getElementById('fh-checkout-map');
+    if (!mapEl) return;
+    const addr = (window._addressCache || []).find(a => a.id === window._fhSelectedAddressId);
+    if (addr && typeof addr.lat === 'number' && typeof addr.lng === 'number') {
+      mapEl.style.display = 'block';
+      TastiqoMap.onReady(() => {
+        requestAnimationFrame(() => TastiqoMap.showCheckoutPin('fh-checkout-map', addr.lat, addr.lng));
+      });
+    } else {
+      mapEl.style.display = 'none';
+    }
   }
 
   function renderCart() {

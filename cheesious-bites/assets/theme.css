@@ -939,6 +939,73 @@ html.cb-loaded  body { opacity: 1; transition: opacity 240ms ease; }
 }
 
 /* ============================================
+   ADDRESS MAP PICKER
+   ============================================ */
+
+.cb-map {
+  width: 100%;
+  height: 240px;
+  border-radius: 10px;
+  border: 1px solid var(--cb-border);
+  overflow: hidden;
+  background: var(--cb-bg);
+}
+
+.cb-map-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.cb-map-hint {
+  font-size: 0.75rem;
+  color: var(--cb-text-muted);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.cb-map-coords {
+  margin-top: 0.4rem;
+  font-size: 0.72rem;
+  color: var(--cb-text-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  min-height: 1.1em;
+}
+
+.cb-map-coords:empty::before {
+  content: 'No pin yet — drag the marker or use the location button.';
+  font-family: var(--cb-font-body);
+  font-style: italic;
+  color: var(--cb-text-muted);
+}
+
+/* Checkout pin-confirm map (smaller, read-only) */
+.cb-checkout-map {
+  width: 100%;
+  height: 160px;
+  border-radius: 10px;
+  border: 1px solid var(--cb-border);
+  overflow: hidden;
+  background: var(--cb-bg);
+  margin-top: 0.75rem;
+}
+
+.cb-checkout-addr-card {
+  background: var(--cb-bg);
+  border: 1px solid var(--cb-border);
+  border-radius: 10px;
+  padding: 0.875rem;
+  margin-bottom: 0.875rem;
+}
+
+.cb-checkout-addr-card.no-pin {
+  border-color: var(--cb-warning, #F59E0B);
+  background: #FFFBEB;
+}
+
+/* ============================================
    MOBILE RESPONSIVE REFINEMENTS
    ============================================ */
 

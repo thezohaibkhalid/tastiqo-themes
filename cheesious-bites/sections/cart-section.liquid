@@ -19,6 +19,14 @@
           <span>Total</span>
           <span id="cb-cart-total">Rs. 0</span>
         </div>
+
+        <!-- Delivery picker: rendered by JS from the customer's saved
+             addresses (or prompts a login if not authenticated). The
+             rider can't navigate without lat/lng, so we either reuse the
+             pin from a saved address or open the address modal to set
+             one. -->
+        <div id="cb-delivery-picker" style="margin-top:1rem;"></div>
+
         <div id="cb-checkout-error" style="display:none;background:#FEF2F2;color:var(--cb-error,#dc2626);padding:0.625rem 0.875rem;border-radius:8px;font-size:0.8rem;margin-top:12px;"></div>
         <button type="button" class="cb-btn cb-btn-primary cb-btn-block cb-btn-lg" style="margin-top: 18px;" id="cb-checkout-btn">
           Checkout →

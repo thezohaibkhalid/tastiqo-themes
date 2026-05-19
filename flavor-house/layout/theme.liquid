@@ -98,6 +98,56 @@
 
   {% render 'customer-auth' %}
 
+  <!-- Google Maps JS API — used by the address modal map picker and the
+       checkout pin-confirm flow. Loaded async; on ready it calls
+       window.__tqMapsReady which the theme JS sets up below. -->
+  <script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBeJwUzZdLQEH7GZcpTftnbD2iCYBTt9EU&libraries=places&loading=async&callback=__tqMapsReady"
+    async defer></script>
+
   {{ 'theme.js' | asset_url | script_tag }}
+
+  <!-- Subscription-status popup / lockout overlay (self-contained) -->
+  <style id="tq-sub-style">
+    #tq-sub-popup{position:fixed;right:20px;bottom:20px;max-width:340px;background:#fff;color:#1C1410;border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.18);font-family:system-ui,-apple-system,sans-serif;font-size:14px;line-height:1.45;z-index:99998;border-left:4px solid var(--tq-accent,#E11D48);padding:16px 36px 16px 16px;animation:tqSubIn .25s ease-out}
+    #tq-sub-popup h4{margin:0 0 6px;font-size:15px;font-weight:700;color:var(--tq-accent,#E11D48)}
+    #tq-sub-popup p{margin:0;color:#444}
+    #tq-sub-popup .tq-sub-close{position:absolute;top:6px;right:8px;background:none;border:0;font-size:20px;line-height:1;cursor:pointer;color:#888;padding:4px}
+    #tq-sub-popup .tq-sub-close:hover{color:#222}
+    #tq-sub-lock{position:fixed;inset:0;background:rgba(15,15,20,.92);z-index:99999;display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,sans-serif;padding:24px}
+    #tq-sub-lock .tq-sub-card{background:#fff;border-radius:16px;padding:32px 28px;max-width:420px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4);border-top:5px solid var(--tq-accent,#E11D48)}
+    #tq-sub-lock h2{margin:0 0 12px;font-size:22px;font-weight:700;color:#1a1a1a}
+    #tq-sub-lock p{margin:0;color:#555;font-size:15px;line-height:1.55}
+    @keyframes tqSubIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  </style>
+  <script>
+    (function(){
+      var ACCENT='#E11D48';
+      document.documentElement.style.setProperty('--tq-accent',ACCENT);
+      function fmtDate(s){try{var d=new Date(s);return d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'})}catch(e){return s||''}}
+      function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+      function showGrace(info){
+        if(sessionStorage.getItem('tq_storefront_grace_dismissed')==='1')return;
+        var days=Math.max(0,parseInt(info.grace_days_left||info.days_left||0,10));
+        var el=document.createElement('div');el.id='tq-sub-popup';el.setAttribute('role','alert');
+        el.innerHTML='<button type="button" class="tq-sub-close" aria-label="Dismiss">&times;</button>'+
+          '<h4>Admin: please clear your bills</h4>'+
+          '<p>This site will pause in <strong>'+days+'</strong> day(s) ('+esc(fmtDate(info.lockout_at))+'). Pay the subscription to keep it live.</p>';
+        document.body.appendChild(el);
+        el.querySelector('.tq-sub-close').addEventListener('click',function(){sessionStorage.setItem('tq_storefront_grace_dismissed','1');el.remove()});
+      }
+      function showLock(){
+        var el=document.createElement('div');el.id='tq-sub-lock';el.setAttribute('role','alertdialog');el.setAttribute('aria-modal','true');
+        el.innerHTML='<div class="tq-sub-card"><h2>Restaurant temporarily unavailable</h2><p>This restaurant’s subscription has expired. Please check back soon.</p></div>';
+        document.body.appendChild(el);
+      }
+      document.addEventListener('DOMContentLoaded',function(){
+        fetch('/api/public/subscription-info',{credentials:'same-origin'})
+          .then(function(r){return r.ok?r.json():null})
+          .then(function(info){if(!info)return;if(info.status==='grace')showGrace(info);else if(info.status==='locked')showLock()})
+          .catch(function(){});
+      });
+    })();
+  </script>
 </body>
 </html>

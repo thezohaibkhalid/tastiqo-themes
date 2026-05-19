@@ -88,6 +88,22 @@
         <label for="addr-line1">Address Line 1</label>
         <input type="text" id="addr-line1" placeholder="Street address" required>
       </div>
+
+      <!-- Map picker: drop a pin so the rider knows exactly where to go. -->
+      <div class="cnc-form-group">
+        <label>Pin your location on the map</label>
+        <div class="cnc-map-actions">
+          <button type="button" class="cnc-btn cnc-btn-outline cnc-btn-sm" id="addr-locate-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:middle;"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+            Use my current location
+          </button>
+          <span class="cnc-map-hint" id="addr-map-hint">Tap the map or drag the pin to set the exact spot.</span>
+        </div>
+        <div id="addr-map" class="cnc-map"></div>
+        <input type="hidden" id="addr-lat" value="">
+        <input type="hidden" id="addr-lng" value="">
+        <div class="cnc-map-coords" id="addr-map-coords"></div>
+      </div>
       <div class="cnc-form-group">
         <label for="addr-line2">Address Line 2 <span style="color:var(--cnc-text-muted);">(optional)</span></label>
         <input type="text" id="addr-line2" placeholder="Apt, suite, floor, etc.">

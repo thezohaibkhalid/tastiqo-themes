@@ -39,6 +39,109 @@
   };
   window.TastiqoCart = TastiqoCart;
 
+  /* ── TastiqoMap — Google Maps address picker ────────────────────── */
+  var DEFAULT_CENTER = { lat: 24.8607, lng: 67.0011 };
+  var TastiqoMap = {
+    _ready: false,
+    _readyCallbacks: [],
+    _addrMap: null,
+    _addrMarker: null,
+    _addrGeocoder: null,
+    _ckMap: null,
+    _ckMarker: null,
+    onReady: function(cb) { if (this._ready) { cb(); return; } this._readyCallbacks.push(cb); },
+    _fireReady: function() {
+      this._ready = true;
+      this._readyCallbacks.forEach(function(cb) { try { cb(); } catch(e) {} });
+      this._readyCallbacks = [];
+    },
+    attachAddressPicker: function(initial) {
+      var self = this;
+      var container = document.getElementById('addr-map');
+      if (!container || !window.google || !window.google.maps) return;
+      var hasInitial = typeof initial.lat === 'number' && typeof initial.lng === 'number';
+      var center = hasInitial ? { lat: initial.lat, lng: initial.lng } : DEFAULT_CENTER;
+      this._addrMap = new google.maps.Map(container, {
+        center: center, zoom: hasInitial ? 16 : 12,
+        disableDefaultUI: true, zoomControl: true, gestureHandling: 'greedy',
+      });
+      this._addrMarker = new google.maps.Marker({ position: center, map: this._addrMap, draggable: true });
+      this._addrGeocoder = new google.maps.Geocoder();
+      this._addrMap.addListener('click', function(e) { self._addrMarker.setPosition(e.latLng); self._onAddrPinChanged(); });
+      this._addrMarker.addListener('dragend', function() { self._onAddrPinChanged(); });
+      if (hasInitial) {
+        this._writeAddrInputs(initial.lat, initial.lng);
+        this._showCoords(initial.lat, initial.lng);
+      } else {
+        this._writeAddrInputs('', '');
+        this._showCoords(null, null);
+      }
+    },
+    locateMe: function() {
+      var self = this;
+      var hint = document.getElementById('addr-map-hint');
+      if (!navigator.geolocation) {
+        if (hint) hint.textContent = 'Your browser does not support location sharing.';
+        return;
+      }
+      if (hint) hint.textContent = 'Getting your location…';
+      navigator.geolocation.getCurrentPosition(
+        function(pos) {
+          var lat = pos.coords.latitude, lng = pos.coords.longitude;
+          if (self._addrMap && self._addrMarker) {
+            self._addrMap.setCenter({ lat: lat, lng: lng });
+            self._addrMap.setZoom(17);
+            self._addrMarker.setPosition({ lat: lat, lng: lng });
+            self._onAddrPinChanged();
+          }
+          if (hint) hint.textContent = 'Drag the pin to fine-tune.';
+        },
+        function(err) {
+          if (hint) hint.textContent = err.code === 1
+            ? 'Permission denied — pin the location manually instead.'
+            : 'Could not get your location — pin it manually.';
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    },
+    _onAddrPinChanged: function() {
+      if (!this._addrMarker) return;
+      var pos = this._addrMarker.getPosition();
+      var lat = pos.lat(), lng = pos.lng();
+      this._writeAddrInputs(lat, lng);
+      this._showCoords(lat, lng);
+      var line1El = document.getElementById('addr-line1');
+      if (this._addrGeocoder && line1El && !line1El.value.trim()) {
+        this._addrGeocoder.geocode({ location: { lat: lat, lng: lng } }, function(results, status) {
+          if (status === 'OK' && results && results[0]) line1El.value = results[0].formatted_address;
+        });
+      }
+    },
+    _writeAddrInputs: function(lat, lng) {
+      var latEl = document.getElementById('addr-lat');
+      var lngEl = document.getElementById('addr-lng');
+      if (latEl) latEl.value = lat === '' ? '' : String(lat);
+      if (lngEl) lngEl.value = lng === '' ? '' : String(lng);
+    },
+    _showCoords: function(lat, lng) {
+      var el = document.getElementById('addr-map-coords');
+      if (!el) return;
+      if (typeof lat !== 'number' || typeof lng !== 'number') { el.textContent = ''; return; }
+      el.textContent = '📍 ' + lat.toFixed(6) + ', ' + lng.toFixed(6);
+    },
+    showCheckoutPin: function(containerId, lat, lng) {
+      var container = document.getElementById(containerId);
+      if (!container || !window.google || !window.google.maps) return;
+      var pos = { lat: lat, lng: lng };
+      this._ckMap = new google.maps.Map(container, {
+        center: pos, zoom: 16, disableDefaultUI: true, gestureHandling: 'none', clickableIcons: false,
+      });
+      this._ckMarker = new google.maps.Marker({ position: pos, map: this._ckMap });
+    },
+  };
+  window.__tqMapsReady = function() { TastiqoMap._fireReady(); };
+  window.TastiqoMap = TastiqoMap;
+
   /* ── Format price ───────────────────────────────────────────────── */
   function formatMoney(paisa) {
     var amount = (paisa / 100).toFixed(2);
@@ -63,10 +166,18 @@
     var branchId = getBranchId();
     if (!branchId) { showCheckoutError('Please select a branch first.'); return; }
 
+    var addrId = window._cncSelectedAddressId;
+    if (!addrId) { showCheckoutError('Please choose a delivery address before placing the order.'); return; }
+    var selectedAddr = (window._addressCache || []).find(function(a) { return a.id === addrId; });
+    if (!selectedAddr || typeof selectedAddr.lat !== 'number' || typeof selectedAddr.lng !== 'number') {
+      showCheckoutError('This address has no map pin. Tap "Adjust pin / edit" to drop one — the rider needs it to find you.');
+      return;
+    }
+
     var apiItems = items.map(function(it) {
       return { product_id: it.product_id, quantity: it.quantity, modifier_ids: (it.modifiers || []).map(function(m) { return m.id; }), notes: it.notes || '' };
     });
-    var body = { branch_id: branchId, order_type: 'pickup', payment_method: 'cash', items: apiItems, customer_notes: '' };
+    var body = { branch_id: branchId, order_type: 'delivery', payment_method: 'cash', items: apiItems, address_id: addrId, customer_notes: '' };
     var checkoutBtn = document.getElementById('cnc-checkout-btn');
     if (checkoutBtn) { checkoutBtn.disabled = true; checkoutBtn.textContent = 'Placing order...'; }
 
@@ -168,9 +279,101 @@
     var cartPage = document.querySelector('[data-cnc-cart-page]');
     if (!cartPage) return;
     renderCart();
+    renderDeliveryPicker();
     window.addEventListener('cart:updated', renderCart);
     var checkoutBtn = document.getElementById('cnc-checkout-btn');
     if (checkoutBtn) checkoutBtn.addEventListener('click', doCheckout);
+  }
+
+  window._cncSelectedAddressId = null;
+
+  function renderDeliveryPicker() {
+    var container = document.getElementById('cnc-delivery-picker');
+    if (!container) return;
+    if (!CustomerAuth.isLoggedIn()) {
+      container.innerHTML =
+        '<div style="border:1px solid var(--cnc-border);border-radius:10px;padding:0.875rem;font-size:0.85rem;line-height:1.5;">' +
+        '<strong>Sign in to add a delivery address.</strong><br>' +
+        '<button type="button" class="cnc-btn-link" id="cnc-delivery-signin">Sign in</button>' +
+        '</div>';
+      var btn = document.getElementById('cnc-delivery-signin');
+      if (btn) btn.addEventListener('click', openAuthModal);
+      return;
+    }
+    container.innerHTML = '<div style="font-size:0.85rem;color:var(--cnc-text-muted);">Loading delivery addresses…</div>';
+    CustomerAuth.apiRequest('GET', '/addresses').then(function(r) {
+      if (!r.ok) throw new Error();
+      return r.json();
+    }).then(function(addrs) {
+      window._addressCache = addrs || [];
+      if (!addrs || !addrs.length) {
+        container.innerHTML =
+          '<div class="cnc-checkout-addr-card no-pin">' +
+          '<strong>No delivery address yet.</strong>' +
+          '<div style="font-size:0.8rem;color:var(--cnc-text-muted);margin:4px 0 8px;">Save an address with a map pin so the rider knows where to deliver.</div>' +
+          '<button type="button" class="cnc-btn cnc-btn-primary cnc-btn-sm" id="cnc-delivery-add">Add delivery address</button>' +
+          '</div>';
+        var addBtn = document.getElementById('cnc-delivery-add');
+        if (addBtn) addBtn.addEventListener('click', function() { openAddressModal(null); });
+        window._cncSelectedAddressId = null;
+        return;
+      }
+      var defaultAddr = addrs.find(function(a) { return a.is_default; }) || addrs[0];
+      window._cncSelectedAddressId = defaultAddr.id;
+      var html = '<div style="font-size:0.85rem;font-weight:600;margin-bottom:0.5rem;">Deliver to</div>';
+      html += '<div style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.5rem;">';
+      addrs.forEach(function(a) {
+        var checked = a.id === window._cncSelectedAddressId ? 'checked' : '';
+        var pinBadge = (typeof a.lat === 'number' && typeof a.lng === 'number')
+          ? '<span style="color:var(--cnc-success);font-size:0.7rem;font-weight:700;">📍 PINNED</span>'
+          : '<span style="color:var(--cnc-warning,#F59E0B);font-size:0.7rem;font-weight:700;">⚠ NO PIN</span>';
+        html +=
+          '<label style="display:flex;gap:0.5rem;align-items:flex-start;padding:0.625rem;border:1px solid var(--cnc-border);border-radius:8px;cursor:pointer;">' +
+            '<input type="radio" name="cnc-delivery-addr" value="' + escHTML(a.id) + '" ' + checked + ' style="margin-top:3px;">' +
+            '<div style="flex:1;font-size:0.85rem;line-height:1.4;">' +
+              '<div style="font-weight:600;">' + escHTML(a.label || 'Address') + ' ' + pinBadge + '</div>' +
+              '<div>' + escHTML(a.address_line1 || '') + '</div>' +
+              '<button type="button" class="cnc-btn-link" data-cnc-adjust-pin="' + escHTML(a.id) + '" style="font-size:0.75rem;margin-top:4px;">Adjust pin / edit</button>' +
+            '</div>' +
+          '</label>';
+      });
+      html += '</div>';
+      html += '<button type="button" class="cnc-btn cnc-btn-outline cnc-btn-sm" id="cnc-delivery-add" style="width:100%;">+ Add another address</button>';
+      html += '<div id="cnc-checkout-map" class="cnc-checkout-map" style="display:none;"></div>';
+      container.innerHTML = html;
+      container.querySelectorAll('input[name="cnc-delivery-addr"]').forEach(function(input) {
+        input.addEventListener('change', function() {
+          window._cncSelectedAddressId = input.value;
+          showSelectedAddrPin();
+        });
+      });
+      container.querySelectorAll('[data-cnc-adjust-pin]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = btn.getAttribute('data-cnc-adjust-pin');
+          var addr = (window._addressCache || []).find(function(a) { return a.id === id; });
+          if (addr) openAddressModal(addr);
+        });
+      });
+      var addBtn = document.getElementById('cnc-delivery-add');
+      if (addBtn) addBtn.addEventListener('click', function() { openAddressModal(null); });
+      showSelectedAddrPin();
+    }).catch(function() {
+      container.innerHTML = '<div style="font-size:0.85rem;color:var(--cnc-text-muted);">Could not load addresses.</div>';
+    });
+  }
+
+  function showSelectedAddrPin() {
+    var mapEl = document.getElementById('cnc-checkout-map');
+    if (!mapEl) return;
+    var addr = (window._addressCache || []).find(function(a) { return a.id === window._cncSelectedAddressId; });
+    if (addr && typeof addr.lat === 'number' && typeof addr.lng === 'number') {
+      mapEl.style.display = 'block';
+      TastiqoMap.onReady(function() {
+        requestAnimationFrame(function() { TastiqoMap.showCheckoutPin('cnc-checkout-map', addr.lat, addr.lng); });
+      });
+    } else {
+      mapEl.style.display = 'none';
+    }
   }
 
   function renderCart() {
@@ -480,6 +683,14 @@
     document.getElementById('addr-default').checked = addr ? addr.is_default : false;
     document.getElementById('address-error').style.display = 'none';
     addressModal.style.display = 'flex';
+
+    var initial = {
+      lat: addr && typeof addr.lat === 'number' ? addr.lat : null,
+      lng: addr && typeof addr.lng === 'number' ? addr.lng : null,
+    };
+    TastiqoMap.onReady(function() {
+      requestAnimationFrame(function() { TastiqoMap.attachAddressPicker(initial); });
+    });
   }
   function closeAddressModal() { if (addressModal) addressModal.style.display = 'none'; }
 
@@ -488,6 +699,9 @@
   if (addressCancelBtn) addressCancelBtn.addEventListener('click', closeAddressModal);
   if (addressModal) addressModal.addEventListener('click', function(e) { if (e.target === addressModal) closeAddressModal(); });
 
+  var addrLocateBtn = document.getElementById('addr-locate-btn');
+  if (addrLocateBtn) addrLocateBtn.addEventListener('click', function() { TastiqoMap.locateMe(); });
+
   window._editAddress = function(id) { var addr = (window._addressCache || []).find(function(a) { return a.id === id; }); if (addr) openAddressModal(addr); };
   window._deleteAddress = function(id) { if (!confirm('Delete this address?')) return; CustomerAuth.apiRequest('DELETE', '/addresses/' + id).then(function(r) { if (!r.ok) throw new Error(); loadAddresses(); }).catch(function() { alert('Failed to delete address'); }); };
 
@@ -495,12 +709,36 @@
     e.preventDefault();
     var addrId = document.getElementById('addr-id').value;
     var errorEl = document.getElementById('address-error');
-    var body = { label: document.getElementById('addr-label').value.trim(), address_line1: document.getElementById('addr-line1').value.trim(), address_line2: document.getElementById('addr-line2').value.trim() || null, city: document.getElementById('addr-city').value.trim() || null, postal_code: document.getElementById('addr-postal').value.trim() || null, delivery_notes: document.getElementById('addr-notes').value.trim() || null, is_default: document.getElementById('addr-default').checked };
+    var latRaw = document.getElementById('addr-lat').value;
+    var lngRaw = document.getElementById('addr-lng').value;
+    var lat = latRaw === '' ? null : parseFloat(latRaw);
+    var lng = lngRaw === '' ? null : parseFloat(lngRaw);
+    var body = {
+      label: document.getElementById('addr-label').value.trim(),
+      address_line1: document.getElementById('addr-line1').value.trim(),
+      address_line2: document.getElementById('addr-line2').value.trim() || null,
+      city: document.getElementById('addr-city').value.trim() || null,
+      postal_code: document.getElementById('addr-postal').value.trim() || null,
+      delivery_notes: document.getElementById('addr-notes').value.trim() || null,
+      is_default: document.getElementById('addr-default').checked,
+      lat: lat,
+      lng: lng,
+    };
     if (!body.address_line1) { errorEl.textContent = 'Address line 1 is required'; errorEl.style.display = 'block'; return; }
+    if (lat === null || lng === null) {
+      errorEl.textContent = 'Please drop a pin on the map so the rider can find you.';
+      errorEl.style.display = 'block';
+      return;
+    }
     var method = addrId ? 'PUT' : 'POST', url = addrId ? '/addresses/' + addrId : '/addresses';
     var btn = document.getElementById('address-submit-btn');
     btn.disabled = true; btn.textContent = 'Saving...';
-    CustomerAuth.apiRequest(method, url, body).then(function(r) { if (!r.ok) return r.json().then(function(d) { throw new Error(d.error || 'Failed'); }); closeAddressModal(); loadAddresses(); })
+    CustomerAuth.apiRequest(method, url, body).then(function(r) {
+      if (!r.ok) return r.json().then(function(d) { throw new Error(d.error || 'Failed'); });
+      closeAddressModal();
+      loadAddresses();
+      if (typeof renderDeliveryPicker === 'function') renderDeliveryPicker();
+    })
     .catch(function(err) { errorEl.textContent = err.message || 'Failed to save address'; errorEl.style.display = 'block'; })
     .finally(function() { btn.disabled = false; btn.textContent = addrId ? 'Update Address' : 'Save Address'; });
   });

@@ -88,6 +88,25 @@
         <label for="addr-line1">Address Line 1</label>
         <input type="text" id="addr-line1" placeholder="Street address" required>
       </div>
+
+      <!-- Map picker: drop a pin so the rider knows exactly where to go.
+           The address modal hidden lat/lng inputs are filled by the JS
+           in theme.js whenever the marker moves or the user taps the
+           geolocation button. -->
+      <div class="cb-form-group">
+        <label>Pin your location on the map</label>
+        <div class="cb-map-actions">
+          <button type="button" class="cb-btn cb-btn-outline cb-btn-sm" id="addr-locate-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:middle;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Use my current location
+          </button>
+          <span class="cb-map-hint" id="addr-map-hint">Tap the map or drag the pin to set the exact spot.</span>
+        </div>
+        <div id="addr-map" class="cb-map"></div>
+        <input type="hidden" id="addr-lat" value="">
+        <input type="hidden" id="addr-lng" value="">
+        <div class="cb-map-coords" id="addr-map-coords"></div>
+      </div>
       <div class="cb-form-group">
         <label for="addr-line2">Address Line 2 <span style="color:var(--cb-text-muted);">(optional)</span></label>
         <input type="text" id="addr-line2" placeholder="Apt, suite, floor, etc.">
