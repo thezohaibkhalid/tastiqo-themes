@@ -216,13 +216,19 @@
       document.documentElement.style.setProperty('--tq-accent',ACCENT);
       function fmtDate(s){try{var d=new Date(s);return d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'})}catch(e){return s||''}}
       function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+      // Human-readable duration. Picks the most precise pair the eye can still
+      // read: days+hours, hours+minutes, minutes+seconds, or just seconds.
+      function fmtDur(s){if(s<=0)return'0s';var d=Math.floor(s/86400),h=Math.floor((s%86400)/3600),m=Math.floor((s%3600)/60),x=s%60;if(d>0)return d+'d '+h+'h';if(h>0)return h+'h '+m+'m';if(m>0)return m+'m '+x+'s';return x+'s'}
       function showGrace(info){
         if(sessionStorage.getItem('tq_storefront_grace_dismissed')==='1')return;
-        var days=Math.max(0,parseInt(info.grace_days_left||info.days_left||0,10));
+        // Backend's grace_days_left rounds *up* to days (so a 1-hour trial
+        // would show as "1 day left"). Compute the remaining time precisely
+        // from lockout_at and format it with the human-friendly fmtDur below.
+        var secsLeft=Math.max(0,Math.floor((new Date(info.lockout_at).getTime()-Date.now())/1000));
         var el=document.createElement('div');el.id='tq-sub-popup';el.setAttribute('role','alert');
         el.innerHTML='<button type="button" class="tq-sub-close" aria-label="Dismiss">&times;</button>'+
           '<h4>Admin: please clear your bills</h4>'+
-          '<p>This site will pause in <strong>'+days+'</strong> day(s) ('+esc(fmtDate(info.lockout_at))+'). Pay the subscription to keep it live.</p>';
+          '<p>This site will pause in <strong>'+fmtDur(secsLeft)+'</strong> ('+esc(fmtDate(info.lockout_at))+'). Pay the subscription to keep it live.</p>';
         document.body.appendChild(el);
         el.querySelector('.tq-sub-close').addEventListener('click',function(){sessionStorage.setItem('tq_storefront_grace_dismissed','1');el.remove()});
       }
