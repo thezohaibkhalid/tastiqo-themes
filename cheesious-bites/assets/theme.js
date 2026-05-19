@@ -1237,13 +1237,63 @@
 
   /* -----------------------------------------------
      Branch Selector Popup (first visit)
+
+     Suppression rules — popup is hidden if ANY of:
+       1. data.show_branch_popup === false (server cookie picked up and matched a branch)
+       2. localStorage has a saved branch_id matching one of the available
+          branches — resilient against cookie loss (incognito, expiry,
+          Fiber→net/http adapter quirks dropping Set-Cookie, etc.)
+       3. there's only one branch
+
+     On selection we save the branch_id to localStorage BEFORE the form
+     posts, so even if the server-side Set-Cookie fails for any reason
+     the popup won't come back next page load. The form still POSTs to
+     /api/storefront/set-branch so SSR keeps the cookie as the canonical
+     source of truth.
   ----------------------------------------------- */
+  var BRANCH_LS_KEY = 'tq_storefront_branch_id';
+
+  function getKnownBranchIds() {
+    var ids = [];
+    document.querySelectorAll('.cb-branch-row input[name="branch_id"], .cb-mobile-branch-row input[name="branch_id"]').forEach(function(input) {
+      if (input.value) ids.push(input.value);
+    });
+    return ids;
+  }
+
+  function savedBranchValid(allIds) {
+    try {
+      var saved = localStorage.getItem(BRANCH_LS_KEY);
+      return !!saved && allIds.indexOf(saved) !== -1;
+    } catch (e) { return false; }
+  }
+
+  // Bind localStorage persistence to the inline branch-switcher forms in
+  // the header (and mobile drawer) so a tap there ALSO suppresses the
+  // popup on later visits. Runs once at page load — not behind the
+  // show_popup gate so it always wires up.
+  function bindHeaderBranchPersistence() {
+    document.querySelectorAll('.cb-branch-row, .cb-mobile-branch-row').forEach(function(f) {
+      if (f.tagName !== 'FORM') return;
+      var inp = f.querySelector('input[name="branch_id"]');
+      if (!inp) return;
+      f.addEventListener('submit', function() {
+        try { localStorage.setItem(BRANCH_LS_KEY, inp.value || ''); } catch (e) {}
+      });
+    });
+  }
+  bindHeaderBranchPersistence();
+
   function initBranchPopup() {
     var data = getStorefrontData();
-    if (!data.show_branch_popup) return;
     if (data.branch_count <= 1) return;
+    var ids = getKnownBranchIds();
+    // Client-side suppression wins — even if the server still says
+    // show_branch_popup=true (cookie lost / not yet round-tripped), a
+    // valid saved branch in localStorage means "user already chose."
+    if (savedBranchValid(ids)) return;
+    if (!data.show_branch_popup) return;
 
-    // Build the popup HTML from the branch list already rendered in the header
     var branchForms = document.querySelectorAll('.cb-branch-menu .cb-branch-row, .cb-mobile-branches .cb-mobile-branch-row');
     if (!branchForms.length) return;
 
@@ -1266,7 +1316,7 @@
       var pillEl = form.querySelector('.cb-pill');
       if (!branchId || !nameEl) return;
 
-      html += '<form method="post" action="/api/storefront/set-branch" class="cb-branch-popup-item">';
+      html += '<form method="post" action="/api/storefront/set-branch" class="cb-branch-popup-item" data-branch-id="' + escHTML(branchId.value) + '">';
       html += '<input type="hidden" name="branch_id" value="' + escHTML(branchId.value) + '">';
       html += '<button type="submit">';
       html += '<div class="cb-branch-popup-item-name">' + escHTML(nameEl.textContent) + '</div>';
@@ -1281,7 +1331,13 @@
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
 
-    // Animate in
+    // Persist the choice to localStorage BEFORE the form submits.
+    overlay.querySelectorAll('form[data-branch-id]').forEach(function(f) {
+      f.addEventListener('submit', function() {
+        try { localStorage.setItem(BRANCH_LS_KEY, f.getAttribute('data-branch-id') || ''); } catch (e) {}
+      });
+    });
+
     requestAnimationFrame(function() {
       overlay.classList.add('is-open');
     });

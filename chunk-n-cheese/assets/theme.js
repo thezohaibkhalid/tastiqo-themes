@@ -879,18 +879,43 @@
   if (loadMoreBtn) loadMoreBtn.addEventListener('click', function() { ordersOffset += ordersLimit; loadOrders(true); });
 
   /* ── Branch Selector Popup ─────────────────────────────────────── */
+  // Suppression: popup hides if localStorage already has a valid saved
+  // branch_id (cookie-loss-tolerant) OR if the server says it's satisfied.
+  var BRANCH_LS_KEY = 'tq_storefront_branch_id';
+  function cncKnownBranchIds() {
+    var ids = [];
+    document.querySelectorAll('.cnc-branch-row input[name="branch_id"], .cnc-mobile-branch-row input[name="branch_id"]').forEach(function(input) {
+      if (input.value) ids.push(input.value);
+    });
+    return ids;
+  }
+  function cncSavedBranchValid(allIds) {
+    try {
+      var saved = localStorage.getItem(BRANCH_LS_KEY);
+      return !!saved && allIds.indexOf(saved) !== -1;
+    } catch (e) { return false; }
+  }
+  document.querySelectorAll('.cnc-branch-row, .cnc-mobile-branch-row').forEach(function(f) {
+    if (f.tagName !== 'FORM') return;
+    var inp = f.querySelector('input[name="branch_id"]');
+    if (!inp) return;
+    f.addEventListener('submit', function() {
+      try { localStorage.setItem(BRANCH_LS_KEY, inp.value || ''); } catch (e) {}
+    });
+  });
   function initBranchPopup() {
     var data = getStorefrontData();
-    if (!data.show_branch_popup || data.branch_count <= 1) return;
+    if (data.branch_count <= 1) return;
+    var ids = cncKnownBranchIds();
+    if (cncSavedBranchValid(ids)) return;
+    if (!data.show_branch_popup) return;
     var branchForms = document.querySelectorAll('.cnc-branch-menu .cnc-branch-row, .cnc-mobile-branches .cnc-mobile-branch-row');
     if (!branchForms.length) return;
-
     var overlay = document.createElement('div');
     overlay.className = 'cnc-branch-popup-overlay';
     var modal = document.createElement('div');
     modal.className = 'cnc-branch-popup';
-    var html = '<div class="cnc-branch-popup-icon">\uD83D\uDCCD</div><h2 class="cnc-branch-popup-title">Select Your Branch</h2><p class="cnc-branch-popup-desc">Choose a branch near you for accurate menu and pricing.</p><div class="cnc-branch-popup-list">';
-
+    var html = '<div class="cnc-branch-popup-icon">📍</div><h2 class="cnc-branch-popup-title">Select Your Branch</h2><p class="cnc-branch-popup-desc">Choose a branch near you for accurate menu and pricing.</p><div class="cnc-branch-popup-list">';
     branchForms.forEach(function(form) {
       if (form.classList.contains('cnc-mobile-branch-row')) return;
       var branchId = form.querySelector('input[name="branch_id"]');
@@ -898,7 +923,7 @@
       var addrEl = form.querySelector('.cnc-branch-row-addr');
       var pillEl = form.querySelector('.cnc-pill');
       if (!branchId || !nameEl) return;
-      html += '<form method="post" action="/api/storefront/set-branch" class="cnc-branch-popup-item"><input type="hidden" name="branch_id" value="' + escHTML(branchId.value) + '"><button type="submit"><div class="cnc-branch-popup-item-name">' + escHTML(nameEl.textContent) + '</div>';
+      html += '<form method="post" action="/api/storefront/set-branch" class="cnc-branch-popup-item" data-branch-id="' + escHTML(branchId.value) + '"><input type="hidden" name="branch_id" value="' + escHTML(branchId.value) + '"><button type="submit"><div class="cnc-branch-popup-item-name">' + escHTML(nameEl.textContent) + '</div>';
       if (addrEl) html += '<div class="cnc-branch-popup-item-addr">' + escHTML(addrEl.textContent) + '</div>';
       if (pillEl) html += '<span class="' + escHTML(pillEl.className) + '">' + escHTML(pillEl.textContent) + '</span>';
       html += '</button></form>';
@@ -907,6 +932,11 @@
     modal.innerHTML = html;
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
+    overlay.querySelectorAll('form[data-branch-id]').forEach(function(f) {
+      f.addEventListener('submit', function() {
+        try { localStorage.setItem(BRANCH_LS_KEY, f.getAttribute('data-branch-id') || ''); } catch (e) {}
+      });
+    });
     requestAnimationFrame(function() { overlay.classList.add('is-open'); });
   }
 
