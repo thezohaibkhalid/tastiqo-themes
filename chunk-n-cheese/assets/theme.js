@@ -39,14 +39,25 @@
   };
   window.TastiqoCart = TastiqoCart;
 
-  /* ── TastiqoMap — Google Maps address picker ────────────────────── */
+  /* ── TastiqoMap — Leaflet + OpenStreetMap address picker ────────────
+     Drop-in replacement for the prior Google Maps implementation. Same
+     public API (onReady / attachAddressPicker / locateMe / showCheckoutPin)
+     so call sites don't change. Uses:
+       • Leaflet         — free, MIT-licensed map library
+       • OpenStreetMap   — free tile source
+       • Nominatim       — free reverse-geocoding (rate-limited to ~1 req/s,
+                            which is fine for typing a pin once per checkout)
+     No API key, no per-tenant billing. */
   var DEFAULT_CENTER = { lat: 24.8607, lng: 67.0011 };
+  var OSM_TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+  var OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+  var NOMINATIM_URL = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2';
+
   var TastiqoMap = {
     _ready: false,
     _readyCallbacks: [],
     _addrMap: null,
     _addrMarker: null,
-    _addrGeocoder: null,
     _ckMap: null,
     _ckMarker: null,
     onReady: function(cb) { if (this._ready) { cb(); return; } this._readyCallbacks.push(cb); },
@@ -55,20 +66,48 @@
       this._readyCallbacks.forEach(function(cb) { try { cb(); } catch(e) {} });
       this._readyCallbacks = [];
     },
+    /* Leaflet ships as a separate <script defer> in the layout. Poll
+       briefly until window.L is available, then resolve onReady. */
+    _waitForLeaflet: function() {
+      var self = this;
+      if (window.L) { this._fireReady(); return; }
+      var tries = 0;
+      var iv = setInterval(function() {
+        tries++;
+        if (window.L) { clearInterval(iv); self._fireReady(); }
+        else if (tries > 100) { clearInterval(iv); } // ~10s → give up silently
+      }, 100);
+    },
     attachAddressPicker: function(initial) {
       var self = this;
       var container = document.getElementById('addr-map');
-      if (!container || !window.google || !window.google.maps) return;
+      if (!container || !window.L) return;
+      /* If we're re-opening the modal, tear down the previous Leaflet
+         instance — otherwise Leaflet errors with "Map container is
+         already initialized." */
+      if (this._addrMap) {
+        try { this._addrMap.remove(); } catch(e) {}
+        this._addrMap = null;
+        this._addrMarker = null;
+      }
       var hasInitial = typeof initial.lat === 'number' && typeof initial.lng === 'number';
-      var center = hasInitial ? { lat: initial.lat, lng: initial.lng } : DEFAULT_CENTER;
-      this._addrMap = new google.maps.Map(container, {
-        center: center, zoom: hasInitial ? 16 : 12,
-        disableDefaultUI: true, zoomControl: true, gestureHandling: 'greedy',
+      var center = hasInitial ? [initial.lat, initial.lng] : [DEFAULT_CENTER.lat, DEFAULT_CENTER.lng];
+      this._addrMap = L.map(container, { zoomControl: true, scrollWheelZoom: true })
+        .setView(center, hasInitial ? 16 : 12);
+      L.tileLayer(OSM_TILE_URL, { attribution: OSM_ATTRIBUTION, maxZoom: 19 }).addTo(this._addrMap);
+      this._addrMarker = L.marker(center, { draggable: true }).addTo(this._addrMap);
+      this._addrMap.on('click', function(e) {
+        self._addrMarker.setLatLng(e.latlng);
+        self._onAddrPinChanged();
       });
-      this._addrMarker = new google.maps.Marker({ position: center, map: this._addrMap, draggable: true });
-      this._addrGeocoder = new google.maps.Geocoder();
-      this._addrMap.addListener('click', function(e) { self._addrMarker.setPosition(e.latLng); self._onAddrPinChanged(); });
-      this._addrMarker.addListener('dragend', function() { self._onAddrPinChanged(); });
+      this._addrMarker.on('dragend', function() { self._onAddrPinChanged(); });
+      /* Leaflet measures the container at construction time. When the
+         modal animates in from display:none, the container has zero
+         size at this point — call invalidateSize() on the next frame
+         so tiles render at the right dimensions. */
+      requestAnimationFrame(function() {
+        if (self._addrMap) self._addrMap.invalidateSize();
+      });
       if (hasInitial) {
         this._writeAddrInputs(initial.lat, initial.lng);
         this._showCoords(initial.lat, initial.lng);
@@ -89,9 +128,8 @@
         function(pos) {
           var lat = pos.coords.latitude, lng = pos.coords.longitude;
           if (self._addrMap && self._addrMarker) {
-            self._addrMap.setCenter({ lat: lat, lng: lng });
-            self._addrMap.setZoom(17);
-            self._addrMarker.setPosition({ lat: lat, lng: lng });
+            self._addrMap.setView([lat, lng], 17);
+            self._addrMarker.setLatLng([lat, lng]);
             self._onAddrPinChanged();
           }
           if (hint) hint.textContent = 'Drag the pin to fine-tune.';
@@ -106,15 +144,26 @@
     },
     _onAddrPinChanged: function() {
       if (!this._addrMarker) return;
-      var pos = this._addrMarker.getPosition();
-      var lat = pos.lat(), lng = pos.lng();
+      var pos = this._addrMarker.getLatLng();
+      var lat = pos.lat, lng = pos.lng;
       this._writeAddrInputs(lat, lng);
       this._showCoords(lat, lng);
       var line1El = document.getElementById('addr-line1');
-      if (this._addrGeocoder && line1El && !line1El.value.trim()) {
-        this._addrGeocoder.geocode({ location: { lat: lat, lng: lng } }, function(results, status) {
-          if (status === 'OK' && results && results[0]) line1El.value = results[0].formatted_address;
-        });
+      if (line1El && !line1El.value.trim()) {
+        /* Reverse geocode via Nominatim. Failures are silent — the user
+           can still type the address themselves. Sending a User-Agent
+           with a contact identifier is good Nominatim etiquette but the
+           browser blocks that header; we set Accept-Language to localise
+           the result instead. */
+        var url = NOMINATIM_URL + '&lat=' + encodeURIComponent(lat) + '&lon=' + encodeURIComponent(lng);
+        fetch(url, { headers: { 'Accept-Language': (navigator.language || 'en') } })
+          .then(function(r) { return r.ok ? r.json() : null; })
+          .then(function(data) {
+            if (data && data.display_name && line1El && !line1El.value.trim()) {
+              line1El.value = data.display_name;
+            }
+          })
+          .catch(function() { /* swallow — geocoding is best-effort */ });
       }
     },
     _writeAddrInputs: function(lat, lng) {
@@ -131,15 +180,28 @@
     },
     showCheckoutPin: function(containerId, lat, lng) {
       var container = document.getElementById(containerId);
-      if (!container || !window.google || !window.google.maps) return;
-      var pos = { lat: lat, lng: lng };
-      this._ckMap = new google.maps.Map(container, {
-        center: pos, zoom: 16, disableDefaultUI: true, gestureHandling: 'none', clickableIcons: false,
+      if (!container || !window.L) return;
+      if (this._ckMap) {
+        try { this._ckMap.remove(); } catch(e) {}
+        this._ckMap = null;
+        this._ckMarker = null;
+      }
+      this._ckMap = L.map(container, {
+        zoomControl: false, scrollWheelZoom: false, dragging: false,
+        doubleClickZoom: false, touchZoom: false, keyboard: false,
+      }).setView([lat, lng], 16);
+      L.tileLayer(OSM_TILE_URL, { attribution: OSM_ATTRIBUTION, maxZoom: 19 }).addTo(this._ckMap);
+      this._ckMarker = L.marker([lat, lng]).addTo(this._ckMap);
+      var self = this;
+      requestAnimationFrame(function() {
+        if (self._ckMap) self._ckMap.invalidateSize();
       });
-      this._ckMarker = new google.maps.Marker({ position: pos, map: this._ckMap });
     },
   };
-  window.__tqMapsReady = function() { TastiqoMap._fireReady(); };
+  /* Kick off the wait — when Leaflet finishes loading we fire the ready
+     callbacks. Replaces the old window.__tqMapsReady that Google's script
+     used to call. */
+  TastiqoMap._waitForLeaflet();
   window.TastiqoMap = TastiqoMap;
 
   /* ── Format price ───────────────────────────────────────────────── */
