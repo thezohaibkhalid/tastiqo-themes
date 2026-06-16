@@ -73,17 +73,16 @@
 
   window.TastiqoCart = TastiqoCart;
 
-  /* -----------------------------------------------
-     TastiqoMap — Google Maps address picker
-  ----------------------------------------------- */
   const DEFAULT_MAP_CENTER = { lat: 24.8607, lng: 67.0011 };
+  const OSM_TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+  const OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+  const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2';
 
   const TastiqoMap = {
     _ready: false,
     _readyCallbacks: [],
     _addrMap: null,
     _addrMarker: null,
-    _addrGeocoder: null,
     _ckMap: null,
     _ckMarker: null,
     onReady(cb) { if (this._ready) { cb(); return; } this._readyCallbacks.push(cb); },
@@ -92,19 +91,31 @@
       this._readyCallbacks.forEach(cb => { try { cb(); } catch {} });
       this._readyCallbacks = [];
     },
+    _waitForLeaflet() {
+      if (window.L) { this._fireReady(); return; }
+      let tries = 0;
+      const iv = setInterval(() => {
+        tries++;
+        if (window.L) { clearInterval(iv); this._fireReady(); }
+        else if (tries > 100) clearInterval(iv);
+      }, 100);
+    },
     attachAddressPicker(initial) {
       const container = document.getElementById('addr-map');
-      if (!container || !window.google || !window.google.maps) return;
+      if (!container || !window.L) return;
+      if (this._addrMap) {
+        try { this._addrMap.remove(); } catch {}
+        this._addrMap = null;
+        this._addrMarker = null;
+      }
       const hasInitial = typeof initial.lat === 'number' && typeof initial.lng === 'number';
-      const center = hasInitial ? { lat: initial.lat, lng: initial.lng } : DEFAULT_MAP_CENTER;
-      this._addrMap = new google.maps.Map(container, {
-        center, zoom: hasInitial ? 16 : 12,
-        disableDefaultUI: true, zoomControl: true, gestureHandling: 'greedy',
-      });
-      this._addrMarker = new google.maps.Marker({ position: center, map: this._addrMap, draggable: true });
-      this._addrGeocoder = new google.maps.Geocoder();
-      this._addrMap.addListener('click', (e) => { this._addrMarker.setPosition(e.latLng); this._onAddrPinChanged(); });
-      this._addrMarker.addListener('dragend', () => this._onAddrPinChanged());
+      const center = hasInitial ? [initial.lat, initial.lng] : [DEFAULT_MAP_CENTER.lat, DEFAULT_MAP_CENTER.lng];
+      this._addrMap = L.map(container, { zoomControl: true, scrollWheelZoom: true }).setView(center, hasInitial ? 16 : 12);
+      L.tileLayer(OSM_TILE_URL, { attribution: OSM_ATTRIBUTION, maxZoom: 19 }).addTo(this._addrMap);
+      this._addrMarker = L.marker(center, { draggable: true }).addTo(this._addrMap);
+      this._addrMap.on('click', (e) => { this._addrMarker.setLatLng(e.latlng); this._onAddrPinChanged(); });
+      this._addrMarker.on('dragend', () => this._onAddrPinChanged());
+      requestAnimationFrame(() => { if (this._addrMap) this._addrMap.invalidateSize(); });
       if (hasInitial) {
         this._writeAddrInputs(initial.lat, initial.lng);
         this._showCoords(initial.lat, initial.lng);
@@ -124,9 +135,8 @@
         (pos) => {
           const lat = pos.coords.latitude, lng = pos.coords.longitude;
           if (this._addrMap && this._addrMarker) {
-            this._addrMap.setCenter({ lat, lng });
-            this._addrMap.setZoom(17);
-            this._addrMarker.setPosition({ lat, lng });
+            this._addrMap.setView([lat, lng], 17);
+            this._addrMarker.setLatLng([lat, lng]);
             this._onAddrPinChanged();
           }
           if (hint) hint.textContent = 'Drag the pin to fine-tune.';
@@ -141,15 +151,21 @@
     },
     _onAddrPinChanged() {
       if (!this._addrMarker) return;
-      const pos = this._addrMarker.getPosition();
-      const lat = pos.lat(), lng = pos.lng();
+      const { lat, lng } = this._addrMarker.getLatLng();
       this._writeAddrInputs(lat, lng);
       this._showCoords(lat, lng);
       const line1El = document.getElementById('addr-line1');
-      if (this._addrGeocoder && line1El && !line1El.value.trim()) {
-        this._addrGeocoder.geocode({ location: { lat, lng } }, (results, status) => {
-          if (status === 'OK' && results && results[0]) line1El.value = results[0].formatted_address;
-        });
+      if (line1El && !line1El.value.trim()) {
+        fetch(`${NOMINATIM_URL}&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}`, {
+          headers: { 'Accept-Language': navigator.language || 'en' },
+        })
+          .then(r => r.ok ? r.json() : null)
+          .then(data => {
+            if (data && data.display_name && line1El && !line1El.value.trim()) {
+              line1El.value = data.display_name;
+            }
+          })
+          .catch(() => {});
       }
     },
     _writeAddrInputs(lat, lng) {
@@ -166,15 +182,22 @@
     },
     showCheckoutPin(containerId, lat, lng) {
       const container = document.getElementById(containerId);
-      if (!container || !window.google || !window.google.maps) return;
-      const pos = { lat, lng };
-      this._ckMap = new google.maps.Map(container, {
-        center: pos, zoom: 16, disableDefaultUI: true, gestureHandling: 'none', clickableIcons: false,
-      });
-      this._ckMarker = new google.maps.Marker({ position: pos, map: this._ckMap });
+      if (!container || !window.L) return;
+      if (this._ckMap) {
+        try { this._ckMap.remove(); } catch {}
+        this._ckMap = null;
+        this._ckMarker = null;
+      }
+      this._ckMap = L.map(container, {
+        zoomControl: false, scrollWheelZoom: false, dragging: false,
+        doubleClickZoom: false, touchZoom: false, keyboard: false,
+      }).setView([lat, lng], 16);
+      L.tileLayer(OSM_TILE_URL, { attribution: OSM_ATTRIBUTION, maxZoom: 19 }).addTo(this._ckMap);
+      this._ckMarker = L.marker([lat, lng]).addTo(this._ckMap);
+      requestAnimationFrame(() => { if (this._ckMap) this._ckMap.invalidateSize(); });
     },
   };
-  window.__tqMapsReady = () => TastiqoMap._fireReady();
+  TastiqoMap._waitForLeaflet();
   window.TastiqoMap = TastiqoMap;
 
   /* -----------------------------------------------

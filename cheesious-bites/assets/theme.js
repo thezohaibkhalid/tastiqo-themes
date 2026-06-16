@@ -77,21 +77,16 @@
   // Expose globally for cross-page use
   window.TastiqoCart = TastiqoCart;
 
-  /* -----------------------------------------------
-     TastiqoMap — Google Maps address picker
-     ----------------------------------------------- */
-  // Default centre (Karachi). Replaced by the rider's actual location
-  // the moment they hit the "Use my current location" button.
   var DEFAULT_CENTER = { lat: 24.8607, lng: 67.0011 };
+  var OSM_TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+  var OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+  var NOMINATIM_URL = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2';
 
   var TastiqoMap = {
     _ready: false,
     _readyCallbacks: [],
-    // Active picker on the address modal
     _addrMap: null,
     _addrMarker: null,
-    _addrGeocoder: null,
-    // Active read-only map on the checkout
     _ckMap: null,
     _ckMarker: null,
 
@@ -104,48 +99,34 @@
       this._readyCallbacks.forEach(function(cb) { try { cb(); } catch(e) {} });
       this._readyCallbacks = [];
     },
+    _waitForLeaflet: function() {
+      var self = this;
+      if (window.L) { this._fireReady(); return; }
+      var tries = 0;
+      var iv = setInterval(function() {
+        tries++;
+        if (window.L) { clearInterval(iv); self._fireReady(); }
+        else if (tries > 100) clearInterval(iv);
+      }, 100);
+    },
 
-    /**
-     * Attach the editable picker map to #addr-map.
-     * @param {{lat:number|null, lng:number|null}} initial
-     */
     attachAddressPicker: function(initial) {
       var self = this;
       var container = document.getElementById('addr-map');
-      if (!container || !window.google || !window.google.maps) return;
-
+      if (!container || !window.L) return;
+      if (this._addrMap) {
+        try { this._addrMap.remove(); } catch(e) {}
+        this._addrMap = null;
+        this._addrMarker = null;
+      }
       var hasInitial = typeof initial.lat === 'number' && typeof initial.lng === 'number';
-      var center = hasInitial ? { lat: initial.lat, lng: initial.lng } : DEFAULT_CENTER;
-
-      // Tear down any previous instance — Google Maps holds DOM refs.
-      this._addrMap = new google.maps.Map(container, {
-        center: center,
-        zoom: hasInitial ? 16 : 12,
-        disableDefaultUI: true,
-        zoomControl: true,
-        gestureHandling: 'greedy',
-      });
-
-      this._addrMarker = new google.maps.Marker({
-        position: center,
-        map: this._addrMap,
-        draggable: true,
-      });
-
-      this._addrGeocoder = new google.maps.Geocoder();
-
-      // Clicking anywhere on the map moves the pin to that spot.
-      this._addrMap.addListener('click', function(e) {
-        self._addrMarker.setPosition(e.latLng);
-        self._onAddrPinChanged();
-      });
-
-      // Dragging the marker fires `dragend`.
-      this._addrMarker.addListener('dragend', function() {
-        self._onAddrPinChanged();
-      });
-
-      // Sync hidden inputs with the (possibly null) initial position.
+      var center = hasInitial ? [initial.lat, initial.lng] : [DEFAULT_CENTER.lat, DEFAULT_CENTER.lng];
+      this._addrMap = L.map(container, { zoomControl: true, scrollWheelZoom: true }).setView(center, hasInitial ? 16 : 12);
+      L.tileLayer(OSM_TILE_URL, { attribution: OSM_ATTRIBUTION, maxZoom: 19 }).addTo(this._addrMap);
+      this._addrMarker = L.marker(center, { draggable: true }).addTo(this._addrMap);
+      this._addrMap.on('click', function(e) { self._addrMarker.setLatLng(e.latlng); self._onAddrPinChanged(); });
+      this._addrMarker.on('dragend', function() { self._onAddrPinChanged(); });
+      requestAnimationFrame(function() { if (self._addrMap) self._addrMap.invalidateSize(); });
       if (hasInitial) {
         this._writeAddrInputs(initial.lat, initial.lng);
         this._showCoords(initial.lat, initial.lng);
@@ -155,7 +136,6 @@
       }
     },
 
-    /** Snap the address-modal pin to the device's current location. */
     locateMe: function() {
       var self = this;
       var hint = document.getElementById('addr-map-hint');
@@ -168,19 +148,17 @@
         function(pos) {
           var lat = pos.coords.latitude, lng = pos.coords.longitude;
           if (self._addrMap && self._addrMarker) {
-            self._addrMap.setCenter({ lat: lat, lng: lng });
-            self._addrMap.setZoom(17);
-            self._addrMarker.setPosition({ lat: lat, lng: lng });
+            self._addrMap.setView([lat, lng], 17);
+            self._addrMarker.setLatLng([lat, lng]);
             self._onAddrPinChanged();
           }
           if (hint) hint.textContent = 'Drag the pin to fine-tune.';
         },
         function(err) {
           if (hint) {
-            hint.textContent =
-              err.code === 1
-                ? 'Permission denied — pin the location manually instead.'
-                : 'Could not get your location — pin it manually.';
+            hint.textContent = err.code === 1
+              ? 'Permission denied — pin the location manually instead.'
+              : 'Could not get your location — pin it manually.';
           }
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
@@ -189,18 +167,21 @@
 
     _onAddrPinChanged: function() {
       if (!this._addrMarker) return;
-      var pos = this._addrMarker.getPosition();
-      var lat = pos.lat(), lng = pos.lng();
+      var pos = this._addrMarker.getLatLng();
+      var lat = pos.lat, lng = pos.lng;
       this._writeAddrInputs(lat, lng);
       this._showCoords(lat, lng);
-      // Reverse-geocode for a helpful line1 suggestion if line1 is empty.
       var line1El = document.getElementById('addr-line1');
-      if (this._addrGeocoder && line1El && !line1El.value.trim()) {
-        this._addrGeocoder.geocode({ location: { lat: lat, lng: lng } }, function(results, status) {
-          if (status === 'OK' && results && results[0]) {
-            line1El.value = results[0].formatted_address;
-          }
-        });
+      if (line1El && !line1El.value.trim()) {
+        var url = NOMINATIM_URL + '&lat=' + encodeURIComponent(lat) + '&lon=' + encodeURIComponent(lng);
+        fetch(url, { headers: { 'Accept-Language': navigator.language || 'en' } })
+          .then(function(r) { return r.ok ? r.json() : null; })
+          .then(function(data) {
+            if (data && data.display_name && line1El && !line1El.value.trim()) {
+              line1El.value = data.display_name;
+            }
+          })
+          .catch(function() {});
       }
     },
 
@@ -214,39 +195,30 @@
     _showCoords: function(lat, lng) {
       var el = document.getElementById('addr-map-coords');
       if (!el) return;
-      if (typeof lat !== 'number' || typeof lng !== 'number') {
-        el.textContent = '';
-        return;
-      }
+      if (typeof lat !== 'number' || typeof lng !== 'number') { el.textContent = ''; return; }
       el.textContent = '📍 ' + lat.toFixed(6) + ', ' + lng.toFixed(6);
     },
 
-    /**
-     * Render a small read-only map on the checkout / cart page.
-     * @param {string} containerId DOM id of the map container
-     * @param {number} lat
-     * @param {number} lng
-     */
     showCheckoutPin: function(containerId, lat, lng) {
       var container = document.getElementById(containerId);
-      if (!container || !window.google || !window.google.maps) return;
-      var pos = { lat: lat, lng: lng };
-      this._ckMap = new google.maps.Map(container, {
-        center: pos,
-        zoom: 16,
-        disableDefaultUI: true,
-        gestureHandling: 'none',
-        clickableIcons: false,
-      });
-      this._ckMarker = new google.maps.Marker({ position: pos, map: this._ckMap });
+      if (!container || !window.L) return;
+      if (this._ckMap) {
+        try { this._ckMap.remove(); } catch(e) {}
+        this._ckMap = null;
+        this._ckMarker = null;
+      }
+      this._ckMap = L.map(container, {
+        zoomControl: false, scrollWheelZoom: false, dragging: false,
+        doubleClickZoom: false, touchZoom: false, keyboard: false,
+      }).setView([lat, lng], 16);
+      L.tileLayer(OSM_TILE_URL, { attribution: OSM_ATTRIBUTION, maxZoom: 19 }).addTo(this._ckMap);
+      this._ckMarker = L.marker([lat, lng]).addTo(this._ckMap);
+      var self = this;
+      requestAnimationFrame(function() { if (self._ckMap) self._ckMap.invalidateSize(); });
     },
   };
 
-  // Google Maps fires this once the JS SDK is loaded (see theme.liquid).
-  window.__tqMapsReady = function() {
-    TastiqoMap._fireReady();
-  };
-
+  TastiqoMap._waitForLeaflet();
   window.TastiqoMap = TastiqoMap;
 
   /* -----------------------------------------------

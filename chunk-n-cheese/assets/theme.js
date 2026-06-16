@@ -39,15 +39,6 @@
   };
   window.TastiqoCart = TastiqoCart;
 
-  /* ── TastiqoMap — Leaflet + OpenStreetMap address picker ────────────
-     Drop-in replacement for the prior Google Maps implementation. Same
-     public API (onReady / attachAddressPicker / locateMe / showCheckoutPin)
-     so call sites don't change. Uses:
-       • Leaflet         — free, MIT-licensed map library
-       • OpenStreetMap   — free tile source
-       • Nominatim       — free reverse-geocoding (rate-limited to ~1 req/s,
-                            which is fine for typing a pin once per checkout)
-     No API key, no per-tenant billing. */
   var DEFAULT_CENTER = { lat: 24.8607, lng: 67.0011 };
   var OSM_TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
   var OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
@@ -66,8 +57,6 @@
       this._readyCallbacks.forEach(function(cb) { try { cb(); } catch(e) {} });
       this._readyCallbacks = [];
     },
-    /* Leaflet ships as a separate <script defer> in the layout. Poll
-       briefly until window.L is available, then resolve onReady. */
     _waitForLeaflet: function() {
       var self = this;
       if (window.L) { this._fireReady(); return; }
@@ -75,16 +64,13 @@
       var iv = setInterval(function() {
         tries++;
         if (window.L) { clearInterval(iv); self._fireReady(); }
-        else if (tries > 100) { clearInterval(iv); } // ~10s → give up silently
+        else if (tries > 100) clearInterval(iv);
       }, 100);
     },
     attachAddressPicker: function(initial) {
       var self = this;
       var container = document.getElementById('addr-map');
       if (!container || !window.L) return;
-      /* If we're re-opening the modal, tear down the previous Leaflet
-         instance — otherwise Leaflet errors with "Map container is
-         already initialized." */
       if (this._addrMap) {
         try { this._addrMap.remove(); } catch(e) {}
         this._addrMap = null;
@@ -96,18 +82,10 @@
         .setView(center, hasInitial ? 16 : 12);
       L.tileLayer(OSM_TILE_URL, { attribution: OSM_ATTRIBUTION, maxZoom: 19 }).addTo(this._addrMap);
       this._addrMarker = L.marker(center, { draggable: true }).addTo(this._addrMap);
-      this._addrMap.on('click', function(e) {
-        self._addrMarker.setLatLng(e.latlng);
-        self._onAddrPinChanged();
-      });
+      this._addrMap.on('click', function(e) { self._addrMarker.setLatLng(e.latlng); self._onAddrPinChanged(); });
       this._addrMarker.on('dragend', function() { self._onAddrPinChanged(); });
-      /* Leaflet measures the container at construction time. When the
-         modal animates in from display:none, the container has zero
-         size at this point — call invalidateSize() on the next frame
-         so tiles render at the right dimensions. */
-      requestAnimationFrame(function() {
-        if (self._addrMap) self._addrMap.invalidateSize();
-      });
+      // invalidateSize after modal show; container has zero size at construction
+      requestAnimationFrame(function() { if (self._addrMap) self._addrMap.invalidateSize(); });
       if (hasInitial) {
         this._writeAddrInputs(initial.lat, initial.lng);
         this._showCoords(initial.lat, initial.lng);
@@ -150,11 +128,6 @@
       this._showCoords(lat, lng);
       var line1El = document.getElementById('addr-line1');
       if (line1El && !line1El.value.trim()) {
-        /* Reverse geocode via Nominatim. Failures are silent — the user
-           can still type the address themselves. Sending a User-Agent
-           with a contact identifier is good Nominatim etiquette but the
-           browser blocks that header; we set Accept-Language to localise
-           the result instead. */
         var url = NOMINATIM_URL + '&lat=' + encodeURIComponent(lat) + '&lon=' + encodeURIComponent(lng);
         fetch(url, { headers: { 'Accept-Language': (navigator.language || 'en') } })
           .then(function(r) { return r.ok ? r.json() : null; })
@@ -163,7 +136,7 @@
               line1El.value = data.display_name;
             }
           })
-          .catch(function() { /* swallow — geocoding is best-effort */ });
+          .catch(function() {});
       }
     },
     _writeAddrInputs: function(lat, lng) {
@@ -193,14 +166,9 @@
       L.tileLayer(OSM_TILE_URL, { attribution: OSM_ATTRIBUTION, maxZoom: 19 }).addTo(this._ckMap);
       this._ckMarker = L.marker([lat, lng]).addTo(this._ckMap);
       var self = this;
-      requestAnimationFrame(function() {
-        if (self._ckMap) self._ckMap.invalidateSize();
-      });
+      requestAnimationFrame(function() { if (self._ckMap) self._ckMap.invalidateSize(); });
     },
   };
-  /* Kick off the wait — when Leaflet finishes loading we fire the ready
-     callbacks. Replaces the old window.__tqMapsReady that Google's script
-     used to call. */
   TastiqoMap._waitForLeaflet();
   window.TastiqoMap = TastiqoMap;
 
@@ -971,36 +939,214 @@
     var ids = cncKnownBranchIds();
     if (cncSavedBranchValid(ids)) return;
     if (!data.show_branch_popup) return;
-    var branchForms = document.querySelectorAll('.cnc-branch-menu .cnc-branch-row, .cnc-mobile-branches .cnc-mobile-branch-row');
-    if (!branchForms.length) return;
-    var overlay = document.createElement('div');
-    overlay.className = 'cnc-branch-popup-overlay';
-    var modal = document.createElement('div');
-    modal.className = 'cnc-branch-popup';
-    var html = '<div class="cnc-branch-popup-icon">📍</div><h2 class="cnc-branch-popup-title">Select Your Branch</h2><p class="cnc-branch-popup-desc">Choose a branch near you for accurate menu and pricing.</p><div class="cnc-branch-popup-list">';
-    branchForms.forEach(function(form) {
-      if (form.classList.contains('cnc-mobile-branch-row')) return;
-      var branchId = form.querySelector('input[name="branch_id"]');
-      var nameEl = form.querySelector('.cnc-branch-row-name');
-      var addrEl = form.querySelector('.cnc-branch-row-addr');
-      var pillEl = form.querySelector('.cnc-pill');
-      if (!branchId || !nameEl) return;
-      html += '<form method="post" action="/api/storefront/set-branch" class="cnc-branch-popup-item" data-branch-id="' + escHTML(branchId.value) + '"><input type="hidden" name="branch_id" value="' + escHTML(branchId.value) + '"><button type="submit"><div class="cnc-branch-popup-item-name">' + escHTML(nameEl.textContent) + '</div>';
-      if (addrEl) html += '<div class="cnc-branch-popup-item-addr">' + escHTML(addrEl.textContent) + '</div>';
-      if (pillEl) html += '<span class="' + escHTML(pillEl.className) + '">' + escHTML(pillEl.textContent) + '</span>';
-      html += '</button></form>';
-    });
-    html += '</div>';
-    modal.innerHTML = html;
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
-    overlay.querySelectorAll('form[data-branch-id]').forEach(function(f) {
-      f.addEventListener('submit', function() {
-        try { localStorage.setItem(BRANCH_LS_KEY, f.getAttribute('data-branch-id') || ''); } catch (e) {}
+    if (typeof window.TQBranchSelector === 'function') {
+      window.TQBranchSelector({ localStorageKey: BRANCH_LS_KEY });
+    }
+  }
+
+  window.TQBranchSelector = function(opts) {
+    opts = opts || {};
+    var overlay = document.getElementById('tq-branch-selector');
+    if (!overlay) return;
+    var modal = overlay.querySelector('.tq-bs-modal');
+    var cityInput = overlay.querySelector('#tq-bs-city-input');
+    var areaInput = overlay.querySelector('#tq-bs-area-input');
+    var cityCombo = overlay.querySelector('[data-tq-combo="city"]');
+    var areaCombo = overlay.querySelector('[data-tq-combo="area"]');
+    var cityOpts = cityCombo.querySelector('[data-tq-options]');
+    var areaOpts = areaCombo.querySelector('[data-tq-options]');
+    var submitBtn = overlay.querySelector('[data-tq-submit]');
+    var locateBtn = overlay.querySelector('[data-tq-locate]');
+    var locateLabel = overlay.querySelector('[data-tq-locate-label]');
+    var errEl = overlay.querySelector('[data-tq-error]');
+    var pickupList = overlay.querySelector('[data-tq-pickup-list]');
+    var tabs = overlay.querySelectorAll('.tq-bs-tab');
+    var panes = overlay.querySelectorAll('.tq-bs-pane');
+
+    var state = { cities: [], areasByCity: {}, cityId: null, areaId: null };
+
+    function setError(msg) {
+      if (!msg) { errEl.style.display = 'none'; errEl.textContent = ''; return; }
+      errEl.textContent = msg; errEl.style.display = 'block';
+    }
+
+    function open() {
+      overlay.style.display = 'flex';
+      requestAnimationFrame(function() { overlay.classList.add('is-open'); });
+      document.documentElement.style.overflow = 'hidden';
+    }
+    function close() {
+      overlay.classList.remove('is-open');
+      overlay.style.display = 'none';
+      document.documentElement.style.overflow = '';
+    }
+
+    tabs.forEach(function(t) {
+      t.addEventListener('click', function() {
+        var pane = t.getAttribute('data-tq-tab');
+        tabs.forEach(function(x) { x.classList.toggle('is-active', x === t); x.setAttribute('aria-selected', x === t ? 'true' : 'false'); });
+        panes.forEach(function(p) { p.hidden = p.getAttribute('data-tq-pane') !== pane; });
+        setError('');
       });
     });
-    requestAnimationFrame(function() { overlay.classList.add('is-open'); });
-  }
+
+    function renderOptions(list, optsEl, onPick) {
+      optsEl.innerHTML = '';
+      if (list.length === 0) {
+        var empty = document.createElement('li');
+        empty.className = 'is-empty';
+        empty.textContent = 'No matches';
+        optsEl.appendChild(empty);
+        return;
+      }
+      list.forEach(function(it) {
+        var li = document.createElement('li');
+        li.textContent = it.name;
+        li.setAttribute('data-id', it.id);
+        li.addEventListener('mousedown', function(e) { e.preventDefault(); onPick(it); });
+        optsEl.appendChild(li);
+      });
+    }
+
+    function filterCities(query) {
+      var q = (query || '').toLowerCase();
+      var list = state.cities.filter(function(c) { return c.name.toLowerCase().indexOf(q) !== -1; });
+      renderOptions(list, cityOpts, pickCity);
+    }
+    function filterAreas(query) {
+      var areas = (state.cityId && state.areasByCity[state.cityId]) || [];
+      var q = (query || '').toLowerCase();
+      var list = areas.filter(function(a) { return a.name.toLowerCase().indexOf(q) !== -1; });
+      renderOptions(list, areaOpts, pickArea);
+    }
+
+    function pickCity(c) {
+      state.cityId = c.id;
+      state.areaId = null;
+      cityInput.value = c.name;
+      cityCombo.classList.remove('is-open');
+      areaInput.value = '';
+      areaInput.disabled = false;
+      areaCombo.classList.remove('is-disabled');
+      submitBtn.disabled = true;
+      filterAreas('');
+    }
+    function pickArea(a) {
+      state.areaId = a.id;
+      areaInput.value = a.name;
+      areaCombo.classList.remove('is-open');
+      submitBtn.disabled = false;
+      setError('');
+    }
+
+    cityInput.addEventListener('focus', function() { filterCities(cityInput.value); cityCombo.classList.add('is-open'); });
+    cityInput.addEventListener('input', function() { filterCities(cityInput.value); cityCombo.classList.add('is-open'); state.cityId = null; areaInput.value = ''; areaInput.disabled = true; areaCombo.classList.add('is-disabled'); submitBtn.disabled = true; });
+    cityInput.addEventListener('blur', function() { setTimeout(function() { cityCombo.classList.remove('is-open'); }, 120); });
+
+    areaInput.addEventListener('focus', function() { if (!areaInput.disabled) { filterAreas(areaInput.value); areaCombo.classList.add('is-open'); } });
+    areaInput.addEventListener('input', function() { filterAreas(areaInput.value); areaCombo.classList.add('is-open'); state.areaId = null; submitBtn.disabled = true; });
+    areaInput.addEventListener('blur', function() { setTimeout(function() { areaCombo.classList.remove('is-open'); }, 120); });
+
+    submitBtn.addEventListener('click', function() {
+      if (!state.areaId) return;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Resolving…';
+      fetch('/api/storefront/service-areas/resolve-branch', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ area_id: state.areaId }),
+      }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+        .then(function(res) {
+          if (!res.ok || !res.data || !res.data.branch_id) {
+            setError((res.data && res.data.error) || 'Could not find a branch for this area.');
+            submitBtn.disabled = false; submitBtn.textContent = 'Select';
+            return;
+          }
+          try { localStorage.setItem(opts.localStorageKey || 'tq_storefront_branch_id', res.data.branch_id); } catch (e) {}
+          var fd = new FormData();
+          fd.append('branch_id', res.data.branch_id);
+          fetch('/api/storefront/set-branch', { method: 'POST', body: fd, credentials: 'same-origin' })
+            .then(function() { window.location.reload(); })
+            .catch(function() { window.location.reload(); });
+        })
+        .catch(function() {
+          setError('Network error — please try again.');
+          submitBtn.disabled = false; submitBtn.textContent = 'Select';
+        });
+    });
+
+    locateBtn.addEventListener('click', function() {
+      if (!navigator.geolocation) { setError('Geolocation not supported on this browser.'); return; }
+      locateBtn.disabled = true;
+      locateLabel.textContent = 'Locating…';
+      navigator.geolocation.getCurrentPosition(
+        function(pos) {
+          fetch('/api/storefront/service-areas/resolve-by-location', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+          }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+            .then(function(res) {
+              if (!res.ok || !res.data || !res.data.area_id) {
+                setError((res.data && res.data.error) || 'No coverage near your location.');
+              } else {
+                var city = state.cities.find(function(c) { return c.id === res.data.city_id; });
+                if (city) pickCity(city);
+                var areas = (state.areasByCity[res.data.city_id] || []);
+                var area = areas.find(function(a) { return a.id === res.data.area_id; });
+                if (area) pickArea(area);
+              }
+            })
+            .catch(function() { setError('Network error — please try again.'); })
+            .finally(function() {
+              locateBtn.disabled = false; locateLabel.textContent = 'Use Current Location';
+            });
+        },
+        function(err) {
+          locateBtn.disabled = false; locateLabel.textContent = 'Use Current Location';
+          setError(err.code === 1 ? 'Permission denied for location.' : 'Could not get your location.');
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    });
+
+    fetch('/api/storefront/service-areas/cities', { credentials: 'same-origin' })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        state.cities = d.cities || [];
+        state.areasByCity = d.areas_by_city || {};
+        renderPickup();
+        if (state.cities.length === 0) {
+          setError('No delivery areas configured yet.');
+        }
+        open();
+      })
+      .catch(function() { open(); });
+
+    function renderPickup() {
+      var forms = document.querySelectorAll('.cnc-branch-menu .cnc-branch-row');
+      if (!forms.length) { pickupList.innerHTML = '<p style="color:var(--cnc-text-muted);font-size:13px;text-align:center;">No branches available.</p>'; return; }
+      pickupList.innerHTML = '';
+      forms.forEach(function(form) {
+        var inp = form.querySelector('input[name="branch_id"]');
+        var nameEl = form.querySelector('.cnc-branch-row-name');
+        var addrEl = form.querySelector('.cnc-branch-row-addr');
+        if (!inp || !nameEl) return;
+        var btn = document.createElement('button');
+        btn.type = 'button'; btn.className = 'tq-bs-pickup-item';
+        btn.innerHTML = '<div class="tq-bs-pickup-name"></div>' + (addrEl ? '<div class="tq-bs-pickup-addr"></div>' : '');
+        btn.querySelector('.tq-bs-pickup-name').textContent = nameEl.textContent;
+        if (addrEl) btn.querySelector('.tq-bs-pickup-addr').textContent = addrEl.textContent;
+        btn.addEventListener('click', function() {
+          try { localStorage.setItem(opts.localStorageKey || 'tq_storefront_branch_id', inp.value); } catch (e) {}
+          var fd = new FormData();
+          fd.append('branch_id', inp.value);
+          fetch('/api/storefront/set-branch', { method: 'POST', body: fd, credentials: 'same-origin' })
+            .then(function() { window.location.reload(); })
+            .catch(function() { window.location.reload(); });
+        });
+        pickupList.appendChild(btn);
+      });
+    }
+  };
 
   /* ── Init ───────────────────────────────────────────────────────── */
   TastiqoCart._updateBadge();

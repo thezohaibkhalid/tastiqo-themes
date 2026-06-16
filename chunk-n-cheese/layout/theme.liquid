@@ -160,15 +160,9 @@
   </script>
 
   {% render 'customer-auth' %}
-
-  <!-- Global address modal — rendered in the layout so every page
-       (account, cart/checkout, etc.) can open it via JS. -->
   {% render 'address-modal' %}
+  {% render 'branch-selector' %}
 
-  <!-- Leaflet + OpenStreetMap — free, no API key, no per-tenant billing.
-       Replaces Google Maps for the address-picker and checkout-pin maps.
-       theme.js fires its own ready signal once the Leaflet global (L)
-       is available; no callback param needed. -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
 

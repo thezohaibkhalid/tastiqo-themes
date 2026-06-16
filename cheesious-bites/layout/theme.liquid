@@ -187,13 +187,11 @@
   </script>
 
   {% render 'customer-auth' %}
+  {% render 'address-modal' %}
+  {% render 'branch-selector' %}
 
-  <!-- Google Maps JS API — used by the address modal map picker and the
-       checkout pin-confirm flow. Loaded async; on ready it calls
-       window.__tqMapsReady which the theme JS sets up below. -->
-  <script
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBeJwUzZdLQEH7GZcpTftnbD2iCYBTt9EU&libraries=places&loading=async&callback=__tqMapsReady"
-    async defer></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
 
   {{ 'theme.js' | asset_url | script_tag }}
 
