@@ -963,7 +963,7 @@
     var tabs = overlay.querySelectorAll('.tq-bs-tab');
     var panes = overlay.querySelectorAll('.tq-bs-pane');
 
-    var state = { cities: [], areasByCity: {}, cityId: null, areaId: null };
+    var state = { cities: [], areasByCity: {}, cityId: null, areaId: null, userLat: null, userLng: null };
 
     function setError(msg) {
       if (!msg) { errEl.style.display = 'none'; errEl.textContent = ''; return; }
@@ -1051,9 +1051,16 @@
       if (!state.areaId) return;
       submitBtn.disabled = true;
       submitBtn.textContent = 'Resolving…';
+      // Forward the user's lat/lng if auto-locate captured it earlier.
+      // The backend uses it to tie-break when an area has multiple branches.
+      var body = { area_id: state.areaId };
+      if (state.userLat != null && state.userLng != null) {
+        body.user_lat = state.userLat;
+        body.user_lng = state.userLng;
+      }
       fetch('/api/storefront/service-areas/resolve-branch', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ area_id: state.areaId }),
+        body: JSON.stringify(body),
       }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
         .then(function(res) {
           if (!res.ok || !res.data || !res.data.branch_id) {
@@ -1080,6 +1087,8 @@
       locateLabel.textContent = 'Locating…';
       navigator.geolocation.getCurrentPosition(
         function(pos) {
+          state.userLat = pos.coords.latitude;
+          state.userLng = pos.coords.longitude;
           fetch('/api/storefront/service-areas/resolve-by-location', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
@@ -1122,23 +1131,43 @@
       .catch(function() { open(); });
 
     function renderPickup() {
-      var forms = document.querySelectorAll('.cnc-branch-menu .cnc-branch-row');
-      if (!forms.length) { pickupList.innerHTML = '<p style="color:var(--cnc-text-muted);font-size:13px;text-align:center;">No branches available.</p>'; return; }
+      // Primary source: branches JSON embedded by the snippet (works on any
+      // theme, no DOM-scraping needed). Falls back to the header's branch
+      // form rows if the JSON isn't present.
+      var branches = [];
+      try {
+        var dataEl = document.getElementById('tq-bs-branches-data');
+        if (dataEl && dataEl.textContent) {
+          branches = JSON.parse(dataEl.textContent) || [];
+        }
+      } catch (e) { branches = []; }
+
+      if (!branches.length) {
+        document.querySelectorAll('.cnc-branch-menu .cnc-branch-row').forEach(function(form) {
+          var inp = form.querySelector('input[name="branch_id"]');
+          var nameEl = form.querySelector('.cnc-branch-row-name');
+          var addrEl = form.querySelector('.cnc-branch-row-addr');
+          if (!inp || !nameEl) return;
+          branches.push({ id: inp.value, name: nameEl.textContent, address: addrEl ? addrEl.textContent : '' });
+        });
+      }
+
+      if (!branches.length) {
+        pickupList.innerHTML = '<p style="color:var(--cnc-text-muted);font-size:13px;text-align:center;">No branches available.</p>';
+        return;
+      }
       pickupList.innerHTML = '';
-      forms.forEach(function(form) {
-        var inp = form.querySelector('input[name="branch_id"]');
-        var nameEl = form.querySelector('.cnc-branch-row-name');
-        var addrEl = form.querySelector('.cnc-branch-row-addr');
-        if (!inp || !nameEl) return;
+      branches.forEach(function(b) {
+        if (!b || !b.id || !b.name) return;
         var btn = document.createElement('button');
         btn.type = 'button'; btn.className = 'tq-bs-pickup-item';
-        btn.innerHTML = '<div class="tq-bs-pickup-name"></div>' + (addrEl ? '<div class="tq-bs-pickup-addr"></div>' : '');
-        btn.querySelector('.tq-bs-pickup-name').textContent = nameEl.textContent;
-        if (addrEl) btn.querySelector('.tq-bs-pickup-addr').textContent = addrEl.textContent;
+        btn.innerHTML = '<div class="tq-bs-pickup-name"></div>' + (b.address ? '<div class="tq-bs-pickup-addr"></div>' : '');
+        btn.querySelector('.tq-bs-pickup-name').textContent = b.name;
+        if (b.address) btn.querySelector('.tq-bs-pickup-addr').textContent = b.address;
         btn.addEventListener('click', function() {
-          try { localStorage.setItem(opts.localStorageKey || 'tq_storefront_branch_id', inp.value); } catch (e) {}
+          try { localStorage.setItem(opts.localStorageKey || 'tq_storefront_branch_id', b.id); } catch (e) {}
           var fd = new FormData();
-          fd.append('branch_id', inp.value);
+          fd.append('branch_id', b.id);
           fetch('/api/storefront/set-branch', { method: 'POST', body: fd, credentials: 'same-origin' })
             .then(function() { window.location.reload(); })
             .catch(function() { window.location.reload(); });

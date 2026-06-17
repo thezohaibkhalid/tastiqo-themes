@@ -50,4 +50,7 @@
       <div class="tq-bs-pickup-list" data-tq-pickup-list></div>
     </div>
   </div>
+  {%- if branch_selector.branches -%}
+  <script id="tq-bs-branches-data" type="application/json">[{%- for b in branch_selector.branches -%}{%- unless forloop.first -%},{%- endunless -%}{"id":{{ b.id | json }},"name":{{ b.name | json }},"address":{{ b.address | default: "" | json }}}{%- endfor -%}]</script>
+  {%- endif -%}
 </div>

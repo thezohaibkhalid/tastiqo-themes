@@ -1256,64 +1256,242 @@
   }
   bindHeaderBranchPersistence();
 
+  // Branch picker — delegates to the shared city/area popup defined
+  // below. The legacy branch-only overlay (`cb-branch-popup-overlay`)
+  // has been replaced by the new Delivery (city/area) + Pick-Up
+  // (branch list) UX rendered by `snippets/branch-selector.liquid`.
   function initBranchPopup() {
     var data = getStorefrontData();
-    if (data.branch_count <= 1) return;
+    if ((data.branch_count || 0) <= 1) return;
     var ids = getKnownBranchIds();
-    // Client-side suppression wins — even if the server still says
-    // show_branch_popup=true (cookie lost / not yet round-tripped), a
-    // valid saved branch in localStorage means "user already chose."
     if (savedBranchValid(ids)) return;
     if (!data.show_branch_popup) return;
+    if (typeof window.TQBranchSelector === 'function') {
+      window.TQBranchSelector({ localStorageKey: BRANCH_LS_KEY });
+    }
+  }
 
-    var branchForms = document.querySelectorAll('.cb-branch-menu .cb-branch-row, .cb-mobile-branches .cb-mobile-branch-row');
-    if (!branchForms.length) return;
+  window.TQBranchSelector = function(opts) {
+    opts = opts || {};
+    var overlay = document.getElementById('tq-branch-selector');
+    if (!overlay) return;
+    var cityInput = overlay.querySelector('#tq-bs-city-input');
+    var areaInput = overlay.querySelector('#tq-bs-area-input');
+    var cityCombo = overlay.querySelector('[data-tq-combo="city"]');
+    var areaCombo = overlay.querySelector('[data-tq-combo="area"]');
+    var cityOpts = cityCombo.querySelector('[data-tq-options]');
+    var areaOpts = areaCombo.querySelector('[data-tq-options]');
+    var submitBtn = overlay.querySelector('[data-tq-submit]');
+    var locateBtn = overlay.querySelector('[data-tq-locate]');
+    var locateLabel = overlay.querySelector('[data-tq-locate-label]');
+    var errEl = overlay.querySelector('[data-tq-error]');
+    var pickupList = overlay.querySelector('[data-tq-pickup-list]');
+    var tabs = overlay.querySelectorAll('.tq-bs-tab');
+    var panes = overlay.querySelectorAll('.tq-bs-pane');
 
-    var overlay = document.createElement('div');
-    overlay.className = 'cb-branch-popup-overlay';
+    var state = { cities: [], areasByCity: {}, cityId: null, areaId: null, userLat: null, userLng: null };
 
-    var modal = document.createElement('div');
-    modal.className = 'cb-branch-popup';
+    function setError(msg) {
+      if (!msg) { errEl.style.display = 'none'; errEl.textContent = ''; return; }
+      errEl.textContent = msg; errEl.style.display = 'block';
+    }
 
-    var html = '<div class="cb-branch-popup-icon">📍</div>';
-    html += '<h2 class="cb-branch-popup-title">Select Your Branch</h2>';
-    html += '<p class="cb-branch-popup-desc">Choose a branch near you for accurate menu and pricing.</p>';
-    html += '<div class="cb-branch-popup-list">';
+    function open() {
+      overlay.style.display = 'flex';
+      requestAnimationFrame(function() { overlay.classList.add('is-open'); });
+      document.documentElement.style.overflow = 'hidden';
+    }
 
-    branchForms.forEach(function(form) {
-      if (form.classList.contains('cb-mobile-branch-row')) return; // skip duplicates from mobile drawer
-      var branchId = form.querySelector('input[name="branch_id"]');
-      var nameEl = form.querySelector('.cb-branch-row-name');
-      var addrEl = form.querySelector('.cb-branch-row-addr');
-      var pillEl = form.querySelector('.cb-pill');
-      if (!branchId || !nameEl) return;
-
-      html += '<form method="post" action="/api/storefront/set-branch" class="cb-branch-popup-item" data-branch-id="' + escHTML(branchId.value) + '">';
-      html += '<input type="hidden" name="branch_id" value="' + escHTML(branchId.value) + '">';
-      html += '<button type="submit">';
-      html += '<div class="cb-branch-popup-item-name">' + escHTML(nameEl.textContent) + '</div>';
-      if (addrEl) html += '<div class="cb-branch-popup-item-addr">' + escHTML(addrEl.textContent) + '</div>';
-      if (pillEl) html += '<span class="' + escHTML(pillEl.className) + '">' + escHTML(pillEl.textContent) + '</span>';
-      html += '</button>';
-      html += '</form>';
-    });
-
-    html += '</div>';
-    modal.innerHTML = html;
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
-
-    // Persist the choice to localStorage BEFORE the form submits.
-    overlay.querySelectorAll('form[data-branch-id]').forEach(function(f) {
-      f.addEventListener('submit', function() {
-        try { localStorage.setItem(BRANCH_LS_KEY, f.getAttribute('data-branch-id') || ''); } catch (e) {}
+    tabs.forEach(function(t) {
+      t.addEventListener('click', function() {
+        var pane = t.getAttribute('data-tq-tab');
+        tabs.forEach(function(x) { x.classList.toggle('is-active', x === t); x.setAttribute('aria-selected', x === t ? 'true' : 'false'); });
+        panes.forEach(function(p) { p.hidden = p.getAttribute('data-tq-pane') !== pane; });
+        setError('');
       });
     });
 
-    requestAnimationFrame(function() {
-      overlay.classList.add('is-open');
+    function renderOptions(list, optsEl, onPick) {
+      optsEl.innerHTML = '';
+      if (list.length === 0) {
+        var empty = document.createElement('li');
+        empty.className = 'is-empty';
+        empty.textContent = 'No matches';
+        optsEl.appendChild(empty);
+        return;
+      }
+      list.forEach(function(it) {
+        var li = document.createElement('li');
+        li.textContent = it.name;
+        li.setAttribute('data-id', it.id);
+        li.addEventListener('mousedown', function(e) { e.preventDefault(); onPick(it); });
+        optsEl.appendChild(li);
+      });
+    }
+
+    function filterCities(query) {
+      var q = (query || '').toLowerCase();
+      var list = state.cities.filter(function(c) { return c.name.toLowerCase().indexOf(q) !== -1; });
+      renderOptions(list, cityOpts, pickCity);
+    }
+    function filterAreas(query) {
+      var areas = (state.cityId && state.areasByCity[state.cityId]) || [];
+      var q = (query || '').toLowerCase();
+      var list = areas.filter(function(a) { return a.name.toLowerCase().indexOf(q) !== -1; });
+      renderOptions(list, areaOpts, pickArea);
+    }
+
+    function pickCity(c) {
+      state.cityId = c.id;
+      state.areaId = null;
+      cityInput.value = c.name;
+      cityCombo.classList.remove('is-open');
+      areaInput.value = '';
+      areaInput.disabled = false;
+      areaCombo.classList.remove('is-disabled');
+      submitBtn.disabled = true;
+      filterAreas('');
+    }
+    function pickArea(a) {
+      state.areaId = a.id;
+      areaInput.value = a.name;
+      areaCombo.classList.remove('is-open');
+      submitBtn.disabled = false;
+      setError('');
+    }
+
+    cityInput.addEventListener('focus', function() { filterCities(cityInput.value); cityCombo.classList.add('is-open'); });
+    cityInput.addEventListener('input', function() { filterCities(cityInput.value); cityCombo.classList.add('is-open'); state.cityId = null; areaInput.value = ''; areaInput.disabled = true; areaCombo.classList.add('is-disabled'); submitBtn.disabled = true; });
+    cityInput.addEventListener('blur', function() { setTimeout(function() { cityCombo.classList.remove('is-open'); }, 120); });
+
+    areaInput.addEventListener('focus', function() { if (!areaInput.disabled) { filterAreas(areaInput.value); areaCombo.classList.add('is-open'); } });
+    areaInput.addEventListener('input', function() { filterAreas(areaInput.value); areaCombo.classList.add('is-open'); state.areaId = null; submitBtn.disabled = true; });
+    areaInput.addEventListener('blur', function() { setTimeout(function() { areaCombo.classList.remove('is-open'); }, 120); });
+
+    submitBtn.addEventListener('click', function() {
+      if (!state.areaId) return;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Resolving…';
+      var body = { area_id: state.areaId };
+      if (state.userLat != null && state.userLng != null) {
+        body.user_lat = state.userLat;
+        body.user_lng = state.userLng;
+      }
+      fetch('/api/storefront/service-areas/resolve-branch', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+        .then(function(res) {
+          if (!res.ok || !res.data || !res.data.branch_id) {
+            setError((res.data && res.data.error) || 'Could not find a branch for this area.');
+            submitBtn.disabled = false; submitBtn.textContent = 'Select';
+            return;
+          }
+          try { localStorage.setItem(opts.localStorageKey || BRANCH_LS_KEY, res.data.branch_id); } catch (e) {}
+          var fd = new FormData();
+          fd.append('branch_id', res.data.branch_id);
+          fetch('/api/storefront/set-branch', { method: 'POST', body: fd, credentials: 'same-origin' })
+            .then(function() { window.location.reload(); })
+            .catch(function() { window.location.reload(); });
+        })
+        .catch(function() {
+          setError('Network error — please try again.');
+          submitBtn.disabled = false; submitBtn.textContent = 'Select';
+        });
     });
-  }
+
+    locateBtn.addEventListener('click', function() {
+      if (!navigator.geolocation) { setError('Geolocation not supported on this browser.'); return; }
+      locateBtn.disabled = true;
+      locateLabel.textContent = 'Locating…';
+      navigator.geolocation.getCurrentPosition(
+        function(pos) {
+          state.userLat = pos.coords.latitude;
+          state.userLng = pos.coords.longitude;
+          fetch('/api/storefront/service-areas/resolve-by-location', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+          }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+            .then(function(res) {
+              if (!res.ok || !res.data || !res.data.area_id) {
+                setError((res.data && res.data.error) || 'No coverage near your location.');
+              } else {
+                var city = state.cities.find(function(c) { return c.id === res.data.city_id; });
+                if (city) pickCity(city);
+                var areas = (state.areasByCity[res.data.city_id] || []);
+                var area = areas.find(function(a) { return a.id === res.data.area_id; });
+                if (area) pickArea(area);
+              }
+            })
+            .catch(function() { setError('Network error — please try again.'); })
+            .finally(function() {
+              locateBtn.disabled = false; locateLabel.textContent = 'Use Current Location';
+            });
+        },
+        function(err) {
+          locateBtn.disabled = false; locateLabel.textContent = 'Use Current Location';
+          setError(err.code === 1 ? 'Permission denied for location.' : 'Could not get your location.');
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    });
+
+    fetch('/api/storefront/service-areas/cities', { credentials: 'same-origin' })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        state.cities = d.cities || [];
+        state.areasByCity = d.areas_by_city || {};
+        renderPickup();
+        if (state.cities.length === 0) {
+          setError('No delivery areas configured yet.');
+        }
+        open();
+      })
+      .catch(function() { open(); });
+
+    function renderPickup() {
+      var branches = [];
+      try {
+        var dataEl = document.getElementById('tq-bs-branches-data');
+        if (dataEl && dataEl.textContent) {
+          branches = JSON.parse(dataEl.textContent) || [];
+        }
+      } catch (e) { branches = []; }
+
+      if (!branches.length) {
+        document.querySelectorAll('.cb-branch-menu .cb-branch-row').forEach(function(form) {
+          var inp = form.querySelector('input[name="branch_id"]');
+          var nameEl = form.querySelector('.cb-branch-row-name');
+          var addrEl = form.querySelector('.cb-branch-row-addr');
+          if (!inp || !nameEl) return;
+          branches.push({ id: inp.value, name: nameEl.textContent, address: addrEl ? addrEl.textContent : '' });
+        });
+      }
+
+      if (!branches.length) {
+        pickupList.innerHTML = '<p style="color:var(--cb-text-muted,#5C6478);font-size:13px;text-align:center;">No branches available.</p>';
+        return;
+      }
+      pickupList.innerHTML = '';
+      branches.forEach(function(b) {
+        if (!b || !b.id || !b.name) return;
+        var btn = document.createElement('button');
+        btn.type = 'button'; btn.className = 'tq-bs-pickup-item';
+        btn.innerHTML = '<div class="tq-bs-pickup-name"></div>' + (b.address ? '<div class="tq-bs-pickup-addr"></div>' : '');
+        btn.querySelector('.tq-bs-pickup-name').textContent = b.name;
+        if (b.address) btn.querySelector('.tq-bs-pickup-addr').textContent = b.address;
+        btn.addEventListener('click', function() {
+          try { localStorage.setItem(opts.localStorageKey || BRANCH_LS_KEY, b.id); } catch (e) {}
+          var fd = new FormData();
+          fd.append('branch_id', b.id);
+          fetch('/api/storefront/set-branch', { method: 'POST', body: fd, credentials: 'same-origin' })
+            .then(function() { window.location.reload(); })
+            .catch(function() { window.location.reload(); });
+        });
+        pickupList.appendChild(btn);
+      });
+    }
+  };
 
   /* -----------------------------------------------
      Initialize Cart Features
