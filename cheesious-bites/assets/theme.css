@@ -155,6 +155,18 @@ html.cb-loaded  body { opacity: 1; transition: opacity 240ms ease; }
 
 .cb-header-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
 
+.cb-area-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 36px; padding: 0 12px;
+  background: var(--cb-surface); border: 1px solid var(--cb-border); border-radius: 999px;
+  color: var(--cb-text); font-size: 13px; font-weight: 600; cursor: pointer;
+  max-width: 180px; white-space: nowrap; overflow: hidden;
+  transition: border .15s ease, color .15s ease;
+}
+.cb-area-chip:hover { border-color: var(--cb-primary); color: var(--cb-primary); }
+.cb-area-chip [data-cb-area-name] { overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 640px) { .cb-area-chip { max-width: 120px; padding: 0 8px; font-size: 12px; } }
+
 .cb-icon-btn {
   display: inline-flex; align-items: center; justify-content: center;
   width: 40px; height: 40px;

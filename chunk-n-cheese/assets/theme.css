@@ -153,6 +153,18 @@ html.cnc-loaded  body { opacity: 1; transition: opacity 200ms ease; }
 
 .cnc-header-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 
+.cnc-area-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 36px; padding: 0 12px;
+  background: #fff; border: 1px solid var(--cnc-border, #E4E7EB); border-radius: 999px;
+  color: var(--cnc-primary, #0F1F44); font-size: 13px; font-weight: 600; cursor: pointer;
+  max-width: 180px; white-space: nowrap; overflow: hidden;
+  transition: border .15s ease, color .15s ease;
+}
+.cnc-area-chip:hover { border-color: var(--cnc-secondary, #F59E0B); color: var(--cnc-secondary, #F59E0B); }
+.cnc-area-chip [data-cb-area-name] { overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 640px) { .cnc-area-chip { max-width: 120px; padding: 0 8px; font-size: 12px; } }
+
 .cnc-icon-btn {
   display: inline-flex; align-items: center; justify-content: center;
   width: 38px; height: 38px;

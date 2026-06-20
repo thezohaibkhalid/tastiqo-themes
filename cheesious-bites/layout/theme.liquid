@@ -169,6 +169,15 @@
     "branch_name": {{ branch.name | json }},
     "branch_count": {{ branch_selector.branches.size | default: 1 }},
     "show_branch_popup": {{ branch_selector.show_popup | json }},
+    "branches_by_city": [
+      {%- for g in branch_selector.cities_grouped -%}
+        { "city": {{ g.city | json }}, "branches": [
+          {%- for b in g.branches -%}
+            { "id": {{ b.id | json }}, "name": {{ b.name | json }}, "address": {{ b.address | json }} }{% unless forloop.last %},{% endunless %}
+          {%- endfor -%}
+        ] }{% unless forloop.last %},{% endunless %}
+      {%- endfor -%}
+    ],
     "currency_symbol": {{ localization.currency_symbol | default: "Rs." | json }}
   }
   </script>

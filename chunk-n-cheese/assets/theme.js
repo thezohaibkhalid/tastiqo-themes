@@ -454,23 +454,6 @@
     });
   }
 
-  /* ── Branch picker dropdown ────────────────────────────────────── */
-  var branchTrigger = document.querySelector('[data-cnc-branch-trigger]');
-  var branchMenu    = document.querySelector('[data-cnc-branch-menu]');
-  if (branchTrigger && branchMenu) {
-    branchTrigger.addEventListener('click', function (e) {
-      e.stopPropagation();
-      var open = branchMenu.hasAttribute('hidden');
-      if (open) { branchMenu.removeAttribute('hidden'); branchTrigger.setAttribute('aria-expanded', 'true'); }
-      else { branchMenu.setAttribute('hidden', ''); branchTrigger.setAttribute('aria-expanded', 'false'); }
-    });
-    document.addEventListener('click', function (e) {
-      if (!branchMenu.contains(e.target) && !branchTrigger.contains(e.target)) {
-        branchMenu.setAttribute('hidden', ''); branchTrigger.setAttribute('aria-expanded', 'false');
-      }
-    });
-  }
-
   /* ── Mobile drawer ─────────────────────────────────────────────── */
   var mobileToggle = document.querySelector('[data-cnc-mobile-toggle]');
   var mobileDrawer = document.querySelector('[data-cnc-mobile-drawer]');
@@ -911,36 +894,38 @@
   /* ── Branch Selector Popup ─────────────────────────────────────── */
   // Suppression: popup hides if localStorage already has a valid saved
   // branch_id (cookie-loss-tolerant) OR if the server says it's satisfied.
-  var BRANCH_LS_KEY = 'tq_storefront_branch_id';
-  function cncKnownBranchIds() {
-    var ids = [];
-    document.querySelectorAll('.cnc-branch-row input[name="branch_id"], .cnc-mobile-branch-row input[name="branch_id"]').forEach(function(input) {
-      if (input.value) ids.push(input.value);
-    });
-    return ids;
-  }
-  function cncSavedBranchValid(allIds) {
+  var BRANCH_LS_KEY    = 'tq_storefront_branch_id';
+  var AREA_LS_KEY      = 'tq_storefront_area_id';
+  var AREA_NAME_LS_KEY = 'tq_storefront_area_name';
+  var ORDER_TYPE_LS_KEY = 'tq_storefront_order_type';
+
+  function savedLocation() {
     try {
-      var saved = localStorage.getItem(BRANCH_LS_KEY);
-      return !!saved && allIds.indexOf(saved) !== -1;
-    } catch (e) { return false; }
+      return {
+        areaId:    localStorage.getItem(AREA_LS_KEY),
+        areaName:  localStorage.getItem(AREA_NAME_LS_KEY),
+        branchId:  localStorage.getItem(BRANCH_LS_KEY),
+        orderType: localStorage.getItem(ORDER_TYPE_LS_KEY),
+      };
+    } catch (e) { return {}; }
   }
-  document.querySelectorAll('.cnc-branch-row, .cnc-mobile-branch-row').forEach(function(f) {
-    if (f.tagName !== 'FORM') return;
-    var inp = f.querySelector('input[name="branch_id"]');
-    if (!inp) return;
-    f.addEventListener('submit', function() {
-      try { localStorage.setItem(BRANCH_LS_KEY, inp.value || ''); } catch (e) {}
-    });
-  });
+
+  function updateAreaChip() {
+    var chip = document.querySelector('[data-cb-area-chip]');
+    if (!chip) return;
+    var label = chip.querySelector('[data-cb-area-name]');
+    var saved = savedLocation();
+    if (label) label.textContent = saved.areaName || 'Choose area';
+  }
+
   function initBranchPopup() {
-    var data = getStorefrontData();
-    if (data.branch_count <= 1) return;
-    var ids = cncKnownBranchIds();
-    if (cncSavedBranchValid(ids)) return;
-    if (!data.show_branch_popup) return;
+    var saved = savedLocation();
+    var chip = document.querySelector('[data-cb-area-chip]');
+    if (chip) chip.addEventListener('click', function() { window.TQBranchSelector(); });
+    updateAreaChip();
+    if (saved.areaId || saved.branchId) return;
     if (typeof window.TQBranchSelector === 'function') {
-      window.TQBranchSelector({ localStorageKey: BRANCH_LS_KEY });
+      window.TQBranchSelector();
     }
   }
 
@@ -948,47 +933,120 @@
     opts = opts || {};
     var overlay = document.getElementById('tq-branch-selector');
     if (!overlay) return;
-    var modal = overlay.querySelector('.tq-bs-modal');
     var cityInput = overlay.querySelector('#tq-bs-city-input');
     var areaInput = overlay.querySelector('#tq-bs-area-input');
     var cityCombo = overlay.querySelector('[data-tq-combo="city"]');
     var areaCombo = overlay.querySelector('[data-tq-combo="area"]');
     var cityOpts = cityCombo.querySelector('[data-tq-options]');
     var areaOpts = areaCombo.querySelector('[data-tq-options]');
-    var submitBtn = overlay.querySelector('[data-tq-submit]');
+    var submitBtn = overlay.querySelector('[data-tq-submit-delivery]');
     var locateBtn = overlay.querySelector('[data-tq-locate]');
     var locateLabel = overlay.querySelector('[data-tq-locate-label]');
-    var errEl = overlay.querySelector('[data-tq-error]');
-    var pickupList = overlay.querySelector('[data-tq-pickup-list]');
-    var tabs = overlay.querySelectorAll('.tq-bs-tab');
-    var panes = overlay.querySelectorAll('.tq-bs-pane');
+    var deliveryErr = overlay.querySelector('[data-tq-pane-error="delivery"]');
+    var pickupErr = overlay.querySelector('[data-tq-pane-error="pickup"]');
+    var tabs = overlay.querySelectorAll('[data-tq-tab]');
+    var panes = overlay.querySelectorAll('[data-tq-pane]');
 
-    var state = { cities: [], areasByCity: {}, cityId: null, areaId: null, userLat: null, userLng: null };
+    var pCityInput  = overlay.querySelector('#tq-bs-pickup-city-input');
+    var pBranchInput = overlay.querySelector('#tq-bs-pickup-branch-input');
+    var pCityCombo  = overlay.querySelector('[data-tq-combo="pickup-city"]');
+    var pBranchCombo = overlay.querySelector('[data-tq-combo="pickup-branch"]');
+    var pCityOpts   = pCityCombo.querySelector('[data-tq-options]');
+    var pBranchOpts = pBranchCombo.querySelector('[data-tq-options]');
+    var pSubmitBtn  = overlay.querySelector('[data-tq-submit-pickup]');
+    var pLocateBtn  = overlay.querySelector('[data-tq-locate-pickup]');
+    var pLocateLabel = overlay.querySelector('[data-tq-locate-pickup-label]');
 
-    function setError(msg) {
-      if (!msg) { errEl.style.display = 'none'; errEl.textContent = ''; return; }
-      errEl.textContent = msg; errEl.style.display = 'block';
+    var state = {
+      cities: [], areasByCity: {}, cityId: null, areaId: null, areaName: null,
+      userLat: null, userLng: null,
+      pickupCities: [], pickupBranchesByCity: {}, pickupCity: null, pickupBranch: null, pickupLoaded: false,
+    };
+
+    function setError(msg, target) {
+      var el = target === 'pickup' ? pickupErr : deliveryErr;
+      if (!el) return;
+      if (!msg) { el.style.display = 'none'; el.textContent = ''; return; }
+      el.textContent = msg; el.style.display = 'block';
     }
+
+    function switchTab(name) {
+      tabs.forEach(function(t) {
+        var active = t.getAttribute('data-tq-tab') === name;
+        t.classList.toggle('is-active', active);
+        t.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+      panes.forEach(function(p) {
+        p.style.display = p.getAttribute('data-tq-pane') === name ? 'block' : 'none';
+      });
+      if (name === 'pickup' && !state.pickupLoaded) loadPickupBranches();
+    }
+
+    function loadPickupBranches() {
+      var data = getStorefrontData();
+      var groups = (data && data.branches_by_city) || [];
+      state.pickupCities = groups.map(function(g) { return { id: g.city, name: g.city }; });
+      state.pickupBranchesByCity = {};
+      groups.forEach(function(g) { state.pickupBranchesByCity[g.city] = g.branches || []; });
+      state.pickupLoaded = true;
+    }
+
+    function filterPickupCities(query) {
+      var q = (query || '').toLowerCase();
+      var list = state.pickupCities.filter(function(c) { return c.name.toLowerCase().indexOf(q) !== -1; });
+      renderOptions(list, pCityOpts, pickPickupCity);
+    }
+    function filterPickupBranches(query) {
+      var branches = (state.pickupCity && state.pickupBranchesByCity[state.pickupCity]) || [];
+      var q = (query || '').toLowerCase();
+      var list = branches.filter(function(b) { return b.name.toLowerCase().indexOf(q) !== -1; });
+      renderOptions(list, pBranchOpts, pickPickupBranch);
+    }
+    function pickPickupCity(c) {
+      state.pickupCity = c.id;
+      state.pickupBranch = null;
+      pCityInput.value = c.name;
+      pCityCombo.classList.remove('is-open');
+      pBranchInput.value = '';
+      pBranchInput.disabled = false;
+      pBranchCombo.classList.remove('is-disabled');
+      pSubmitBtn.disabled = true;
+      filterPickupBranches('');
+    }
+    function pickPickupBranch(b) {
+      state.pickupBranch = b;
+      pBranchInput.value = b.name;
+      pBranchCombo.classList.remove('is-open');
+      pSubmitBtn.disabled = false;
+      setError('', 'pickup');
+    }
+
+    function commitPickup() {
+      var b = state.pickupBranch;
+      if (!b) return;
+      try {
+        localStorage.setItem(BRANCH_LS_KEY, b.id);
+        localStorage.setItem(AREA_NAME_LS_KEY, b.name);
+        localStorage.setItem(ORDER_TYPE_LS_KEY, 'pickup');
+        localStorage.removeItem(AREA_LS_KEY);
+      } catch (e) {}
+      pSubmitBtn.disabled = true;
+      pSubmitBtn.textContent = 'Saving…';
+      var fd = new FormData();
+      fd.append('branch_id', b.id);
+      fetch('/api/storefront/set-branch', { method: 'POST', body: fd, credentials: 'same-origin' })
+        .then(function() { window.location.reload(); })
+        .catch(function() { window.location.reload(); });
+    }
+
+    tabs.forEach(function(t) { t.addEventListener('click', function() { switchTab(t.getAttribute('data-tq-tab')); }); });
 
     function open() {
       overlay.style.display = 'flex';
       requestAnimationFrame(function() { overlay.classList.add('is-open'); });
       document.documentElement.style.overflow = 'hidden';
+      switchTab('delivery');
     }
-    function close() {
-      overlay.classList.remove('is-open');
-      overlay.style.display = 'none';
-      document.documentElement.style.overflow = '';
-    }
-
-    tabs.forEach(function(t) {
-      t.addEventListener('click', function() {
-        var pane = t.getAttribute('data-tq-tab');
-        tabs.forEach(function(x) { x.classList.toggle('is-active', x === t); x.setAttribute('aria-selected', x === t ? 'true' : 'false'); });
-        panes.forEach(function(p) { p.hidden = p.getAttribute('data-tq-pane') !== pane; });
-        setError('');
-      });
-    });
 
     function renderOptions(list, optsEl, onPick) {
       optsEl.innerHTML = '';
@@ -1033,6 +1091,7 @@
     }
     function pickArea(a) {
       state.areaId = a.id;
+      state.areaName = a.name;
       areaInput.value = a.name;
       areaCombo.classList.remove('is-open');
       submitBtn.disabled = false;
@@ -1051,8 +1110,6 @@
       if (!state.areaId) return;
       submitBtn.disabled = true;
       submitBtn.textContent = 'Resolving…';
-      // Forward the user's lat/lng if auto-locate captured it earlier.
-      // The backend uses it to tie-break when an area has multiple branches.
       var body = { area_id: state.areaId };
       if (state.userLat != null && state.userLng != null) {
         body.user_lat = state.userLat;
@@ -1068,7 +1125,12 @@
             submitBtn.disabled = false; submitBtn.textContent = 'Select';
             return;
           }
-          try { localStorage.setItem(opts.localStorageKey || 'tq_storefront_branch_id', res.data.branch_id); } catch (e) {}
+          try {
+            localStorage.setItem(BRANCH_LS_KEY, res.data.branch_id);
+            if (state.areaId) localStorage.setItem(AREA_LS_KEY, state.areaId);
+            if (state.areaName) localStorage.setItem(AREA_NAME_LS_KEY, state.areaName);
+            localStorage.setItem(ORDER_TYPE_LS_KEY, 'delivery');
+          } catch (e) {}
           var fd = new FormData();
           fd.append('branch_id', res.data.branch_id);
           fetch('/api/storefront/set-branch', { method: 'POST', body: fd, credentials: 'same-origin' })
@@ -1117,70 +1179,60 @@
       );
     });
 
+    pCityInput.addEventListener('focus', function() { filterPickupCities(pCityInput.value); pCityCombo.classList.add('is-open'); });
+    pCityInput.addEventListener('input', function() { filterPickupCities(pCityInput.value); pCityCombo.classList.add('is-open'); state.pickupCity = null; pBranchInput.value = ''; pBranchInput.disabled = true; pBranchCombo.classList.add('is-disabled'); pSubmitBtn.disabled = true; });
+    pCityInput.addEventListener('blur', function() { setTimeout(function() { pCityCombo.classList.remove('is-open'); }, 120); });
+
+    pBranchInput.addEventListener('focus', function() { if (!pBranchInput.disabled) { filterPickupBranches(pBranchInput.value); pBranchCombo.classList.add('is-open'); } });
+    pBranchInput.addEventListener('input', function() { filterPickupBranches(pBranchInput.value); pBranchCombo.classList.add('is-open'); state.pickupBranch = null; pSubmitBtn.disabled = true; });
+    pBranchInput.addEventListener('blur', function() { setTimeout(function() { pBranchCombo.classList.remove('is-open'); }, 120); });
+
+    pSubmitBtn.addEventListener('click', commitPickup);
+
+    pLocateBtn.addEventListener('click', function() {
+      if (!navigator.geolocation) { setError('Geolocation not supported on this browser.', 'pickup'); return; }
+      pLocateBtn.disabled = true;
+      pLocateLabel.textContent = 'Fetching Location…';
+      navigator.geolocation.getCurrentPosition(
+        function(pos) {
+          fetch('/api/storefront/service-areas/resolve-by-location', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+          }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+            .then(function(res) {
+              if (!res.ok || !res.data || !res.data.city_name) {
+                setError('Could not match your location to a city.', 'pickup');
+              } else {
+                var matched = state.pickupCities.find(function(c) { return c.name.toLowerCase() === String(res.data.city_name).toLowerCase(); });
+                if (matched) { pickPickupCity(matched); setError('', 'pickup'); }
+                else setError('No outlets in your city.', 'pickup');
+              }
+            })
+            .catch(function() { setError('Network error — please try again.', 'pickup'); })
+            .finally(function() { pLocateBtn.disabled = false; pLocateLabel.textContent = 'Use Current Location'; });
+        },
+        function(err) {
+          pLocateBtn.disabled = false; pLocateLabel.textContent = 'Use Current Location';
+          setError(err.code === 1 ? 'Permission denied for location.' : 'Could not get your location.', 'pickup');
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    });
+
+    loadPickupBranches();
+
     fetch('/api/storefront/service-areas/cities', { credentials: 'same-origin' })
       .then(function(r) { return r.json(); })
       .then(function(d) {
         state.cities = d.cities || [];
         state.areasByCity = d.areas_by_city || {};
-        renderPickup();
         if (state.cities.length === 0) {
           setError('No delivery areas configured yet.');
         }
         open();
       })
       .catch(function() { open(); });
-
-    function renderPickup() {
-      // Primary source: branches JSON embedded by the snippet (works on any
-      // theme, no DOM-scraping needed). Falls back to the header's branch
-      // form rows if the JSON isn't present.
-      var branches = [];
-      try {
-        var dataEl = document.getElementById('tq-bs-branches-data');
-        if (dataEl && dataEl.textContent) {
-          branches = JSON.parse(dataEl.textContent) || [];
-        }
-      } catch (e) { branches = []; }
-
-      if (!branches.length) {
-        document.querySelectorAll('.cnc-branch-menu .cnc-branch-row').forEach(function(form) {
-          var inp = form.querySelector('input[name="branch_id"]');
-          var nameEl = form.querySelector('.cnc-branch-row-name');
-          var addrEl = form.querySelector('.cnc-branch-row-addr');
-          if (!inp || !nameEl) return;
-          branches.push({ id: inp.value, name: nameEl.textContent, address: addrEl ? addrEl.textContent : '' });
-        });
-      }
-
-      if (!branches.length) {
-        pickupList.innerHTML = '<p style="color:var(--cnc-text-muted);font-size:13px;text-align:center;">No branches available.</p>';
-        return;
-      }
-      pickupList.innerHTML = '';
-      branches.forEach(function(b) {
-        if (!b || !b.id || !b.name) return;
-        var btn = document.createElement('button');
-        btn.type = 'button'; btn.className = 'tq-bs-pickup-item';
-        btn.innerHTML = '<div class="tq-bs-pickup-name"></div>' + (b.address ? '<div class="tq-bs-pickup-addr"></div>' : '');
-        btn.querySelector('.tq-bs-pickup-name').textContent = b.name;
-        if (b.address) btn.querySelector('.tq-bs-pickup-addr').textContent = b.address;
-        btn.addEventListener('click', function() {
-          try { localStorage.setItem(opts.localStorageKey || 'tq_storefront_branch_id', b.id); } catch (e) {}
-          var fd = new FormData();
-          fd.append('branch_id', b.id);
-          fetch('/api/storefront/set-branch', { method: 'POST', body: fd, credentials: 'same-origin' })
-            .then(function() { window.location.reload(); })
-            .catch(function() { window.location.reload(); });
-        });
-        pickupList.appendChild(btn);
-      });
-    }
   };
-
-  /* ── Init ───────────────────────────────────────────────────────── */
-  TastiqoCart._updateBadge();
-  initProductAddToCart();
-  initCartPage();
   initBranchPopup();
 
 })();

@@ -8,17 +8,21 @@
         <span class="tq-bs-logo-text">{{ account.business_name | default: 'Store' }}</span>
       {%- endif -%}
     </div>
+
     <h2 class="tq-bs-title">Select your order type</h2>
+
     <div class="tq-bs-tabs" role="tablist">
       <button type="button" class="tq-bs-tab is-active" data-tq-tab="delivery" role="tab" aria-selected="true">Delivery</button>
       <button type="button" class="tq-bs-tab" data-tq-tab="pickup" role="tab" aria-selected="false">Pick-Up</button>
     </div>
+
     <div class="tq-bs-divider"></div>
 
     <div class="tq-bs-pane" data-tq-pane="delivery">
       <p class="tq-bs-section-label">Please select your location</p>
+
       <button type="button" class="tq-bs-locate" data-tq-locate>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
         <span data-tq-locate-label>Use Current Location</span>
       </button>
 
@@ -40,17 +44,40 @@
         </div>
       </div>
 
-      <div class="tq-bs-error" data-tq-error style="display:none;"></div>
+      <div class="tq-bs-error" data-tq-error data-tq-pane-error="delivery" style="display:none;"></div>
 
-      <button type="button" class="tq-bs-submit" data-tq-submit disabled>Select</button>
+      <button type="button" class="tq-bs-submit" data-tq-submit-delivery disabled>Select</button>
     </div>
 
-    <div class="tq-bs-pane" data-tq-pane="pickup" hidden>
-      <p class="tq-bs-section-label">Choose the branch you'll visit</p>
-      <div class="tq-bs-pickup-list" data-tq-pickup-list></div>
+    <div class="tq-bs-pane" data-tq-pane="pickup" style="display:none;">
+      <p class="tq-bs-section-label">Which outlet would you like to pick-up from?</p>
+
+      <button type="button" class="tq-bs-locate" data-tq-locate-pickup>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+        <span data-tq-locate-pickup-label>Use Current Location</span>
+      </button>
+
+      <div class="tq-bs-field">
+        <label class="tq-bs-label" for="tq-bs-pickup-city-input">Select City / Region</label>
+        <div class="tq-bs-combo" data-tq-combo="pickup-city">
+          <input type="text" id="tq-bs-pickup-city-input" class="tq-bs-combo-input" placeholder="Select City / Region" autocomplete="off" />
+          <svg class="tq-bs-caret" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          <ul class="tq-bs-options" data-tq-options role="listbox"></ul>
+        </div>
+      </div>
+
+      <div class="tq-bs-field">
+        <label class="tq-bs-label" for="tq-bs-pickup-branch-input">Select Branch</label>
+        <div class="tq-bs-combo is-disabled" data-tq-combo="pickup-branch">
+          <input type="text" id="tq-bs-pickup-branch-input" class="tq-bs-combo-input" placeholder="Select Branch" autocomplete="off" disabled />
+          <svg class="tq-bs-caret" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          <ul class="tq-bs-options" data-tq-options role="listbox"></ul>
+        </div>
+      </div>
+
+      <div class="tq-bs-error" data-tq-pane-error="pickup" style="display:none;"></div>
+
+      <button type="button" class="tq-bs-submit" data-tq-submit-pickup disabled>Select</button>
     </div>
   </div>
-  {%- if branch_selector.branches -%}
-  <script id="tq-bs-branches-data" type="application/json">[{%- for b in branch_selector.branches -%}{%- unless forloop.first -%},{%- endunless -%}{"id":{{ b.id | json }},"name":{{ b.name | json }},"address":{{ b.address | default: "" | json }}}{%- endfor -%}]</script>
-  {%- endif -%}
 </div>

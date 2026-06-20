@@ -29,30 +29,16 @@
 
     <div class="cb-header-right">
 
-      {% if branch_selector and branch_selector.branches and branch_selector.branches.size > 1 %}
-        <button type="button" class="cb-branch-trigger" data-cb-branch-trigger aria-label="Choose branch" aria-expanded="false">
-          <span class="cb-branch-icon">📍</span>
-          <span class="cb-branch-name">{{ branch.name | default: "Pick branch" }}</span>
-          <span class="cb-branch-caret">▾</span>
-        </button>
-        <div class="cb-branch-menu" data-cb-branch-menu hidden>
-          <div class="cb-branch-menu-head">Choose your branch</div>
-          {% for b in branch_selector.branches %}
-            <form method="post" action="/api/storefront/set-branch" class="cb-branch-row {% if branch.id == b.id %}is-selected{% endif %}">
-              <input type="hidden" name="branch_id" value="{{ b.id }}">
-              <button type="submit">
-                <div class="cb-branch-row-name">{{ b.name }}</div>
-                {% if b.address %}<div class="cb-branch-row-addr">{{ b.address }}</div>{% endif %}
-                {% if b.is_open %}
-                  <span class="cb-pill cb-pill-open">Open now</span>
-                {% else %}
-                  <span class="cb-pill cb-pill-closed">Closed</span>
-                {% endif %}
-              </button>
-            </form>
-          {% endfor %}
-        </div>
-      {% endif %}
+      <button type="button" class="cb-area-chip" data-cb-area-chip aria-label="Change delivery area">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+          <circle cx="12" cy="10" r="3"/>
+        </svg>
+        <span data-cb-area-name>Choose area</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
 
       {% if show_search %}
         <a href="{{ routes.search | default: '/search' }}" class="cb-icon-btn" aria-label="Search">
@@ -86,16 +72,5 @@
         <a href="{{ item.url }}" class="cb-mobile-link {% if item.active %}is-active{% endif %}">{{ item.label }}</a>
       {% endfor %}
     </nav>
-    {% if branch_selector and branch_selector.branches and branch_selector.branches.size > 1 %}
-      <div class="cb-mobile-branches">
-        <div class="cb-mobile-branches-head">Branch</div>
-        {% for b in branch_selector.branches %}
-          <form method="post" action="/api/storefront/set-branch" class="cb-mobile-branch-row {% if branch.id == b.id %}is-selected{% endif %}">
-            <input type="hidden" name="branch_id" value="{{ b.id }}">
-            <button type="submit">{{ b.name }}</button>
-          </form>
-        {% endfor %}
-      </div>
-    {% endif %}
   </div>
 </header>
