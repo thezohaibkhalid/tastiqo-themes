@@ -177,45 +177,25 @@
 
   {{ 'theme.js' | asset_url | script_tag }}
 
-  <!-- Subscription-status popup / lockout overlay (self-contained) -->
+  <!-- Storefront-lock overlay: only shown when the restaurant is fully offline.
+       Never reveals subscription/billing state to diners. -->
   <style id="tq-sub-style">
-    #tq-sub-popup{position:fixed;right:20px;bottom:20px;max-width:340px;background:#fff;color:#1A1A2E;border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.18);font-family:system-ui,-apple-system,sans-serif;font-size:14px;line-height:1.45;z-index:99998;border-left:4px solid var(--tq-accent,#F5A623);padding:16px 36px 16px 16px;animation:tqSubIn .25s ease-out}
-    #tq-sub-popup h4{margin:0 0 6px;font-size:15px;font-weight:700;color:#111B47}
-    #tq-sub-popup p{margin:0;color:#444}
-    #tq-sub-popup .tq-sub-close{position:absolute;top:6px;right:8px;background:none;border:0;font-size:20px;line-height:1;cursor:pointer;color:#888;padding:4px}
-    #tq-sub-popup .tq-sub-close:hover{color:#222}
     #tq-sub-lock{position:fixed;inset:0;background:rgba(15,15,20,.92);z-index:99999;display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,sans-serif;padding:24px}
-    #tq-sub-lock .tq-sub-card{background:#fff;border-radius:16px;padding:32px 28px;max-width:420px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4);border-top:5px solid var(--tq-accent,#F5A623)}
+    #tq-sub-lock .tq-sub-card{background:#fff;border-radius:16px;padding:32px 28px;max-width:420px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4);border-top:5px solid #F5A623}
     #tq-sub-lock h2{margin:0 0 12px;font-size:22px;font-weight:700;color:#1a1a1a}
     #tq-sub-lock p{margin:0;color:#555;font-size:15px;line-height:1.55}
-    @keyframes tqSubIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
   </style>
   <script>
     (function(){
-      var ACCENT='#F5A623';
-      document.documentElement.style.setProperty('--tq-accent',ACCENT);
-      function fmtDate(s){try{var d=new Date(s);return d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'})}catch(e){return s||''}}
-      function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
-      function fmtDur(s){if(s<=0)return'0s';var d=Math.floor(s/86400),h=Math.floor((s%86400)/3600),m=Math.floor((s%3600)/60),x=s%60;if(d>0)return d+'d '+h+'h';if(h>0)return h+'h '+m+'m';if(m>0)return m+'m '+x+'s';return x+'s'}
-      function showGrace(info){
-        if(sessionStorage.getItem('tq_storefront_grace_dismissed')==='1')return;
-        var secsLeft=Math.max(0,Math.floor((new Date(info.lockout_at).getTime()-Date.now())/1000));
-        var el=document.createElement('div');el.id='tq-sub-popup';el.setAttribute('role','alert');
-        el.innerHTML='<button type="button" class="tq-sub-close" aria-label="Dismiss">&times;</button>'+
-          '<h4>Admin: please clear your bills</h4>'+
-          '<p>This site will pause in <strong>'+fmtDur(secsLeft)+'</strong> ('+esc(fmtDate(info.lockout_at))+'). Pay the subscription to keep it live.</p>';
-        document.body.appendChild(el);
-        el.querySelector('.tq-sub-close').addEventListener('click',function(){sessionStorage.setItem('tq_storefront_grace_dismissed','1');el.remove()});
-      }
       function showLock(){
         var el=document.createElement('div');el.id='tq-sub-lock';el.setAttribute('role','alertdialog');el.setAttribute('aria-modal','true');
-        el.innerHTML='<div class="tq-sub-card"><h2>Restaurant temporarily unavailable</h2><p>This restaurant’s subscription has expired. Please check back soon.</p></div>';
+        el.innerHTML='<div class="tq-sub-card"><h2>Temporarily unavailable</h2><p>We’re not accepting orders at the moment. Please check back soon.</p></div>';
         document.body.appendChild(el);
       }
       document.addEventListener('DOMContentLoaded',function(){
         fetch('/api/public/subscription-info',{credentials:'same-origin'})
           .then(function(r){return r.ok?r.json():null})
-          .then(function(info){if(!info)return;if(info.status==='grace')showGrace(info);else if(info.status==='locked')showLock()})
+          .then(function(info){if(info&&info.is_locked)showLock()})
           .catch(function(){});
       });
     })();
