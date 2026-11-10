@@ -20,6 +20,8 @@
     "font_body":      "Inter",
     "base_font_size": 16,
     "heading_scale":  100,
+    "body_scale":     100,
+    "button_scale":   100,
 
     "page_width":       1280,
     "spacing_sections": 80,

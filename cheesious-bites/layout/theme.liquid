@@ -32,9 +32,11 @@
 {%- assign t_font_body      = theme.font_body             | default: 'Inter'       -%}
 {%- assign t_base_font_size = theme.base_font_size        | default: 16            -%}
 {%- assign t_heading_scale  = theme.heading_scale         | default: 100           -%}
+{%- assign t_body_scale     = theme.body_scale            | default: 100           -%}
+{%- assign t_button_scale   = theme.button_scale          | default: 100           -%}
 
 {%- assign t_page_width        = theme.page_width         | default: 1280          -%}
-{%- assign t_spacing_sections  = theme.spacing_sections   | default: 80            -%}
+{%- assign t_spacing_sections = theme.spacing_sections | if_nil: 80 -%}
 {%- assign t_border_radius     = theme.border_radius      | default: '14px'        -%}
 
 {%- assign t_header_sticky     = theme.header_sticky                               -%}
@@ -46,7 +48,7 @@
 {%- assign t_footer_columns   = theme.footer_columns      | default: 4             -%}
 
 {%- assign t_button_style              = theme.button_style              | default: 'rounded' -%}
-{%- assign t_button_border_thickness   = theme.button_border_thickness   | default: 0         -%}
+{%- assign t_button_border_thickness = theme.button_border_thickness | if_nil: 0 -%}
 {%- assign t_button_shadow             = theme.button_shadow             | default: 'small'   -%}
 
 {%- assign t_seo_title       = theme.seo_title                                      -%}
@@ -111,6 +113,8 @@
       --cb-font-body:      '{{ t_font_body }}', system-ui, sans-serif;
       --cb-base-font-size: {{ t_base_font_size }}px;
       --cb-heading-scale:  {{ t_heading_scale | divided_by: 100.0 }};
+      --cb-body-scale:     {{ t_body_scale | divided_by: 100.0 }};
+      --cb-button-scale:   {{ t_button_scale | divided_by: 100.0 }};
 
       /* Layout */
       --cb-page-width:     {{ t_page_width }}px;
@@ -136,7 +140,7 @@
 
     {% if theme.custom_css %}
       /* User-supplied CSS */
-      {{ theme.custom_css }}
+      {{ theme.custom_css | raw }}
     {% endif %}
   </style>
 </head>
@@ -182,19 +186,6 @@
   }
   </script>
 
-  <!-- Loaded class flips after first paint for the body fade-in -->
-  <script>
-    (function () {
-      document.documentElement.classList.add('cb-loading');
-      window.addEventListener('load', function () {
-        requestAnimationFrame(function () {
-          document.documentElement.classList.remove('cb-loading');
-          document.documentElement.classList.add('cb-loaded');
-        });
-      });
-    })();
-  </script>
-
   {% render 'customer-auth' %}
   {% render 'address-modal' %}
   {% render 'branch-selector' %}
@@ -230,7 +221,7 @@
 
   {% if theme.custom_js %}
     <script>
-      try { {{ theme.custom_js }} } catch (e) { console.error('[cheesious] custom_js error', e); }
+      try { {{ theme.custom_js | raw }} } catch (e) { console.error('[cheesious] custom_js error', e); }
     </script>
   {% endif %}
 </body>

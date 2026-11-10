@@ -8,10 +8,9 @@
 
     <div class="cb-footer-brand">
       <a href="/" class="cb-footer-logo">
-        {% if theme.logo_image != blank %}
-          <img src="{{ theme.logo_image }}" alt="{{ restaurant.name }}">
-        {% elsif restaurant.logo %}
-          <img src="{{ restaurant.logo }}" alt="{{ restaurant.name }}">
+        {% assign footer_logo = theme.logo_image | default: theme.settings.logo_image | default: restaurant.logo %}
+        {% if footer_logo != blank %}
+          <img src="{{ footer_logo }}" alt="{{ restaurant.name }}">
         {% else %}
           <span class="cb-logo-mark">🧀</span>
           <span>{{ restaurant.name | default: "Cheesious Bites" }}</span>
@@ -62,7 +61,15 @@
   </div>
 
   <div class="cb-footer-bottom">
-    <span>{{ section.settings.copyright | default: "© 2026 Cheesious Bites. All rights reserved." }}</span>
+    <span>{{ theme.footer_copyright | default: section.settings.copyright | default: "© 2026 Cheesious Bites. All rights reserved." }}</span>
+    <span style="display:flex;gap:12px;flex-wrap:wrap;">
+      {% if theme.social_instagram != blank %}<a href="{{ theme.social_instagram }}" target="_blank" rel="noopener">Instagram</a>{% endif %}
+      {% if theme.social_facebook != blank %}<a href="{{ theme.social_facebook }}" target="_blank" rel="noopener">Facebook</a>{% endif %}
+      {% if theme.social_tiktok != blank %}<a href="{{ theme.social_tiktok }}" target="_blank" rel="noopener">TikTok</a>{% endif %}
+      {% if theme.social_youtube != blank %}<a href="{{ theme.social_youtube }}" target="_blank" rel="noopener">YouTube</a>{% endif %}
+      {% if theme.social_whatsapp != blank %}<a href="{{ theme.social_whatsapp }}" target="_blank" rel="noopener">WhatsApp</a>{% endif %}
+      {% if theme.social_google_maps != blank %}<a href="{{ theme.social_google_maps }}" target="_blank" rel="noopener">Google Maps</a>{% endif %}
+    </span>
     {% if navigation.legal.size > 0 %}
       <div style="display:flex;gap:12px;flex-wrap:wrap;">
         {% for link in navigation.legal %}
