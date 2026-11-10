@@ -1,0 +1,86 @@
+{% comment %} Featured Items — Shows popular/new/deal items from featured collections {% endcomment %}
+
+<section class="section section-alt">
+  <div class="container">
+    <div class="section-header">
+      <h2>{{ section.settings.title | default: "Most Popular" }}</h2>
+      {% if section.settings.subtitle %}
+        <p>{{ section.settings.subtitle }}</p>
+      {% endif %}
+    </div>
+
+    {% assign source = section.settings.source | default: "popular" %}
+    {% assign items = featured[source] | default: featured.popular %}
+    {% assign count = section.settings.items_count | default: 6 %}
+    {% assign cols = section.settings.columns | default: 3 %}
+
+    {% if items.size > 0 %}
+      <div class="grid-{{ cols }}">
+        {% for item in items limit: count %}
+          {% render 'menu-card', item: item, ordering: ordering %}
+        {% endfor %}
+      </div>
+    {% else %}
+      <p style="text-align:center;color:var(--color-text-muted);">No featured items right now.</p>
+    {% endif %}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Featured Items",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Section Title",
+      "default": "Most Popular"
+    },
+    {
+      "type": "text",
+      "id": "subtitle",
+      "label": "Subtitle",
+      "default": "Loved by thousands across the city"
+    },
+    {
+      "type": "select",
+      "id": "source",
+      "label": "Item Source",
+      "default": "popular",
+      "options": [
+        { "value": "popular", "label": "Popular" },
+        { "value": "new", "label": "New Arrivals" },
+        { "value": "deals", "label": "Deals" },
+        { "value": "spicy", "label": "Spicy" },
+        { "value": "veg", "label": "Vegetarian" },
+        { "value": "all", "label": "All Featured" }
+      ]
+    },
+    {
+      "type": "range",
+      "id": "items_count",
+      "label": "Number of Items",
+      "min": 3,
+      "max": 12,
+      "default": 6
+    },
+    {
+      "type": "select",
+      "id": "columns",
+      "label": "Grid Columns",
+      "default": "3",
+      "options": [
+        { "value": "2", "label": "2" },
+        { "value": "3", "label": "3" },
+        { "value": "4", "label": "4" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Featured Items",
+      "settings": {}
+    }
+  ]
+}
+{% endschema %}

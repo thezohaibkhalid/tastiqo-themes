@@ -1,0 +1,24 @@
+{
+  "name": "Cart",
+  "sections": {
+    "cart-items": {
+      "type": "cart-items",
+      "settings": {}
+    },
+    "cart-summary": {
+      "type": "cart-summary",
+      "settings": {
+        "show_delivery_fee": true,
+        "show_tax_note": true
+      }
+    },
+    "cross-sell": {
+      "type": "cart-cross-sell",
+      "settings": {
+        "title": "Add Something Extra?",
+        "items_count": 4
+      }
+    }
+  },
+  "order": ["cart-items", "cart-summary", "cross-sell"]
+}

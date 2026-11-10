@@ -1,0 +1,44 @@
+{
+  "name": "Locations",
+  "sections": {
+    "hero": {
+      "type": "hero-section",
+      "settings": {
+        "style": "minimal",
+        "eyebrow": "Find us",
+        "title": "Cheesious near you.",
+        "subtitle": "Four locations across Karachi. Always fresh, always melty."
+      }
+    },
+    "branches": {
+      "type": "locations-section",
+      "settings": {
+        "eyebrow": "",
+        "title": "All our branches",
+        "subtitle": ""
+      }
+    },
+    "header": {
+      "type": "header-section",
+      "settings": {
+        "show_search": false,
+        "show_cart": true,
+        "mobile_style": "drawer"
+      }
+    },
+    "footer": {
+      "type": "footer-section",
+      "settings": {}
+    }
+  },
+  "order": [
+    "hero",
+    "branches"
+  ],
+  "header_order": [
+    "header"
+  ],
+  "footer_order": [
+    "footer"
+  ]
+}

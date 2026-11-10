@@ -1,0 +1,49 @@
+{% comment %} Multi-branch location grid. Pulls from branch_selector.branches. {% endcomment %}
+
+<section class="cb-section">
+  <div class="cb-container">
+    {% if section.settings.title != blank %}
+      <div class="cb-section-head cb-anim-up">
+        {% if section.settings.eyebrow != blank %}<span class="cb-eyebrow">{{ section.settings.eyebrow }}</span>{% endif %}
+        <h2>{{ section.settings.title }}</h2>
+        {% if section.settings.subtitle != blank %}<p>{{ section.settings.subtitle }}</p>{% endif %}
+      </div>
+    {% endif %}
+
+    <div class="cb-loc-grid">
+      {% for b in branch_selector.branches %}
+        <div class="cb-loc-card cb-anim-up delay-{{ forloop.index0 | modulo: 4 }}">
+          <h3>{{ b.name }}</h3>
+          {% if b.address %}<div class="cb-loc-addr">{{ b.address }}</div>{% endif %}
+          <div class="cb-loc-meta">
+            {% if b.is_open %}
+              <span class="cb-pill cb-pill-open">Open now</span>
+            {% else %}
+              <span class="cb-pill cb-pill-closed">Closed</span>
+            {% endif %}
+            {% if b.phone %}<a href="tel:{{ b.phone }}" class="cb-pill" style="background: var(--color-bg); color: var(--color-text);">📞 {{ b.phone }}</a>{% endif %}
+          </div>
+          {% if b.maps_url %}
+            <div style="margin-top: 16px;">
+              <a href="{{ b.maps_url }}" target="_blank" rel="noopener" class="cb-btn cb-btn-outline cb-btn-sm">Get directions →</a>
+            </div>
+          {% endif %}
+        </div>
+      {% else %}
+        <p style="color: var(--color-muted);">No branches configured yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Locations",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "Find us" },
+    { "type": "text", "id": "title", "label": "Title", "default": "Cheesious near you" },
+    { "type": "textarea", "id": "subtitle", "label": "Subtitle", "default": "Four locations across Karachi. Always fresh, always melty." }
+  ],
+  "presets": [{ "name": "Locations", "settings": {} }]
+}
+{% endschema %}

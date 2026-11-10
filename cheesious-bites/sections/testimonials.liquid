@@ -1,0 +1,84 @@
+{% comment %} Customer testimonials grid. Reviews defined as blocks. {% endcomment %}
+
+<section class="cb-section" style="background: {{ section.settings.bg_color | default: 'var(--color-bg)' }};">
+  <div class="cb-container">
+    <div class="cb-section-head cb-anim-up">
+      {% if section.settings.eyebrow != blank %}<span class="cb-eyebrow">{{ section.settings.eyebrow }}</span>{% endif %}
+      <h2>{{ section.settings.title | default: 'What our regulars say' }}</h2>
+      {% if section.settings.subtitle != blank %}<p>{{ section.settings.subtitle }}</p>{% endif %}
+    </div>
+
+    <div class="cb-testimonials-grid">
+      {% if section.blocks.size > 0 %}
+        {% for block in section.blocks %}
+          {% if block.type == 'review' %}
+            <article class="cb-testimonial cb-anim-up delay-{{ forloop.index | minus: 1 }}">
+              <div class="cb-testimonial-stars">
+                {%- assign stars = block.settings.rating | default: 5 -%}
+                {%- for i in (1..stars) -%}★{%- endfor -%}
+              </div>
+              <p class="cb-testimonial-text">"{{ block.settings.text | default: 'Amazing pizza, amazing service. Fast delivery, even hotter cheese pull.' }}"</p>
+              <div class="cb-testimonial-author">
+                <div class="cb-testimonial-avatar">
+                  {% if block.settings.avatar != blank %}
+                    <img src="{{ block.settings.avatar }}" alt="{{ block.settings.author }}" loading="lazy">
+                  {% else %}
+                    <div class="cb-skeleton" style="width:100%;height:100%;"></div>
+                  {% endif %}
+                </div>
+                <div>
+                  <div class="cb-testimonial-name">{{ block.settings.author | default: 'Anonymous' }}</div>
+                  <div class="cb-testimonial-role">{{ block.settings.location | default: 'Karachi' }}</div>
+                </div>
+              </div>
+            </article>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        {%- assign defaults = "Sara Khan|DHA Phase 6|5|Best margherita in Karachi. The crust is unreal.;Ahmed R.|Clifton|5|Their cheese pulls should be illegal. Ordered three times this week.;Mariam J.|Gulshan|5|Fast delivery, still piping hot. The truffle pizza is a game changer." -%}
+        {%- assign rows = defaults | split: ";" -%}
+        {%- for row in rows -%}
+          {%- assign parts = row | split: "|" -%}
+          <article class="cb-testimonial cb-anim-up delay-{{ forloop.index | minus: 1 }}">
+            <div class="cb-testimonial-stars">★★★★★</div>
+            <p class="cb-testimonial-text">"{{ parts[3] }}"</p>
+            <div class="cb-testimonial-author">
+              <div class="cb-testimonial-avatar"><div class="cb-skeleton" style="width:100%;height:100%;"></div></div>
+              <div>
+                <div class="cb-testimonial-name">{{ parts[0] }}</div>
+                <div class="cb-testimonial-role">{{ parts[1] }}</div>
+              </div>
+            </div>
+          </article>
+        {%- endfor -%}
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Testimonials",
+  "max_blocks": 9,
+  "settings": [
+    { "type": "text", "id": "eyebrow",  "label": "Eyebrow",  "default": "Reviews" },
+    { "type": "text", "id": "title",    "label": "Title",    "default": "What our regulars say" },
+    { "type": "textarea", "id": "subtitle", "label": "Subtitle", "default": "" },
+    { "type": "color", "id": "bg_color", "label": "Background", "default": "#FFF8F1" }
+  ],
+  "blocks": [
+    {
+      "type": "review",
+      "name": "Review",
+      "settings": [
+        { "type": "text", "id": "author", "label": "Customer name", "default": "Sara Khan" },
+        { "type": "text", "id": "location", "label": "Location", "default": "Clifton, Karachi" },
+        { "type": "range", "id": "rating", "label": "Rating", "min": 1, "max": 5, "step": 1, "default": 5 },
+        { "type": "textarea", "id": "text", "label": "Review", "default": "Best margherita in Karachi. The crust is unreal." },
+        { "type": "image_picker", "id": "avatar", "label": "Avatar" }
+      ]
+    }
+  ],
+  "presets": [{ "name": "Testimonials", "settings": {} }]
+}
+{% endschema %}

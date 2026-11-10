@@ -1,0 +1,35 @@
+{
+  "name": "Search",
+  "sections": {
+    "menu_grid": {
+      "type": "menu-grid",
+      "settings": {
+        "title": "Search results",
+        "subtitle": "Looking for something specific? Try filtering below.",
+        "card_style": "elevated",
+        "columns": 3
+      }
+    },
+    "header": {
+      "type": "header-section",
+      "settings": {
+        "show_search": false,
+        "show_cart": true,
+        "mobile_style": "drawer"
+      }
+    },
+    "footer": {
+      "type": "footer-section",
+      "settings": {}
+    }
+  },
+  "order": [
+    "menu_grid"
+  ],
+  "header_order": [
+    "header"
+  ],
+  "footer_order": [
+    "footer"
+  ]
+}

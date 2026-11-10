@@ -1,0 +1,113 @@
+{%- comment -%}
+  Footer snippet — receives editor settings via render args:
+    t_footer_copyright (text)
+    t_footer_columns   (1-4)
+
+  Social links are read directly from theme.social_* — Instagram,
+  Facebook, TikTok, Google Maps, WhatsApp, YouTube. Whichever fields
+  are filled in the editor render as a link in the social row.
+{%- endcomment -%}
+
+{%- assign footer_cols = t_footer_columns | default: 4 -%}
+{%- assign copyright   = t_footer_copyright | default: '' -%}
+
+{%- comment -%} Build social link list dynamically from theme settings. {%- endcomment -%}
+{%- assign socials = '' -%}
+{%- if theme.social_instagram   != blank -%}{%- assign socials = socials | append: 'instagram|' | append: theme.social_instagram   | append: ';' -%}{%- endif -%}
+{%- if theme.social_facebook    != blank -%}{%- assign socials = socials | append: 'facebook|'  | append: theme.social_facebook    | append: ';' -%}{%- endif -%}
+{%- if theme.social_tiktok      != blank -%}{%- assign socials = socials | append: 'tiktok|'    | append: theme.social_tiktok      | append: ';' -%}{%- endif -%}
+{%- if theme.social_youtube     != blank -%}{%- assign socials = socials | append: 'youtube|'   | append: theme.social_youtube     | append: ';' -%}{%- endif -%}
+{%- if theme.social_whatsapp    != blank -%}{%- assign socials = socials | append: 'whatsapp|'  | append: theme.social_whatsapp    | append: ';' -%}{%- endif -%}
+{%- if theme.social_google_maps != blank -%}{%- assign socials = socials | append: 'maps|'      | append: theme.social_google_maps | append: ';' -%}{%- endif -%}
+
+<footer class="cb-footer cb-footer-cols-{{ footer_cols }}">
+  <div class="cb-footer-inner">
+
+    <div class="cb-footer-brand">
+      <a href="/" class="cb-footer-logo">
+        {% if theme.logo_image != blank %}
+          <img src="{{ theme.logo_image }}" alt="{{ restaurant.name }}">
+        {% elsif restaurant.logo %}
+          <img src="{{ restaurant.logo }}" alt="{{ restaurant.name }}">
+        {% else %}
+          <span class="cb-logo-mark">🧀</span>
+          <span>{{ restaurant.name | default: "Cheesious Bites" }}</span>
+        {% endif %}
+      </a>
+      <p class="cb-footer-tagline">
+        {{ restaurant.tagline | default: "Hand-stretched, wood-fired, cheese-pulled to perfection." }}
+      </p>
+      {% if socials != '' %}
+        <div class="cb-footer-social">
+          {%- assign rows = socials | split: ';' -%}
+          {%- for row in rows -%}
+            {%- if row != '' -%}
+              {%- assign parts = row | split: '|' -%}
+              {%- assign platform = parts[0] -%}
+              {%- assign url = parts[1] -%}
+              <a href="{{ url }}" target="_blank" rel="noopener" aria-label="{{ platform }}">
+                {%- if platform == 'instagram' -%}IG
+                {%- elsif platform == 'facebook' -%}FB
+                {%- elsif platform == 'tiktok' -%}TT
+                {%- elsif platform == 'youtube' -%}YT
+                {%- elsif platform == 'whatsapp' -%}WA
+                {%- elsif platform == 'maps' -%}📍
+                {%- else -%}{{ platform | upcase | slice: 0, 2 }}
+                {%- endif -%}
+              </a>
+            {%- endif -%}
+          {%- endfor -%}
+        </div>
+      {% endif %}
+    </div>
+
+    {% if footer_cols >= 2 %}
+      <div class="cb-footer-col">
+        <h4>Explore</h4>
+        <ul>
+          {% for item in navigation.primary %}
+            <li><a href="{{ item.url }}">{{ item.label }}</a></li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    {% if footer_cols >= 3 %}
+      <div class="cb-footer-col">
+        <h4>Visit us</h4>
+        <ul class="cb-footer-contact">
+          {% if branch.address %}<li>📍 {{ branch.address }}</li>{% endif %}
+          {% if branch.phone %}<li>📞 <a href="tel:{{ branch.phone }}">{{ branch.phone }}</a></li>{% endif %}
+          {% if restaurant.email %}<li>✉️ <a href="mailto:{{ restaurant.email }}">{{ restaurant.email }}</a></li>{% endif %}
+        </ul>
+      </div>
+    {% endif %}
+
+    {% if footer_cols >= 4 and branch.hours and branch.hours.size > 0 %}
+      <div class="cb-footer-col">
+        <h4>Hours</h4>
+        <ul class="cb-footer-hours">
+          {% for h in branch.hours %}
+            <li>
+              <span class="cb-day">{{ h.day }}</span>
+              <span class="cb-time">
+                {% if h.closed %}Closed{% else %}{{ h.open }} – {{ h.close }}{% endif %}
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="cb-footer-bottom">
+    <span>
+      {% if copyright != '' %}
+        {{ copyright }}
+      {% else %}
+        © {{ 'now' | date: '%Y' }} {{ restaurant.name | default: "Cheesious Bites" }}. All rights reserved.
+      {% endif %}
+    </span>
+    <span class="cb-footer-credits">Crafted with ❤️ &amp; mozzarella.</span>
+  </div>
+</footer>

@@ -1,0 +1,69 @@
+{
+  "name": "About",
+  "sections": {
+    "hero": {
+      "type": "hero-section",
+      "settings": {
+        "style": "minimal",
+        "eyebrow": "About us",
+        "title": "Six years. Four ovens. One obsession.",
+        "subtitle": "We turned a love for proper Italian pizza into a city-wide habit.",
+        "cta1_text": "Order now",
+        "cta1_link": "/menu",
+        "cta2_text": "",
+        "cta2_link": ""
+      }
+    },
+    "story": {
+      "type": "about-section",
+      "settings": {
+        "image_position": "left",
+        "eyebrow": "The story",
+        "title": "It started in a garage with a wood-fired oven.",
+        "body": "Two friends. One stubborn idea: make the kind of pizza you'd queue around the block for in Naples. We hand-stretch every dough, ferment it for 48 hours, and fire it for 90 seconds at 480\u00b0C. The cheese? Pulled fresh that morning."
+      }
+    },
+    "values": {
+      "type": "testimonials",
+      "settings": {
+        "eyebrow": "What we stand for",
+        "title": "Real food. Real people."
+      }
+    },
+    "cta": {
+      "type": "cta-banner",
+      "settings": {
+        "title": "Come hungry.",
+        "subtitle": "We'll handle the rest.",
+        "cta1_text": "Order online",
+        "cta1_link": "/menu",
+        "cta2_text": "Find a branch",
+        "cta2_link": "/locations"
+      }
+    },
+    "header": {
+      "type": "header-section",
+      "settings": {
+        "show_search": false,
+        "show_cart": true,
+        "mobile_style": "drawer"
+      }
+    },
+    "footer": {
+      "type": "footer-section",
+      "settings": {}
+    }
+  },
+  "order": [
+    "hero",
+    "story",
+    "values",
+    "cta"
+  ],
+  "header_order": [
+    "header"
+  ],
+  "footer_order": [
+    "footer"
+  ]
+}

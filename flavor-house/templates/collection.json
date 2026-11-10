@@ -1,0 +1,8 @@
+{
+  "name": "Collection",
+  "sections": {
+    "menu-header": { "type": "menu-header", "settings": {} },
+    "collection": { "type": "menu-grid", "settings": {} }
+  },
+  "order": ["menu-header", "collection"]
+}

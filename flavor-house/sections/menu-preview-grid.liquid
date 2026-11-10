@@ -1,0 +1,77 @@
+{% comment %} Menu Preview Grid — Shows first few categories with limited items + View Full Menu {% endcomment %}
+
+<section class="section section-alt">
+  <div class="container">
+    <div class="section-header">
+      <h2>{{ section.settings.title | default: "From Our Kitchen" }}</h2>
+    </div>
+
+    {% assign cat_limit = section.settings.categories_count | default: 3 %}
+    {% assign item_limit = section.settings.items_per_category | default: 4 %}
+
+    {% for cat in menu_categories limit: cat_limit %}
+      <div style="margin-bottom: 2.5rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+          <h3 style="font-size:1.25rem;">{{ cat.title }}</h3>
+          <a href="/collection/{{ cat.handle }}" class="btn btn-ghost btn-sm" style="color:var(--color-primary);">
+            View All →
+          </a>
+        </div>
+
+        <div class="grid-4">
+          {% for item in cat.items limit: item_limit %}
+            {% render 'menu-card', item: item, ordering: ordering, compact: true %}
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+
+    {% if section.settings.show_view_all %}
+      <div style="text-align:center;margin-top:1rem;">
+        <a href="/menu" class="btn btn-primary btn-lg">View Full Menu</a>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Menu Preview Grid",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Section Title",
+      "default": "From Our Kitchen"
+    },
+    {
+      "type": "range",
+      "id": "categories_count",
+      "label": "Number of Categories",
+      "min": 1,
+      "max": 5,
+      "default": 3
+    },
+    {
+      "type": "range",
+      "id": "items_per_category",
+      "label": "Items Per Category",
+      "min": 2,
+      "max": 6,
+      "default": 4
+    },
+    {
+      "type": "checkbox",
+      "id": "show_view_all",
+      "label": "Show 'View Full Menu' Button",
+      "default": true
+    }
+  ],
+  "presets": [
+    {
+      "name": "Menu Preview Grid",
+      "settings": {}
+    }
+  ]
+}
+{% endschema %}

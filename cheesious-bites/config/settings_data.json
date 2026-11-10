@@ -1,0 +1,54 @@
+{
+  "current": {
+    "logo_image": "",
+    "logo_width": 160,
+    "favicon": "",
+
+    "color_primary":     "#E85D2F",
+    "color_secondary":   "#FFC93C",
+    "color_accent":      "#5C2018",
+    "color_background":  "#FFF8F1",
+    "color_surface":     "#FFFFFF",
+    "color_text":        "#231910",
+    "color_text_muted":  "#7A6A5C",
+    "color_border":      "#F2E6D6",
+    "color_success":     "#16A34A",
+    "color_warning":     "#F59E0B",
+    "color_error":       "#DC2626",
+
+    "font_heading":   "Fraunces",
+    "font_body":      "Inter",
+    "base_font_size": 16,
+    "heading_scale":  100,
+
+    "page_width":       1280,
+    "spacing_sections": 80,
+    "border_radius":    "14px",
+
+    "header_sticky":     true,
+    "show_search":       false,
+    "show_cart":         true,
+    "mobile_menu_style": "drawer",
+
+    "footer_copyright": "© 2026 Cheesious Bites. All rights reserved.",
+    "footer_columns":   4,
+
+    "social_instagram":   "https://instagram.com/cheesiousbites",
+    "social_facebook":    "https://facebook.com/cheesiousbites",
+    "social_tiktok":      "",
+    "social_google_maps": "",
+    "social_whatsapp":    "",
+    "social_youtube":     "",
+
+    "seo_title":       "Cheesious Bites — Wood-fired pizza in Karachi",
+    "seo_description": "Hand-stretched, wood-fired, cheese-pulled to perfection. Order online for delivery in 30 minutes across Karachi.",
+    "seo_og_image":    "",
+
+    "button_style":            "rounded",
+    "button_border_thickness": 0,
+    "button_shadow":           "small",
+
+    "custom_css": "",
+    "custom_js":  ""
+  }
+}

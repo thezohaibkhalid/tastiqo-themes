@@ -1,0 +1,53 @@
+{% comment %} Related Items — Shown below product detail {% endcomment %}
+
+{% if product and product.relatedItems.size > 0 %}
+<section class="section section-alt">
+  <div class="container">
+    <div class="section-header">
+      <h2>{{ section.settings.title | default: "You May Also Like" }}</h2>
+    </div>
+
+    {% assign cols = section.settings.columns | default: 4 %}
+    {% assign count = section.settings.items_count | default: 4 %}
+
+    <div class="grid-{{ cols }}">
+      {% for item in product.relatedItems limit: count %}
+        {% render 'menu-card', item: item, ordering: ordering %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% schema %}
+{
+  "name": "Related Items",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Section Title",
+      "default": "You May Also Like"
+    },
+    {
+      "type": "range",
+      "id": "items_count",
+      "label": "Number of Items",
+      "min": 2,
+      "max": 8,
+      "default": 4
+    },
+    {
+      "type": "select",
+      "id": "columns",
+      "label": "Grid Columns",
+      "default": "4",
+      "options": [
+        { "value": "2", "label": "2" },
+        { "value": "3", "label": "3" },
+        { "value": "4", "label": "4" }
+      ]
+    }
+  ]
+}
+{% endschema %}

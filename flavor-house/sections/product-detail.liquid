@@ -1,0 +1,159 @@
+{% comment %} Product Detail — Full product page with variants, toppings, and add to cart {% endcomment %}
+
+<section class="product-detail">
+  <div class="container">
+    {% if product %}
+      <div class="product-grid">
+        <!-- Image -->
+        <div class="product-image">
+          <img src="{{ product.imageUrl }}" alt="{{ product.name }}">
+          {% if product.hasDiscount %}
+            <span class="badge badge-primary" style="position:absolute;top:1rem;left:1rem;">
+              -{{ product.discountPercent }}%
+            </span>
+          {% endif %}
+          {% if product.isSoldOut %}
+            <div style="position:absolute;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;">
+              <span class="badge badge-danger" style="font-size:1rem;padding:0.5rem 1.5rem;">Sold Out</span>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Info -->
+        <div class="product-info">
+          {% if product.collectionTitle %}
+            <a href="{{ product.collectionUrl }}" style="font-size:0.8125rem;color:var(--color-primary);font-weight:500;">
+              ← {{ product.collectionTitle }}
+            </a>
+          {% endif %}
+
+          <h1>{{ product.name }}</h1>
+
+          {% if product.description %}
+            <p class="product-desc">{{ product.description }}</p>
+          {% endif %}
+
+          <!-- Price -->
+          <div class="product-price-row">
+            <span class="product-price" id="product-active-price">{{ product.priceMoney }}</span>
+            {% if product.hasDiscount %}
+              <span class="product-compare-price">{{ product.compareAtPriceMoney }}</span>
+              <span class="badge badge-primary product-discount-badge">-{{ product.discountPercent }}%</span>
+            {% endif %}
+          </div>
+
+          <!-- Modifier groups (variants, toppings, sauces…) -->
+          {% if product.modifier_groups and product.modifier_groups.size > 0 %}
+            <div class="product-modifier-groups">
+              {% for group in product.modifier_groups %}
+                <div class="modifier-group" data-group-id="{{ group.id }}" data-group-required="{{ group.required }}" data-group-min="{{ group.min }}" data-group-max="{{ group.max }}">
+                  <div class="modifier-group-title">
+                    {{ group.title }}
+                    {% if group.required %}<span class="modifier-required">Required</span>{% endif %}
+                  </div>
+                  <div class="modifier-options">
+                    {% for option in group.options %}
+                      <label class="modifier-option">
+                        {% if group.max == 1 %}
+                          <input type="radio" name="modifier_group_{{ group.id }}" value="{{ option.id }}" data-price-delta="{{ option.price_delta }}" data-option-name="{{ option.label }}" data-group-name="{{ group.title }}"{% if option.is_default %} checked{% endif %}>
+                        {% else %}
+                          <input type="checkbox" name="modifier_group_{{ group.id }}" value="{{ option.id }}" data-price-delta="{{ option.price_delta }}" data-option-name="{{ option.label }}" data-group-name="{{ group.title }}"{% if option.is_default %} checked{% endif %}>
+                        {% endif %}
+                        <span class="modifier-option-label">
+                          <span class="modifier-option-name">{{ option.label }}</span>
+                          {% if option.price_delta and option.price_delta > 0 %}
+                            <span class="modifier-option-price">+{{ option.price_delta_money }}</span>
+                          {% endif %}
+                        </span>
+                      </label>
+                    {% endfor %}
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <!-- Quantity + Add to Cart -->
+          {% unless product.isSoldOut %}
+            <div class="product-quantity">
+              <div class="quantity-control" data-fh-qty>
+                <button type="button" data-qty-minus data-fh-qty-step="-1">−</button>
+                <span data-qty-value data-fh-qty-value>1</span>
+                <button type="button" data-qty-plus data-fh-qty-step="1">+</button>
+              </div>
+              <button type="button" class="btn btn-primary btn-lg" style="flex:1;" id="fh-add-to-cart-btn">
+                Add to Cart
+              </button>
+            </div>
+          {% endunless %}
+
+          <script type="application/json" id="product-data">
+          {
+            "id": "{{ product.id }}",
+            "name": {{ product.name | json }},
+            "price": {{ product.price }},
+            "image_url": {{ product.imageUrl | default: "" | json }},
+            "modifier_groups": {{ product.modifier_groups | json }}
+          }
+          </script>
+
+          {% if ordering.whatsappOrderEnabled %}
+            <a href="{{ ordering.whatsappOrderHref }}" target="_blank" rel="noopener" class="btn btn-outline btn-lg" style="width:100%;margin-top:0.75rem;">
+              💬 Order via WhatsApp
+            </a>
+          {% endif %}
+
+          <!-- Meta -->
+          <div class="product-meta">
+            {% if section.settings.show_calories and product.calories %}
+              <span>🔥 {{ product.calories }} cal</span>
+            {% endif %}
+            {% if section.settings.show_tags and product.tags.size > 0 %}
+              {% for tag in product.tags %}
+                <span class="badge badge-outline">{{ tag }}</span>
+              {% endfor %}
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% else %}
+      <div style="text-align:center;padding:4rem 0;">
+        <h2>Product not found</h2>
+        <p style="color:var(--color-text-muted);margin-bottom:1.5rem;">This item may no longer be available.</p>
+        <a href="/menu" class="btn btn-primary">Browse Menu</a>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Product Detail",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "show_variants",
+      "label": "Show Variants",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_toppings",
+      "label": "Show Toppings",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_calories",
+      "label": "Show Calories",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_tags",
+      "label": "Show Tags",
+      "default": true
+    }
+  ]
+}
+{% endschema %}

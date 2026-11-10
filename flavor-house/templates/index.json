@@ -1,0 +1,126 @@
+{
+  "name": "Homepage",
+  "sections": {
+    "announcement": {
+      "type": "announcement-bar",
+      "settings": {
+        "enabled": true,
+        "text": "🔥 Free delivery on orders above Rs.1,500!",
+        "link": "/menu",
+        "link_text": "Order Now",
+        "bg_color": "#E11D48"
+      }
+    },
+    "hero": {
+      "type": "hero-banner",
+      "settings": {
+        "title": "Authentic Flavors, Delivered Fresh",
+        "subtitle": "From our kitchen to your doorstep — crafted with love since 1998",
+        "overlay_opacity": 60,
+        "cta_text": "View Menu",
+        "cta_link": "/menu",
+        "cta2_text": "Order on WhatsApp",
+        "cta2_link": "",
+        "alignment": "center"
+      }
+    },
+    "categories": {
+      "type": "menu-categories",
+      "settings": {
+        "title": "Explore Our Menu",
+        "subtitle": "Something for every craving",
+        "columns": 3,
+        "limit": 6
+      }
+    },
+    "featured": {
+      "type": "featured-items",
+      "settings": {
+        "title": "Most Popular",
+        "subtitle": "Loved by thousands across the city",
+        "source": "popular",
+        "items_count": 6,
+        "columns": 3
+      }
+    },
+    "deals": {
+      "type": "deals-section",
+      "settings": {
+        "title": "Today's Deals",
+        "subtitle": "Limited time offers you don't want to miss"
+      }
+    },
+    "grid": {
+      "type": "menu-preview-grid",
+      "settings": {
+        "title": "From Our Kitchen",
+        "categories_count": 3,
+        "items_per_category": 4,
+        "show_view_all": true
+      }
+    },
+    "testimonials": {
+      "type": "testimonials",
+      "settings": {
+        "title": "What Our Customers Say",
+        "subtitle": "Real reviews from real food lovers"
+      },
+      "blocks": {
+        "t1": {
+          "type": "testimonial",
+          "settings": {
+            "name": "Ahmed K.",
+            "text": "Best pizza in Karachi, hands down. The Tikka Supreme is incredible!",
+            "rating": 5,
+            "image": ""
+          }
+        },
+        "t2": {
+          "type": "testimonial",
+          "settings": {
+            "name": "Sara M.",
+            "text": "Always fresh, always on time. Love ordering from here every weekend.",
+            "rating": 5,
+            "image": ""
+          }
+        },
+        "t3": {
+          "type": "testimonial",
+          "settings": {
+            "name": "Usman R.",
+            "text": "The BBQ platter is a must-try. Great value for the price!",
+            "rating": 4,
+            "image": ""
+          }
+        }
+      },
+      "block_order": [
+        "t1",
+        "t2",
+        "t3"
+      ]
+    },
+    "cta": {
+      "type": "cta-banner",
+      "settings": {
+        "title": "Hungry? Let's Fix That.",
+        "subtitle": "Order now and get freshly prepared meals delivered to your door.",
+        "cta_text": "Order Now",
+        "cta_link": "/menu",
+        "cta_style": "primary",
+        "show_whatsapp": true,
+        "visible": true
+      }
+    }
+  },
+  "order": [
+    "announcement",
+    "hero",
+    "categories",
+    "featured",
+    "deals",
+    "grid",
+    "testimonials",
+    "cta"
+  ]
+}

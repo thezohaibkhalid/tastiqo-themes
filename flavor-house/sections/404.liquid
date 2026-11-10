@@ -1,0 +1,43 @@
+{% comment %} 404 Section — Page not found {% endcomment %}
+
+<section class="page-404">
+  <div>
+    <h1>{{ section.settings.title | default: "404" }}</h1>
+    <p>{{ section.settings.message | default: "Oops! This page doesn't exist." }}</p>
+    <a href="{{ section.settings.cta_link | default: '/' }}" class="btn btn-primary">
+      {{ section.settings.cta_text | default: "Back to Home" }}
+    </a>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "404 Page",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Title",
+      "default": "404"
+    },
+    {
+      "type": "text",
+      "id": "message",
+      "label": "Message",
+      "default": "Oops! This page doesn't exist."
+    },
+    {
+      "type": "text",
+      "id": "cta_text",
+      "label": "Button Text",
+      "default": "Back to Home"
+    },
+    {
+      "type": "url",
+      "id": "cta_link",
+      "label": "Button Link",
+      "default": "/"
+    }
+  ]
+}
+{% endschema %}

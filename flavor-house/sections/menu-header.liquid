@@ -1,0 +1,27 @@
+{% comment %} Menu Header — Page header for menu page with branch name and delivery info {% endcomment %}
+
+<section class="menu-header-section">
+  <div class="container">
+    <h1>Our Menu</h1>
+    <p>
+      📍 {{ branch.name | default: restaurant.name }}
+      {% if section.settings.show_delivery_time and ordering.enabled %}
+        · 🕐 {{ ordering.estimated_delivery_min }}–{{ ordering.estimated_delivery_max }} min delivery
+      {% endif %}
+    </p>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Menu Header",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "show_delivery_time",
+      "label": "Show Delivery Time",
+      "default": true
+    }
+  ]
+}
+{% endschema %}

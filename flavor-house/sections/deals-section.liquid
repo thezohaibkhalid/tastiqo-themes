@@ -1,0 +1,75 @@
+{% comment %} Deals Section — Highlight discounted items as deal cards {% endcomment %}
+
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <h2>{{ section.settings.title | default: "Today's Deals" }}</h2>
+      {% if section.settings.subtitle %}
+        <p>{{ section.settings.subtitle }}</p>
+      {% endif %}
+    </div>
+
+    {% assign deals = featured.deals %}
+    {% if deals.size > 0 %}
+      <div class="grid-2">
+        {% for item in deals limit: 4 %}
+          <div class="deal-card">
+            <div class="deal-card-info">
+              {% if item.discountPercent %}
+                <span class="badge badge-secondary" style="margin-bottom: 0.5rem;">{{ item.discountPercent }}% OFF</span>
+              {% endif %}
+              <h3>{{ item.name }}</h3>
+              <p>{{ item.description | truncatewords: 12 }}</p>
+              <div class="deal-card-prices">
+                <span class="current">{{ item.priceMoney }}</span>
+                {% if item.hasDiscount %}
+                  <span class="original">{{ item.compareAtPriceMoney }}</span>
+                {% endif %}
+              </div>
+              {% if item.isSoldOut %}
+                <span class="badge badge-danger" style="margin-top: 0.5rem;">Sold Out</span>
+              {% else %}
+                <a href="{{ item.url }}" class="btn btn-sm" style="background:rgba(255,255,255,0.2);color:#fff;margin-top:0.75rem;">
+                  Order Now
+                </a>
+              {% endif %}
+            </div>
+            {% if item.imageUrl %}
+              <div class="deal-card-image">
+                <img src="{{ item.imageUrl }}" alt="{{ item.name }}" loading="lazy">
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p style="text-align:center;color:var(--color-text-muted);">No deals available right now. Check back soon!</p>
+    {% endif %}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Deals Section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Section Title",
+      "default": "Today's Deals"
+    },
+    {
+      "type": "text",
+      "id": "subtitle",
+      "label": "Subtitle",
+      "default": "Limited time offers you don't want to miss"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Deals Section",
+      "settings": {}
+    }
+  ]
+}
+{% endschema %}
