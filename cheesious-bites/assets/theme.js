@@ -262,21 +262,34 @@
 
     var branchId = getBranchId();
     if (!branchId) {
-      showCheckoutError('Please select a branch first.');
+      if (typeof window.TQBranchSelector === 'function') window.TQBranchSelector();
+      showCheckoutError('Please select your city and area first.');
       return;
     }
 
-    // Require a selected delivery address with a valid pin — the rider
-    // can't navigate without lat/lng.
-    var addrId = window._cbSelectedAddressId;
-    if (!addrId) {
-      showCheckoutError('Please choose a delivery address before placing the order.');
+    var saved = { areaId: null, orderType: 'delivery' };
+    try {
+      saved.areaId = localStorage.getItem('tq_storefront_area_id');
+      saved.orderType = localStorage.getItem('tq_storefront_order_type') || 'delivery';
+    } catch (e) {}
+    var orderType = saved.orderType === 'pickup' ? 'pickup' : 'delivery';
+    if (orderType === 'delivery' && !saved.areaId) {
+      if (typeof window.TQBranchSelector === 'function') window.TQBranchSelector();
+      showCheckoutError('Please select your delivery area.');
       return;
     }
-    var selectedAddr = (window._addressCache || []).find(function(a) { return a.id === addrId; });
-    if (!selectedAddr || typeof selectedAddr.lat !== 'number' || typeof selectedAddr.lng !== 'number') {
-      showCheckoutError('This address has no map pin. Tap "Adjust pin / edit" to drop one — the rider needs it to find you.');
-      return;
+
+    var addrId = window._cbSelectedAddressId;
+    if (orderType === 'delivery') {
+      if (!addrId) {
+        showCheckoutError('Please choose a delivery address before placing the order.');
+        return;
+      }
+      var selectedAddr = (window._addressCache || []).find(function(a) { return a.id === addrId; });
+      if (!selectedAddr || typeof selectedAddr.lat !== 'number' || typeof selectedAddr.lng !== 'number') {
+        showCheckoutError('This address has no map pin. Tap "Adjust pin / edit" to drop one — the rider needs it to find you.');
+        return;
+      }
     }
 
     var apiItems = items.map(function(it) {
@@ -290,10 +303,11 @@
 
     var body = {
       branch_id: branchId,
-      order_type: 'delivery',
+      order_type: orderType,
       payment_method: 'cash',
       items: apiItems,
-      address_id: addrId,
+      address_id: orderType === 'delivery' ? addrId : undefined,
+      delivery_area_id: orderType === 'delivery' ? saved.areaId : undefined,
       customer_notes: ''
     };
 
@@ -312,9 +326,10 @@
       if (!res.ok) return res.json().then(function(d) { throw new Error(d.error || 'Failed to place order'); });
       return res.json();
     })
-    .then(function() {
+    .then(function(order) {
       TastiqoCart.clear();
-      window.location.href = '/account/orders';
+      if (order && order.id) window.location.href = '/account/orders/' + order.id;
+      else window.location.href = '/account/orders';
     })
     .catch(function(err) {
       showCheckoutError(err.message || 'Failed to place order. Please try again.');
@@ -1173,7 +1188,8 @@
         if (!data.orders.length && ordersOffset === 0) { listEl.style.display = 'none'; if (emptyEl) emptyEl.style.display = 'block'; return; }
         var html = data.orders.map(function(o) {
           var d = new Date(o.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-          return '<div class="cb-order-card"><div class="cb-order-card-info"><div class="cb-order-card-number">' + o.order_number + '</div><div class="cb-order-card-meta">' + d + ' &middot; ' + o.order_type + '</div></div><span class="cb-order-status-badge ' + o.status + '">' + o.status + '</span><div class="cb-order-card-total">' + o.currency + ' ' + parseFloat(o.total).toFixed(2) + '</div></div>';
+          var typeLabel = o.order_type === 'dine_in' ? 'Dine in' : (o.order_type || '');
+          return '<a class="cb-order-card" href="/account/orders/' + encodeURIComponent(o.id) + '"><div class="cb-order-card-info"><div class="cb-order-card-number">Order #' + o.order_number + '</div><div class="cb-order-card-meta">' + d + ' &middot; ' + typeLabel + '</div></div><span class="cb-order-status-badge ' + o.status + '">' + orderStatusLabel(o.status, o.order_type) + '</span><div class="cb-order-card-total">' + o.currency + ' ' + parseFloat(o.total).toFixed(2) + '</div><span class="cb-order-card-chevron" aria-hidden="true">›</span></a>';
         }).join('');
         if (append) listEl.insertAdjacentHTML('beforeend', html); else listEl.innerHTML = html;
         if (data.orders.length + ordersOffset < data.total) { if (pagEl) pagEl.style.display = 'block'; } else { if (pagEl) pagEl.style.display = 'none'; }
@@ -1183,6 +1199,168 @@
 
   var loadMoreBtn = document.getElementById('orders-load-more');
   if (loadMoreBtn) loadMoreBtn.addEventListener('click', function() { ordersOffset += ordersLimit; loadOrders(true); });
+
+  /* -----------------------------------------------
+     Order details + live status
+  ----------------------------------------------- */
+  function orderStatusLabel(status, type) {
+    if (status === 'pending') return 'Order placed';
+    if (status === 'confirmed') return 'Confirmed';
+    if (status === 'preparing') return 'Preparing';
+    if (status === 'ready') return type === 'delivery' ? 'On the way' : (type === 'pickup' ? 'Ready for pickup' : 'Ready');
+    if (status === 'completed') return 'Completed';
+    if (status === 'cancelled') return 'Cancelled';
+    return status || '';
+  }
+  function escHtml(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function(ch) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+    });
+  }
+  function moneyOf(order, amount) {
+    var n = parseFloat(amount);
+    if (!isFinite(n)) n = 0;
+    return (order.currency || 'PKR') + ' ' + n.toFixed(2);
+  }
+  function whenText(value) {
+    if (!value) return '';
+    var d = new Date(value);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  }
+  function addressText(addr) {
+    if (!addr) return '';
+    if (typeof addr === 'string') return addr;
+    var keys = ['label', 'address_line', 'address_line1', 'line1', 'street', 'area', 'city', 'notes'];
+    var parts = [];
+    keys.forEach(function(key) { if (addr[key]) parts.push(String(addr[key])); });
+    return parts.join(', ');
+  }
+
+  var detailPage = document.getElementById('order-detail-page');
+  var detailGuest = document.getElementById('order-detail-guest');
+  var detailMissing = document.getElementById('order-detail-missing');
+  if (detailPage || detailGuest) {
+    var orderMatch = window.location.pathname.match(/^\/account\/orders\/([0-9a-fA-F-]{36})\/?$/);
+    if (!CustomerAuth.isLoggedIn()) {
+      if (detailGuest) detailGuest.style.display = 'block';
+    } else if (!orderMatch) {
+      if (detailMissing) detailMissing.style.display = 'block';
+    } else {
+      if (detailPage) detailPage.style.display = 'block';
+      loadOrderDetail(orderMatch[1]);
+    }
+  }
+
+  function loadOrderDetail(orderId) {
+    var root = document.getElementById('order-detail-root');
+    if (!root) return;
+    var current = null;
+    var stream = null;
+
+    function paint() {
+      if (!current) return;
+      var steps = [
+        { key: 'pending', label: 'Order placed', at: current.created_at },
+        { key: 'confirmed', label: 'Confirmed', at: current.confirmed_at },
+        { key: 'preparing', label: 'Preparing', at: current.preparing_at },
+        { key: 'ready', label: orderStatusLabel('ready', current.order_type), at: current.ready_at },
+        { key: 'completed', label: 'Completed', at: current.completed_at }
+      ];
+      var rank = { pending: 0, confirmed: 1, preparing: 2, ready: 3, completed: 4 };
+      var here = rank[current.status];
+      if (here == null) here = -1;
+      var cancelled = current.status === 'cancelled';
+      var track = steps.map(function(step, index) {
+        var cls = 'cb-od-step';
+        if (!cancelled && index < here) cls += ' is-done';
+        else if (!cancelled && index === here) cls += ' is-current';
+        else cls += ' is-upcoming';
+        if (cancelled && step.at) cls = 'cb-od-step is-done';
+        return '<li class="' + cls + '"><span class="cb-od-dot"></span><div><div class="cb-od-step-label">' + escHtml(step.label) + '</div>' +
+          (step.at ? '<div class="cb-od-step-time">' + escHtml(whenText(step.at)) + '</div>' : '') + '</div></li>';
+      }).join('');
+      var items = (current.items || []).map(function(item) {
+        var mods = (item.modifiers || []).map(function(mod) { return escHtml(mod.modifier_name); }).filter(Boolean).join(', ');
+        return '<div class="cb-od-item"><div><div class="cb-od-item-name">' + escHtml(item.product_name) + '</div>' +
+          (mods ? '<div class="cb-od-item-mods">' + mods + '</div>' : '') +
+          (item.notes ? '<div class="cb-od-note">' + escHtml(item.notes) + '</div>' : '') +
+          '</div><div>' + item.quantity + '</div><div>' + moneyOf(current, item.subtotal) + '</div></div>';
+      }).join('');
+      var fee = parseFloat(current.delivery_fee) || 0;
+      var discount = parseFloat(current.discount_amount) || 0;
+      var addr = addressText(current.delivery_address);
+      var typeLabel = current.order_type === 'dine_in' ? 'Dine in' : (current.order_type === 'pickup' ? 'Pickup' : 'Delivery');
+      var live = (current.status === 'completed' || current.status === 'cancelled') ? '' : '<div class="cb-od-live">Updating live</div>';
+      root.innerHTML =
+        '<div class="cb-od-head"><div><div class="cb-od-kicker">Order #' + escHtml(current.order_number) + '</div><h1 class="cb-od-number">' + escHtml(current.tracking_code || ('#' + current.order_number)) + '</h1>' +
+        '<div class="cb-od-meta">' + escHtml(whenText(current.created_at)) + ' · ' + escHtml(typeLabel) + ' · Type this code in the app</div>' +
+        '<button type="button" class="cb-btn cb-btn-outline cb-btn-sm cb-od-copy" id="cb-copy-order-no">Copy tracking code</button></div>' +
+        '<div style="text-align:right;">' + live + '<span class="cb-order-status-badge ' + escHtml(current.status) + '">' + escHtml(orderStatusLabel(current.status, current.order_type)) + '</span></div></div>' +
+        (cancelled ? '<div class="cb-od-cancelled">This order was cancelled' + (current.cancel_reason ? ': ' + escHtml(current.cancel_reason) : '.') + '</div>' : '') +
+        '<ol class="cb-od-track">' + track + '</ol>' +
+        '<div class="cb-od-grid"><div class="cb-od-card"><h3>Items</h3>' + (items || '<p class="cb-od-note">No items on this order.</p>') + '</div>' +
+        '<div class="cb-od-card"><h3>Details</h3>' +
+        '<div class="cb-od-row"><span>Subtotal</span><span>' + moneyOf(current, current.subtotal) + '</span></div>' +
+        (fee ? '<div class="cb-od-row"><span>Delivery</span><span>' + moneyOf(current, fee) + '</span></div>' : '') +
+        (discount ? '<div class="cb-od-row"><span>Discount</span><span>-' + moneyOf(current, discount) + '</span></div>' : '') +
+        '<div class="cb-od-row is-total"><span>Total</span><span>' + moneyOf(current, current.total) + '</span></div>' +
+        (addr ? '<p class="cb-od-note" style="margin-top:0.8rem;">' + escHtml(addr) + '</p>' : '') +
+        (current.customer_notes ? '<p class="cb-od-note">Note: ' + escHtml(current.customer_notes) + '</p>' : '') +
+        (current.estimated_ready_minutes ? '<p class="cb-od-note">Ready in about ' + escHtml(current.estimated_ready_minutes) + ' min</p>' : '') +
+        '</div></div>';
+      var copyBtn = document.getElementById('cb-copy-order-no');
+      if (copyBtn) copyBtn.addEventListener('click', function() {
+        var text = String(current.tracking_code || current.order_number);
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function() { copyBtn.textContent = 'Copied'; });
+        } else {
+          copyBtn.textContent = '#' + text;
+        }
+      });
+    }
+
+    function applyStatus(status, reason) {
+      if (!current || !status || current.status === status) return;
+      current.status = status;
+      if (reason) current.cancel_reason = reason;
+      paint();
+      refresh();
+    }
+
+    function refresh() {
+      fetch('/api/storefront/orders/' + orderId, { headers: { 'Authorization': 'Bearer ' + CustomerAuth.getAccessToken() } })
+        .then(function(res) { if (res.status === 404) throw new Error('missing'); if (!res.ok) throw new Error('failed'); return res.json(); })
+        .then(function(order) { current = order; paint(); })
+        .catch(function(err) {
+          if (err.message === 'missing' && detailMissing) {
+            detailPage.style.display = 'none';
+            detailMissing.style.display = 'block';
+          } else if (!current) {
+            root.innerHTML = '<p style="text-align:center;padding:2rem;color:var(--cb-text-muted);">Could not load this order.</p>';
+          }
+        });
+    }
+
+    refresh();
+    if (window.EventSource) {
+      stream = new EventSource('/api/storefront/orders/' + orderId + '/stream?token=' + encodeURIComponent(CustomerAuth.getAccessToken()));
+      stream.onmessage = function(event) {
+        try {
+          var data = JSON.parse(event.data);
+          applyStatus(data.status, data.cancel_reason);
+        } catch (e) {}
+      };
+    }
+    var poll = setInterval(function() {
+      if (!current || current.status === 'completed' || current.status === 'cancelled') {
+        clearInterval(poll);
+        if (stream) stream.close();
+        return;
+      }
+      refresh();
+    }, 15000);
+  }
 
   var BRANCH_LS_KEY    = 'tq_storefront_branch_id';
   var AREA_LS_KEY      = 'tq_storefront_area_id';
@@ -1454,6 +1632,7 @@
                 var areas = (state.areasByCity[res.data.city_id] || []);
                 var area = areas.find(function(a) { return a.id === res.data.area_id; });
                 if (area) pickArea(area);
+                else setError('We do not deliver to that spot. Choose an area from the list.');
               }
             })
             .catch(function() { setError('Network error — please try again.'); })

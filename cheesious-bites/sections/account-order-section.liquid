@@ -1,0 +1,28 @@
+{% comment %}
+  Account Order Section — one order, with its number and live status.
+{% endcomment %}
+
+<section class="cb-section cb-account-order-section">
+  <div class="cb-container">
+    <div id="order-detail-page" style="display:none;">
+      <div class="cb-account-header">
+        <a href="/account/orders" class="cb-btn cb-btn-outline cb-btn-sm">Back to orders</a>
+      </div>
+      <div id="order-detail-root">
+        <div style="text-align:center;padding:3rem;color:var(--cb-text-muted);">Loading order...</div>
+      </div>
+    </div>
+
+    <div id="order-detail-guest" style="display:none;text-align:center;padding:4rem 0;">
+      <h2 class="cb-heading-lg">Sign in to see this order</h2>
+      <p style="color:var(--cb-text-muted);margin-bottom:1.5rem;">Your order number and status are saved to your account.</p>
+      <button class="cb-btn cb-btn-primary" data-open-auth>Sign In</button>
+    </div>
+
+    <div id="order-detail-missing" style="display:none;text-align:center;padding:4rem 0;">
+      <h2 class="cb-heading-lg">Order not found</h2>
+      <p style="color:var(--cb-text-muted);margin-bottom:1.5rem;">This order is not on your account.</p>
+      <a href="/account/orders" class="cb-btn cb-btn-primary">Order History</a>
+    </div>
+  </div>
+</section>

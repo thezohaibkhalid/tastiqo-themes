@@ -1,0 +1,11 @@
+{
+  "name": "Order details",
+  "sections": {
+    "header": { "type": "header-section", "settings": {} },
+    "order": { "type": "account-order-section", "settings": {} },
+    "footer": { "type": "footer-section", "settings": {} }
+  },
+  "header_order": ["header"],
+  "order": ["order"],
+  "footer_order": ["footer"]
+}

@@ -926,19 +926,36 @@
 
     const branchId = getBranchId();
     if (!branchId) {
-      showCheckoutError('Please select a branch first.');
+      if (typeof window.TQBranchSelector === 'function') window.TQBranchSelector();
+      showCheckoutError('Please select your city and area first.');
+      return;
+    }
+
+    let saved = {};
+    try {
+      saved = {
+        areaId: localStorage.getItem('tq_storefront_area_id'),
+        orderType: localStorage.getItem('tq_storefront_order_type') || 'delivery',
+      };
+    } catch (e) {}
+    const orderType = saved.orderType === 'pickup' ? 'pickup' : 'delivery';
+    if (orderType === 'delivery' && !saved.areaId) {
+      if (typeof window.TQBranchSelector === 'function') window.TQBranchSelector();
+      showCheckoutError('Please select your delivery area.');
       return;
     }
 
     const addrId = window._fhSelectedAddressId;
-    if (!addrId) {
-      showCheckoutError('Please choose a delivery address before placing the order.');
-      return;
-    }
-    const selectedAddr = (window._addressCache || []).find(a => a.id === addrId);
-    if (!selectedAddr || typeof selectedAddr.lat !== 'number' || typeof selectedAddr.lng !== 'number') {
-      showCheckoutError('This address has no map pin. Tap "Adjust pin / edit" to drop one — the rider needs it to find you.');
-      return;
+    if (orderType === 'delivery') {
+      if (!addrId) {
+        showCheckoutError('Please choose a delivery address before placing the order.');
+        return;
+      }
+      const selectedAddr = (window._addressCache || []).find(a => a.id === addrId);
+      if (!selectedAddr || typeof selectedAddr.lat !== 'number' || typeof selectedAddr.lng !== 'number') {
+        showCheckoutError('This address has no map pin. Tap "Adjust pin / edit" to drop one — the rider needs it to find you.');
+        return;
+      }
     }
 
     const apiItems = items.map(it => ({
@@ -950,10 +967,11 @@
 
     const body = {
       branch_id: branchId,
-      order_type: 'delivery',
+      order_type: orderType,
       payment_method: 'cash',
       items: apiItems,
-      address_id: addrId,
+      address_id: orderType === 'delivery' ? addrId : undefined,
+      delivery_area_id: orderType === 'delivery' ? saved.areaId : undefined,
       customer_notes: ''
     };
 
@@ -1580,6 +1598,7 @@
                 var areas = (state.areasByCity[res.data.city_id] || []);
                 var area = areas.find(function(a) { return a.id === res.data.area_id; });
                 if (area) pickArea(area);
+                else setError('We do not deliver to that spot. Choose an area from the list.');
               }
             })
             .catch(function() { setError('Network error — please try again.'); })
