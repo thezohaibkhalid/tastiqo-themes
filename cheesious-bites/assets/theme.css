@@ -1116,8 +1116,8 @@ p  { margin: 0 0 1em; color: var(--cb-text); }
 .tq-bs-combo-input:focus { border-color: #F59E0B; background: #fff; }
 .tq-bs-combo.is-disabled .tq-bs-combo-input { background: #F1F5F9; cursor: not-allowed; }
 .tq-bs-caret { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #5C6478; pointer-events: none; }
-.tq-bs-options { list-style: none; margin: 0; padding: 4px; max-height: 220px; overflow-y: auto; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #fff; border: 1px solid #E4E7EB; border-radius: 10px; box-shadow: 0 12px 24px rgba(0,0,0,.12); z-index: 510; display: none; }
-.tq-bs-combo.is-open .tq-bs-options { display: block; }
+.tq-bs-options { list-style: none; margin: 0; padding: 4px; max-height: 220px; overflow-y: auto; position: fixed; background: #fff; border: 1px solid #E4E7EB; border-radius: 10px; box-shadow: 0 16px 40px rgba(0,0,0,.18); z-index: 900; display: none; }
+.tq-bs-combo.is-open .tq-bs-options, .tq-bs-options.is-open { display: block; }
 .tq-bs-options li { padding: 9px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; color: #0F1F44; }
 .tq-bs-options li:hover, .tq-bs-options li.is-active { background: #F1F5F9; }
 .tq-bs-options li.is-empty { color: #5C6478; font-style: italic; cursor: default; }

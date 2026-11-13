@@ -251,48 +251,157 @@
   /* -----------------------------------------------
      Checkout flow
   ----------------------------------------------- */
-  function doCheckout() {
-    if (!CustomerAuth.isLoggedIn()) {
-      openAuthModal();
-      return;
-    }
+  function prepareCheckout() {
+    if (!CustomerAuth.isLoggedIn()) return { needAuth: true };
 
     var items = TastiqoCart.getItems();
-    if (!items.length) return;
+    if (!items.length) return { error: 'Your cart is empty.' };
 
     var branchId = getBranchId();
     if (!branchId) {
       if (typeof window.TQBranchSelector === 'function') window.TQBranchSelector();
-      showCheckoutError('Please select your city and area first.');
-      return;
+      return { error: 'Please select your city and area first.' };
     }
 
-    var saved = { areaId: null, orderType: 'delivery' };
+    var saved = { areaId: null, areaName: '', orderType: 'delivery' };
     try {
       saved.areaId = localStorage.getItem('tq_storefront_area_id');
+      saved.areaName = localStorage.getItem('tq_storefront_area_name') || '';
       saved.orderType = localStorage.getItem('tq_storefront_order_type') || 'delivery';
     } catch (e) {}
     var orderType = saved.orderType === 'pickup' ? 'pickup' : 'delivery';
     if (orderType === 'delivery' && !saved.areaId) {
       if (typeof window.TQBranchSelector === 'function') window.TQBranchSelector();
-      showCheckoutError('Please select your delivery area.');
-      return;
+      return { error: 'Please select your delivery area.' };
     }
 
     var addrId = window._cbSelectedAddressId;
+    var selectedAddr = null;
     if (orderType === 'delivery') {
-      if (!addrId) {
-        showCheckoutError('Please choose a delivery address before placing the order.');
-        return;
-      }
-      var selectedAddr = (window._addressCache || []).find(function(a) { return a.id === addrId; });
+      if (!addrId) return { error: 'Please choose a delivery address before placing the order.' };
+      selectedAddr = (window._addressCache || []).find(function(a) { return a.id === addrId; });
       if (!selectedAddr || typeof selectedAddr.lat !== 'number' || typeof selectedAddr.lng !== 'number') {
-        showCheckoutError('This address has no map pin. Tap "Adjust pin / edit" to drop one — the rider needs it to find you.');
-        return;
+        return { error: 'This address has no map pin. Tap "Adjust pin / edit" to drop one — the rider needs it to find you.' };
       }
     }
 
-    var apiItems = items.map(function(it) {
+    var quote = deliveryQuote;
+    if (orderType === 'delivery' && quote.min > 0 && TastiqoCart.getSubtotal() < quote.min) {
+      return { error: 'The minimum order is ' + formatMoney(quote.min) + '.' };
+    }
+
+    return {
+      items: items,
+      branchId: branchId,
+      orderType: orderType,
+      addrId: addrId,
+      areaId: saved.areaId,
+      areaName: saved.areaName,
+      address: selectedAddr,
+      quote: quote
+    };
+  }
+
+  function ensureOrderReview() {
+    var overlay = document.getElementById('cb-order-review');
+    if (overlay) return overlay;
+    overlay = document.createElement('div');
+    overlay.id = 'cb-order-review';
+    overlay.className = 'cb-auth-modal-backdrop';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.innerHTML =
+      '<div class="cb-auth-modal" style="max-width:28rem;">' +
+        '<button type="button" class="cb-auth-modal-close" id="cb-order-review-close" aria-label="Close">×</button>' +
+        '<div class="cb-auth-header">' +
+          '<h2>Confirm your order</h2>' +
+          '<p>Nothing is sent until you place the order.</p>' +
+        '</div>' +
+        '<div id="cb-order-review-body"></div>' +
+        '<label for="cb-order-note" style="display:block;margin-top:14px;font-size:0.85rem;font-weight:600;">Note for the kitchen <span style="font-weight:400;color:var(--cb-text-muted);">(optional)</span></label>' +
+        '<textarea id="cb-order-note" rows="2" maxlength="300" style="width:100%;margin-top:6px;padding:0.6rem 0.75rem;border:1px solid var(--cb-border);border-radius:8px;font:inherit;resize:vertical;"></textarea>' +
+        '<div id="cb-order-review-error" style="display:none;background:#FEF2F2;color:var(--cb-error,#dc2626);padding:0.625rem 0.875rem;border-radius:8px;font-size:0.8rem;margin-top:12px;"></div>' +
+        '<button type="button" class="cb-btn cb-btn-primary cb-btn-block cb-btn-lg" id="cb-order-place" style="margin-top:14px;">Place order</button>' +
+        '<button type="button" class="cb-btn cb-btn-outline cb-btn-block" id="cb-order-back" style="margin-top:8px;">Back to cart</button>' +
+      '</div>';
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) closeOrderReview();
+    });
+    document.getElementById('cb-order-review-close').addEventListener('click', closeOrderReview);
+    document.getElementById('cb-order-back').addEventListener('click', closeOrderReview);
+    document.getElementById('cb-order-place').addEventListener('click', doCheckout);
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && overlay.classList.contains('is-open')) closeOrderReview();
+    });
+    return overlay;
+  }
+
+  function closeOrderReview() {
+    var overlay = document.getElementById('cb-order-review');
+    if (overlay) overlay.classList.remove('is-open');
+    var placeBtn = document.getElementById('cb-order-place');
+    if (placeBtn && !placeBtn.dataset.placing) {
+      placeBtn.disabled = false;
+      placeBtn.textContent = 'Place order';
+    }
+  }
+
+  function openOrderReview() {
+    var ctx = prepareCheckout();
+    if (ctx.needAuth) { openAuthModal(); return; }
+    if (ctx.error) { showCheckoutError(ctx.error); return; }
+    var cartError = document.getElementById('cb-checkout-error');
+    if (cartError) cartError.style.display = 'none';
+
+    var fee = ctx.orderType === 'delivery' ? (ctx.quote.fee || 0) : 0;
+    var subtotal = TastiqoCart.getSubtotal();
+    var rows = ctx.items.map(function(item) {
+      var mods = item.modifiers && item.modifiers.length
+        ? '<div style="color:var(--cb-text-muted);font-size:0.75rem;">' + escHTML(item.modifiers.map(function(m) { return m.name; }).join(', ')) + '</div>'
+        : '';
+      return '<div style="display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--cb-border);font-size:0.9rem;">' +
+        '<div><strong>' + item.quantity + '× ' + escHTML(item.name) + '</strong>' + mods + '</div>' +
+        '<div style="white-space:nowrap;font-weight:700;">' + formatMoney(item.unit_price * item.quantity) + '</div>' +
+      '</div>';
+    }).join('');
+
+    var where = ctx.orderType === 'pickup'
+      ? '<strong>Pickup</strong>'
+      : '<strong>Delivery</strong>' + (ctx.areaName ? ' · ' + escHTML(ctx.areaName) : '');
+    if (ctx.address) {
+      where += '<div style="margin-top:4px;">' + escHTML(ctx.address.label || 'Address') + ' — ' + escHTML(ctx.address.address_line1 || '') + '</div>';
+    }
+    var pay = ctx.orderType === 'pickup' ? 'Pay with cash when you collect it' : 'Pay with cash on delivery';
+
+    var body = document.getElementById('cb-order-review-body') || ensureOrderReview().querySelector('#cb-order-review-body');
+    ensureOrderReview();
+    body = document.getElementById('cb-order-review-body');
+    body.innerHTML =
+      rows +
+      '<div style="margin-top:12px;font-size:0.85rem;line-height:1.45;">' + where + '</div>' +
+      '<div style="display:flex;justify-content:space-between;padding-top:12px;font-size:0.9rem;"><span>Subtotal</span><span>' + formatMoney(subtotal) + '</span></div>' +
+      (fee > 0 ? '<div style="display:flex;justify-content:space-between;padding-top:6px;font-size:0.9rem;"><span>Delivery</span><span>' + formatMoney(fee) + '</span></div>' : '') +
+      '<div style="display:flex;justify-content:space-between;padding-top:10px;margin-top:8px;border-top:1px solid var(--cb-border);font-weight:700;font-size:1.05rem;"><span>Total</span><span>' + formatMoney(subtotal + fee) + '</span></div>' +
+      '<div style="margin-top:8px;font-size:0.8rem;color:var(--cb-text-muted);">' + pay + '</div>';
+
+    var reviewError = document.getElementById('cb-order-review-error');
+    if (reviewError) reviewError.style.display = 'none';
+    document.getElementById('cb-order-review').classList.add('is-open');
+  }
+
+  function doCheckout() {
+    var ctx = prepareCheckout();
+    if (ctx.needAuth) { openAuthModal(); return; }
+    if (ctx.error) {
+      var reviewError = document.getElementById('cb-order-review-error');
+      if (reviewError) { reviewError.textContent = ctx.error; reviewError.style.display = 'block'; }
+      else showCheckoutError(ctx.error);
+      return;
+    }
+
+    var noteEl = document.getElementById('cb-order-note');
+    var apiItems = ctx.items.map(function(it) {
       return {
         product_id: it.product_id,
         quantity: it.quantity,
@@ -302,17 +411,17 @@
     });
 
     var body = {
-      branch_id: branchId,
-      order_type: orderType,
+      branch_id: ctx.branchId,
+      order_type: ctx.orderType,
       payment_method: 'cash',
       items: apiItems,
-      address_id: orderType === 'delivery' ? addrId : undefined,
-      delivery_area_id: orderType === 'delivery' ? saved.areaId : undefined,
-      customer_notes: ''
+      address_id: ctx.orderType === 'delivery' ? ctx.addrId : undefined,
+      delivery_area_id: ctx.orderType === 'delivery' ? ctx.areaId : undefined,
+      customer_notes: noteEl ? noteEl.value.trim() : ''
     };
 
-    var checkoutBtn = document.getElementById('cb-checkout-btn');
-    if (checkoutBtn) { checkoutBtn.disabled = true; checkoutBtn.textContent = 'Placing order...'; }
+    var placeBtn = document.getElementById('cb-order-place');
+    if (placeBtn) { placeBtn.disabled = true; placeBtn.dataset.placing = '1'; placeBtn.textContent = 'Placing order...'; }
 
     fetch('/api/storefront/orders', {
       method: 'POST',
@@ -332,8 +441,11 @@
       else window.location.href = '/account/orders';
     })
     .catch(function(err) {
-      showCheckoutError(err.message || 'Failed to place order. Please try again.');
-      if (checkoutBtn) { checkoutBtn.disabled = false; checkoutBtn.textContent = 'Checkout →'; }
+      var reviewError = document.getElementById('cb-order-review-error');
+      var message = err.message || 'Failed to place order. Please try again.';
+      if (reviewError) { reviewError.textContent = message; reviewError.style.display = 'block'; }
+      else showCheckoutError(message);
+      if (placeBtn) { placeBtn.disabled = false; delete placeBtn.dataset.placing; placeBtn.textContent = 'Place order'; }
     });
   }
 
@@ -502,7 +614,8 @@
 
     var checkoutBtn = document.getElementById('cb-checkout-btn');
     if (checkoutBtn) {
-      checkoutBtn.addEventListener('click', doCheckout);
+      checkoutBtn.textContent = 'Review order →';
+      checkoutBtn.addEventListener('click', openOrderReview);
     }
   }
 
@@ -616,6 +729,85 @@
     if (e.key === 'tastiqo_addresses_changed') renderDeliveryPicker();
   });
 
+  var deliveryQuote = { key: '', fee: 0, min: 0 };
+  function deliverySelection() {
+    var areaId = '';
+    var orderType = 'delivery';
+    try {
+      areaId = localStorage.getItem('tq_storefront_area_id') || '';
+      orderType = localStorage.getItem('tq_storefront_order_type') || 'delivery';
+    } catch (e) {}
+    return { areaId: areaId, orderType: orderType === 'pickup' ? 'pickup' : 'delivery' };
+  }
+  function loadDeliveryQuote(done) {
+    var selected = deliverySelection();
+    var key = selected.orderType === 'pickup' ? 'pickup' : selected.areaId;
+    if (deliveryQuote.key === key) { done(deliveryQuote); return; }
+    if (selected.orderType === 'pickup' || !selected.areaId) {
+      deliveryQuote = { key: key, fee: 0, min: 0 };
+      done(deliveryQuote);
+      return;
+    }
+    fetch('/api/storefront/service-areas/cities', { credentials: 'same-origin' })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var fee = 0;
+        var min = 0;
+        var groups = (data && data.areas_by_city) || {};
+        Object.keys(groups).forEach(function(cityId) {
+          (groups[cityId] || []).forEach(function(area) {
+            if (area.id === selected.areaId) {
+              fee = area.delivery_fee || 0;
+              min = area.min_order || 0;
+            }
+          });
+        });
+        deliveryQuote = { key: key, fee: fee, min: min };
+        done(deliveryQuote);
+      })
+      .catch(function() {
+        deliveryQuote = { key: key, fee: 0, min: 0 };
+        done(deliveryQuote);
+      });
+  }
+  function paintDeliveryQuote(subtotal, quote) {
+    var totalEl = document.getElementById('cb-cart-total');
+    if (!totalEl || !totalEl.parentElement) return;
+    var fee = quote.fee || 0;
+    var min = quote.min || 0;
+    var summary = totalEl.parentElement.parentElement;
+    var feeRow = document.getElementById('cb-cart-fee-row');
+    if (fee > 0) {
+      if (!feeRow) {
+        feeRow = document.createElement('div');
+        feeRow.id = 'cb-cart-fee-row';
+        feeRow.className = 'cb-summary-row';
+        feeRow.innerHTML = '<span>Delivery</span><span id="cb-cart-fee"></span>';
+        summary.insertBefore(feeRow, totalEl.parentElement);
+      }
+      feeRow.style.display = '';
+      var feeEl = document.getElementById('cb-cart-fee');
+      if (feeEl) feeEl.textContent = formatMoney(fee);
+    } else if (feeRow) {
+      feeRow.style.display = 'none';
+    }
+    var note = document.getElementById('cb-cart-min');
+    if (min > 0) {
+      if (!note) {
+        note = document.createElement('p');
+        note.id = 'cb-cart-min';
+        note.style.cssText = 'margin:8px 0 0;font-size:0.8rem;';
+        summary.insertBefore(note, totalEl.parentElement.nextSibling);
+      }
+      note.textContent = 'Minimum order is ' + formatMoney(min);
+      note.style.color = subtotal < min ? '#b45309' : 'var(--cb-text-muted, #6b7280)';
+      note.style.display = '';
+    } else if (note) {
+      note.style.display = 'none';
+    }
+    totalEl.textContent = formatMoney(subtotal + fee);
+  }
+
   function renderCart() {
     var filledEl = document.getElementById('cb-cart-filled');
     var emptyEl = document.getElementById('cb-cart-empty');
@@ -670,6 +862,7 @@
     var subtotal = TastiqoCart.getSubtotal();
     if (subtotalEl) subtotalEl.textContent = formatMoney(subtotal);
     if (totalEl) totalEl.textContent = formatMoney(subtotal);
+    loadDeliveryQuote(function(quote) { paintDeliveryQuote(subtotal, quote); });
 
     // Wire up quantity controls
     itemsEl.querySelectorAll('.cb-qty-ctrl').forEach(function(btn) {
@@ -1438,7 +1631,63 @@
       el.textContent = msg; el.style.display = 'block';
     }
 
+    function optionsFor(combo) {
+      var key = combo.getAttribute('data-tq-combo');
+      return combo.querySelector('[data-tq-options]') || document.querySelector('.tq-bs-options[data-tq-home="' + key + '"]');
+    }
+    function positionList(combo, list) {
+      var input = combo.querySelector('input');
+      if (!input || !list) return;
+      var rect = input.getBoundingClientRect();
+      var gap = 4;
+      var spaceBelow = window.innerHeight - rect.bottom - 16;
+      var spaceAbove = rect.top - 16;
+      var openUp = spaceBelow < 140 && spaceAbove > spaceBelow;
+      var room = Math.max(96, Math.min(220, openUp ? spaceAbove : spaceBelow));
+      list.style.left = rect.left + 'px';
+      list.style.width = rect.width + 'px';
+      list.style.right = 'auto';
+      list.style.maxHeight = room + 'px';
+      if (openUp) {
+        list.style.top = 'auto';
+        list.style.bottom = (window.innerHeight - rect.top + gap) + 'px';
+      } else {
+        list.style.bottom = 'auto';
+        list.style.top = (rect.bottom + gap) + 'px';
+      }
+    }
+    function openCombo(combo) {
+      var list = optionsFor(combo);
+      if (!list) return;
+      combo.classList.add('is-open');
+      list.setAttribute('data-tq-home', combo.getAttribute('data-tq-combo'));
+      document.body.appendChild(list);
+      list.classList.add('is-open');
+      positionList(combo, list);
+    }
+    function closeCombo(combo) {
+      var list = optionsFor(combo);
+      combo.classList.remove('is-open');
+      if (!list) return;
+      list.classList.remove('is-open');
+      if (list.parentElement !== combo) combo.appendChild(list);
+    }
+    function repositionOpen() {
+      overlay.querySelectorAll('.tq-bs-combo.is-open').forEach(function(combo) {
+        positionList(combo, optionsFor(combo));
+      });
+    }
+    if (!overlay._tqComboBound) {
+      overlay._tqComboBound = true;
+      window.addEventListener('resize', repositionOpen);
+      window.addEventListener('scroll', repositionOpen, true);
+    }
+
     function switchTab(name) {
+      closeCombo(cityCombo);
+      closeCombo(areaCombo);
+      closeCombo(pCityCombo);
+      closeCombo(pBranchCombo);
       tabs.forEach(function(t) {
         var active = t.getAttribute('data-tq-tab') === name;
         t.classList.toggle('is-active', active);
@@ -1474,7 +1723,7 @@
       state.pickupCity = c.id;
       state.pickupBranch = null;
       pCityInput.value = c.name;
-      pCityCombo.classList.remove('is-open');
+      closeCombo(pCityCombo);
       pBranchInput.value = '';
       pBranchInput.disabled = false;
       pBranchCombo.classList.remove('is-disabled');
@@ -1484,7 +1733,7 @@
     function pickPickupBranch(b) {
       state.pickupBranch = b;
       pBranchInput.value = b.name;
-      pBranchCombo.classList.remove('is-open');
+      closeCombo(pBranchCombo);
       pSubmitBtn.disabled = false;
       setError('', 'pickup');
     }
@@ -1550,7 +1799,7 @@
       state.cityId = c.id;
       state.areaId = null;
       cityInput.value = c.name;
-      cityCombo.classList.remove('is-open');
+      closeCombo(cityCombo);
       areaInput.value = '';
       areaInput.disabled = false;
       areaCombo.classList.remove('is-disabled');
@@ -1561,18 +1810,18 @@
       state.areaId = a.id;
       state.areaName = a.name;
       areaInput.value = a.name;
-      areaCombo.classList.remove('is-open');
+      closeCombo(areaCombo);
       submitBtn.disabled = false;
       setError('');
     }
 
-    cityInput.addEventListener('focus', function() { filterCities(cityInput.value); cityCombo.classList.add('is-open'); });
-    cityInput.addEventListener('input', function() { filterCities(cityInput.value); cityCombo.classList.add('is-open'); state.cityId = null; areaInput.value = ''; areaInput.disabled = true; areaCombo.classList.add('is-disabled'); submitBtn.disabled = true; });
-    cityInput.addEventListener('blur', function() { setTimeout(function() { cityCombo.classList.remove('is-open'); }, 120); });
+    cityInput.addEventListener('focus', function() { filterCities(cityInput.value); openCombo(cityCombo); });
+    cityInput.addEventListener('input', function() { filterCities(cityInput.value); openCombo(cityCombo); state.cityId = null; areaInput.value = ''; areaInput.disabled = true; areaCombo.classList.add('is-disabled'); submitBtn.disabled = true; });
+    cityInput.addEventListener('blur', function() { setTimeout(function() { closeCombo(cityCombo); }, 120); });
 
-    areaInput.addEventListener('focus', function() { if (!areaInput.disabled) { filterAreas(areaInput.value); areaCombo.classList.add('is-open'); } });
-    areaInput.addEventListener('input', function() { filterAreas(areaInput.value); areaCombo.classList.add('is-open'); state.areaId = null; submitBtn.disabled = true; });
-    areaInput.addEventListener('blur', function() { setTimeout(function() { areaCombo.classList.remove('is-open'); }, 120); });
+    areaInput.addEventListener('focus', function() { if (!areaInput.disabled) { filterAreas(areaInput.value); openCombo(areaCombo); } });
+    areaInput.addEventListener('input', function() { filterAreas(areaInput.value); openCombo(areaCombo); state.areaId = null; submitBtn.disabled = true; });
+    areaInput.addEventListener('blur', function() { setTimeout(function() { closeCombo(areaCombo); }, 120); });
 
     submitBtn.addEventListener('click', function() {
       if (!state.areaId) return;
@@ -1648,13 +1897,13 @@
       );
     });
 
-    pCityInput.addEventListener('focus', function() { filterPickupCities(pCityInput.value); pCityCombo.classList.add('is-open'); });
-    pCityInput.addEventListener('input', function() { filterPickupCities(pCityInput.value); pCityCombo.classList.add('is-open'); state.pickupCity = null; pBranchInput.value = ''; pBranchInput.disabled = true; pBranchCombo.classList.add('is-disabled'); pSubmitBtn.disabled = true; });
-    pCityInput.addEventListener('blur', function() { setTimeout(function() { pCityCombo.classList.remove('is-open'); }, 120); });
+    pCityInput.addEventListener('focus', function() { filterPickupCities(pCityInput.value); openCombo(pCityCombo); });
+    pCityInput.addEventListener('input', function() { filterPickupCities(pCityInput.value); openCombo(pCityCombo); state.pickupCity = null; pBranchInput.value = ''; pBranchInput.disabled = true; pBranchCombo.classList.add('is-disabled'); pSubmitBtn.disabled = true; });
+    pCityInput.addEventListener('blur', function() { setTimeout(function() { closeCombo(pCityCombo); }, 120); });
 
-    pBranchInput.addEventListener('focus', function() { if (!pBranchInput.disabled) { filterPickupBranches(pBranchInput.value); pBranchCombo.classList.add('is-open'); } });
-    pBranchInput.addEventListener('input', function() { filterPickupBranches(pBranchInput.value); pBranchCombo.classList.add('is-open'); state.pickupBranch = null; pSubmitBtn.disabled = true; });
-    pBranchInput.addEventListener('blur', function() { setTimeout(function() { pBranchCombo.classList.remove('is-open'); }, 120); });
+    pBranchInput.addEventListener('focus', function() { if (!pBranchInput.disabled) { filterPickupBranches(pBranchInput.value); openCombo(pBranchCombo); } });
+    pBranchInput.addEventListener('input', function() { filterPickupBranches(pBranchInput.value); openCombo(pBranchCombo); state.pickupBranch = null; pSubmitBtn.disabled = true; });
+    pBranchInput.addEventListener('blur', function() { setTimeout(function() { closeCombo(pBranchCombo); }, 120); });
 
     pSubmitBtn.addEventListener('click', commitPickup);
 

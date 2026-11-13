@@ -958,6 +958,11 @@
       }
     }
 
+    if (orderType === 'delivery' && deliveryQuote.min > 0 && TastiqoCart.getSubtotal() < deliveryQuote.min) {
+      showCheckoutError('The minimum order is ' + formatMoney(deliveryQuote.min) + '.');
+      return;
+    }
+
     const apiItems = items.map(it => ({
       product_id: it.product_id,
       quantity: it.quantity,
@@ -1255,6 +1260,82 @@
     }
   }
 
+  var deliveryQuote = { key: '', fee: 0, min: 0 };
+  function loadDeliveryQuote(done) {
+    var areaId = '';
+    var orderType = 'delivery';
+    try {
+      areaId = localStorage.getItem('tq_storefront_area_id') || '';
+      orderType = localStorage.getItem('tq_storefront_order_type') || 'delivery';
+    } catch (e) {}
+    orderType = orderType === 'pickup' ? 'pickup' : 'delivery';
+    var key = orderType === 'pickup' ? 'pickup' : areaId;
+    if (deliveryQuote.key === key) { done(deliveryQuote); return; }
+    if (orderType === 'pickup' || !areaId) {
+      deliveryQuote = { key: key, fee: 0, min: 0 };
+      done(deliveryQuote);
+      return;
+    }
+    fetch('/api/storefront/service-areas/cities', { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var fee = 0;
+        var min = 0;
+        var groups = (data && data.areas_by_city) || {};
+        Object.keys(groups).forEach(function (cityId) {
+          (groups[cityId] || []).forEach(function (area) {
+            if (area.id === areaId) {
+              fee = area.delivery_fee || 0;
+              min = area.min_order || 0;
+            }
+          });
+        });
+        deliveryQuote = { key: key, fee: fee, min: min };
+        done(deliveryQuote);
+      })
+      .catch(function () {
+        deliveryQuote = { key: key, fee: 0, min: 0 };
+        done(deliveryQuote);
+      });
+  }
+  function paintDeliveryQuote(subtotal, quote) {
+    var totalEl = document.getElementById('cart-total');
+    if (!totalEl || !totalEl.parentElement) return;
+    var fee = quote.fee || 0;
+    var min = quote.min || 0;
+    var summary = totalEl.parentElement.parentElement;
+    var feeRow = document.getElementById('fh-cart-fee-row');
+    if (fee > 0) {
+      if (!feeRow) {
+        feeRow = document.createElement('div');
+        feeRow.id = 'fh-cart-fee-row';
+        feeRow.className = 'cart-summary-row';
+        feeRow.innerHTML = '<span>Delivery</span><span id="fh-cart-fee"></span>';
+        summary.insertBefore(feeRow, totalEl.parentElement);
+      }
+      feeRow.style.display = '';
+      var feeEl = document.getElementById('fh-cart-fee');
+      if (feeEl) feeEl.textContent = formatMoney(fee);
+    } else if (feeRow) {
+      feeRow.style.display = 'none';
+    }
+    var note = document.getElementById('fh-cart-min');
+    if (min > 0) {
+      if (!note) {
+        note = document.createElement('div');
+        note.id = 'fh-cart-min';
+        note.style.cssText = 'font-size:0.75rem;margin-bottom:1rem;';
+        summary.insertBefore(note, totalEl.parentElement.nextSibling);
+      }
+      note.textContent = 'Minimum order: ' + formatMoney(min);
+      note.style.color = subtotal < min ? '#b45309' : 'var(--color-text-muted, #6b7280)';
+      note.style.display = '';
+    } else if (note) {
+      note.style.display = 'none';
+    }
+    totalEl.textContent = formatMoney(subtotal + fee);
+  }
+
   function renderCart() {
     const filledEl = document.getElementById('fh-cart-filled');
     const emptyEl = document.getElementById('fh-cart-empty');
@@ -1308,6 +1389,7 @@
     const subtotal = TastiqoCart.getSubtotal();
     if (subtotalEl) subtotalEl.textContent = formatMoney(subtotal);
     if (totalEl) totalEl.textContent = formatMoney(subtotal);
+    loadDeliveryQuote(function (quote) { paintDeliveryQuote(subtotal, quote); });
 
     itemsEl.querySelectorAll('[data-fh-cart-action]').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -1404,7 +1486,63 @@
       el.textContent = msg; el.style.display = 'block';
     }
 
+    function optionsFor(combo) {
+      var key = combo.getAttribute('data-tq-combo');
+      return combo.querySelector('[data-tq-options]') || document.querySelector('.tq-bs-options[data-tq-home="' + key + '"]');
+    }
+    function positionList(combo, list) {
+      var input = combo.querySelector('input');
+      if (!input || !list) return;
+      var rect = input.getBoundingClientRect();
+      var gap = 4;
+      var spaceBelow = window.innerHeight - rect.bottom - 16;
+      var spaceAbove = rect.top - 16;
+      var openUp = spaceBelow < 140 && spaceAbove > spaceBelow;
+      var room = Math.max(96, Math.min(220, openUp ? spaceAbove : spaceBelow));
+      list.style.left = rect.left + 'px';
+      list.style.width = rect.width + 'px';
+      list.style.right = 'auto';
+      list.style.maxHeight = room + 'px';
+      if (openUp) {
+        list.style.top = 'auto';
+        list.style.bottom = (window.innerHeight - rect.top + gap) + 'px';
+      } else {
+        list.style.bottom = 'auto';
+        list.style.top = (rect.bottom + gap) + 'px';
+      }
+    }
+    function openCombo(combo) {
+      var list = optionsFor(combo);
+      if (!list) return;
+      combo.classList.add('is-open');
+      list.setAttribute('data-tq-home', combo.getAttribute('data-tq-combo'));
+      document.body.appendChild(list);
+      list.classList.add('is-open');
+      positionList(combo, list);
+    }
+    function closeCombo(combo) {
+      var list = optionsFor(combo);
+      combo.classList.remove('is-open');
+      if (!list) return;
+      list.classList.remove('is-open');
+      if (list.parentElement !== combo) combo.appendChild(list);
+    }
+    function repositionOpen() {
+      overlay.querySelectorAll('.tq-bs-combo.is-open').forEach(function(combo) {
+        positionList(combo, optionsFor(combo));
+      });
+    }
+    if (!overlay._tqComboBound) {
+      overlay._tqComboBound = true;
+      window.addEventListener('resize', repositionOpen);
+      window.addEventListener('scroll', repositionOpen, true);
+    }
+
     function switchTab(name) {
+      closeCombo(cityCombo);
+      closeCombo(areaCombo);
+      closeCombo(pCityCombo);
+      closeCombo(pBranchCombo);
       tabs.forEach(function(t) {
         var active = t.getAttribute('data-tq-tab') === name;
         t.classList.toggle('is-active', active);
@@ -1440,7 +1578,7 @@
       state.pickupCity = c.id;
       state.pickupBranch = null;
       pCityInput.value = c.name;
-      pCityCombo.classList.remove('is-open');
+      closeCombo(pCityCombo);
       pBranchInput.value = '';
       pBranchInput.disabled = false;
       pBranchCombo.classList.remove('is-disabled');
@@ -1450,7 +1588,7 @@
     function pickPickupBranch(b) {
       state.pickupBranch = b;
       pBranchInput.value = b.name;
-      pBranchCombo.classList.remove('is-open');
+      closeCombo(pBranchCombo);
       pSubmitBtn.disabled = false;
       setError('', 'pickup');
     }
@@ -1516,7 +1654,7 @@
       state.cityId = c.id;
       state.areaId = null;
       cityInput.value = c.name;
-      cityCombo.classList.remove('is-open');
+      closeCombo(cityCombo);
       areaInput.value = '';
       areaInput.disabled = false;
       areaCombo.classList.remove('is-disabled');
@@ -1527,18 +1665,18 @@
       state.areaId = a.id;
       state.areaName = a.name;
       areaInput.value = a.name;
-      areaCombo.classList.remove('is-open');
+      closeCombo(areaCombo);
       submitBtn.disabled = false;
       setError('');
     }
 
-    cityInput.addEventListener('focus', function() { filterCities(cityInput.value); cityCombo.classList.add('is-open'); });
-    cityInput.addEventListener('input', function() { filterCities(cityInput.value); cityCombo.classList.add('is-open'); state.cityId = null; areaInput.value = ''; areaInput.disabled = true; areaCombo.classList.add('is-disabled'); submitBtn.disabled = true; });
-    cityInput.addEventListener('blur', function() { setTimeout(function() { cityCombo.classList.remove('is-open'); }, 120); });
+    cityInput.addEventListener('focus', function() { filterCities(cityInput.value); openCombo(cityCombo); });
+    cityInput.addEventListener('input', function() { filterCities(cityInput.value); openCombo(cityCombo); state.cityId = null; areaInput.value = ''; areaInput.disabled = true; areaCombo.classList.add('is-disabled'); submitBtn.disabled = true; });
+    cityInput.addEventListener('blur', function() { setTimeout(function() { closeCombo(cityCombo); }, 120); });
 
-    areaInput.addEventListener('focus', function() { if (!areaInput.disabled) { filterAreas(areaInput.value); areaCombo.classList.add('is-open'); } });
-    areaInput.addEventListener('input', function() { filterAreas(areaInput.value); areaCombo.classList.add('is-open'); state.areaId = null; submitBtn.disabled = true; });
-    areaInput.addEventListener('blur', function() { setTimeout(function() { areaCombo.classList.remove('is-open'); }, 120); });
+    areaInput.addEventListener('focus', function() { if (!areaInput.disabled) { filterAreas(areaInput.value); openCombo(areaCombo); } });
+    areaInput.addEventListener('input', function() { filterAreas(areaInput.value); openCombo(areaCombo); state.areaId = null; submitBtn.disabled = true; });
+    areaInput.addEventListener('blur', function() { setTimeout(function() { closeCombo(areaCombo); }, 120); });
 
     submitBtn.addEventListener('click', function() {
       if (!state.areaId) return;
@@ -1614,13 +1752,13 @@
       );
     });
 
-    pCityInput.addEventListener('focus', function() { filterPickupCities(pCityInput.value); pCityCombo.classList.add('is-open'); });
-    pCityInput.addEventListener('input', function() { filterPickupCities(pCityInput.value); pCityCombo.classList.add('is-open'); state.pickupCity = null; pBranchInput.value = ''; pBranchInput.disabled = true; pBranchCombo.classList.add('is-disabled'); pSubmitBtn.disabled = true; });
-    pCityInput.addEventListener('blur', function() { setTimeout(function() { pCityCombo.classList.remove('is-open'); }, 120); });
+    pCityInput.addEventListener('focus', function() { filterPickupCities(pCityInput.value); openCombo(pCityCombo); });
+    pCityInput.addEventListener('input', function() { filterPickupCities(pCityInput.value); openCombo(pCityCombo); state.pickupCity = null; pBranchInput.value = ''; pBranchInput.disabled = true; pBranchCombo.classList.add('is-disabled'); pSubmitBtn.disabled = true; });
+    pCityInput.addEventListener('blur', function() { setTimeout(function() { closeCombo(pCityCombo); }, 120); });
 
-    pBranchInput.addEventListener('focus', function() { if (!pBranchInput.disabled) { filterPickupBranches(pBranchInput.value); pBranchCombo.classList.add('is-open'); } });
-    pBranchInput.addEventListener('input', function() { filterPickupBranches(pBranchInput.value); pBranchCombo.classList.add('is-open'); state.pickupBranch = null; pSubmitBtn.disabled = true; });
-    pBranchInput.addEventListener('blur', function() { setTimeout(function() { pBranchCombo.classList.remove('is-open'); }, 120); });
+    pBranchInput.addEventListener('focus', function() { if (!pBranchInput.disabled) { filterPickupBranches(pBranchInput.value); openCombo(pBranchCombo); } });
+    pBranchInput.addEventListener('input', function() { filterPickupBranches(pBranchInput.value); openCombo(pBranchCombo); state.pickupBranch = null; pSubmitBtn.disabled = true; });
+    pBranchInput.addEventListener('blur', function() { setTimeout(function() { closeCombo(pBranchCombo); }, 120); });
 
     pSubmitBtn.addEventListener('click', commitPickup);
 
