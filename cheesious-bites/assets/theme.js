@@ -1396,11 +1396,17 @@
   /* -----------------------------------------------
      Order details + live status
   ----------------------------------------------- */
-  function orderStatusLabel(status, type) {
+  function orderStatusLabel(status, type, deliveryStatus) {
+    if (type === 'delivery') {
+      if (deliveryStatus === 'delivered' || status === 'completed') return 'Delivered';
+      if (deliveryStatus === 'in_transit') return 'On the way';
+      if (deliveryStatus === 'picked_up') return 'Rider picked up';
+      if (deliveryStatus === 'assigned' && status === 'ready') return 'Waiting for rider pickup';
+    }
     if (status === 'pending') return 'Order placed';
     if (status === 'confirmed') return 'Confirmed';
     if (status === 'preparing') return 'Preparing';
-    if (status === 'ready') return type === 'delivery' ? 'On the way' : (type === 'pickup' ? 'Ready for pickup' : 'Ready');
+    if (status === 'ready') return type === 'delivery' ? 'Ready for delivery' : (type === 'pickup' ? 'Ready for pickup' : 'Ready');
     if (status === 'completed') return 'Completed';
     if (status === 'cancelled') return 'Cancelled';
     return status || '';
@@ -1450,18 +1456,35 @@
     if (!root) return;
     var current = null;
     var stream = null;
+    var pendingStatusEvent = null;
+    var pendingDeliveryEvent = null;
 
     function paint() {
       if (!current) return;
-      var steps = [
+      var deliveryStatus = current.delivery_status || '';
+      var isDelivery = current.order_type === 'delivery';
+      var steps = isDelivery ? [
+        { key: 'pending', label: 'Order placed', at: current.created_at },
+        { key: 'confirmed', label: 'Confirmed', at: current.confirmed_at },
+        { key: 'preparing', label: 'Preparing', at: current.preparing_at },
+        { key: 'ready', label: 'Ready for delivery', at: current.ready_at },
+        { key: 'assigned', label: 'Waiting for rider pickup', at: current.delivery_assigned_at },
+        { key: 'picked_up', label: 'Rider picked up your order', at: current.delivery_picked_up_at },
+        { key: 'in_transit', label: 'Rider is delivering', at: current.delivery_in_transit_at },
+        { key: 'delivered', label: 'Delivered', at: current.delivery_delivered_at || current.completed_at }
+      ] : [
         { key: 'pending', label: 'Order placed', at: current.created_at },
         { key: 'confirmed', label: 'Confirmed', at: current.confirmed_at },
         { key: 'preparing', label: 'Preparing', at: current.preparing_at },
         { key: 'ready', label: orderStatusLabel('ready', current.order_type), at: current.ready_at },
         { key: 'completed', label: 'Completed', at: current.completed_at }
       ];
-      var rank = { pending: 0, confirmed: 1, preparing: 2, ready: 3, completed: 4 };
+      var rank = { pending: 0, confirmed: 1, preparing: 2, ready: 3, completed: isDelivery ? 7 : 4 };
       var here = rank[current.status];
+      if (isDelivery && deliveryStatus === 'assigned' && current.status === 'ready') here = 4;
+      if (isDelivery && deliveryStatus === 'picked_up') here = 5;
+      if (isDelivery && deliveryStatus === 'in_transit') here = 6;
+      if (isDelivery && deliveryStatus === 'delivered') here = 7;
       if (here == null) here = -1;
       var cancelled = current.status === 'cancelled';
       var track = steps.map(function(step, index) {
@@ -1489,7 +1512,7 @@
         '<div class="cb-od-head"><div><div class="cb-od-kicker">Order #' + escHtml(current.order_number) + '</div><h1 class="cb-od-number">' + escHtml(current.tracking_code || ('#' + current.order_number)) + '</h1>' +
         '<div class="cb-od-meta">' + escHtml(whenText(current.created_at)) + ' · ' + escHtml(typeLabel) + ' · Type this code in the app</div>' +
         '<button type="button" class="cb-btn cb-btn-outline cb-btn-sm cb-od-copy" id="cb-copy-order-no">Copy tracking code</button></div>' +
-        '<div style="text-align:right;">' + live + '<span class="cb-order-status-badge ' + escHtml(current.status) + '">' + escHtml(orderStatusLabel(current.status, current.order_type)) + '</span></div></div>' +
+        '<div style="text-align:right;">' + live + '<span class="cb-order-status-badge ' + escHtml(current.status) + '">' + escHtml(orderStatusLabel(current.status, current.order_type, deliveryStatus)) + '</span></div></div>' +
         (cancelled ? '<div class="cb-od-cancelled">This order was cancelled' + (current.cancel_reason ? ': ' + escHtml(current.cancel_reason) : '.') + '</div>' : '') +
         '<ol class="cb-od-track">' + track + '</ol>' +
         '<div class="cb-od-grid"><div class="cb-od-card"><h3>Items</h3>' + (items || '<p class="cb-od-note">No items on this order.</p>') + '</div>' +
@@ -1513,18 +1536,77 @@
       });
     }
 
-    function applyStatus(status, reason) {
-      if (!current || !status || current.status === status) return;
+    function applyStatus(status, reason, skipRefresh) {
+      if (!status) return;
+      if (!current) { pendingStatusEvent = { status: status, reason: reason }; return; }
+      if (current.status === status) return;
       current.status = status;
       if (reason) current.cancel_reason = reason;
+      var now = new Date().toISOString();
+      if (status === 'confirmed' && !current.confirmed_at) current.confirmed_at = now;
+      if (status === 'preparing' && !current.preparing_at) current.preparing_at = now;
+      if (status === 'ready' && !current.ready_at) current.ready_at = now;
+      if (status === 'completed' && !current.completed_at) current.completed_at = now;
       paint();
-      refresh();
+      if (!skipRefresh) refresh();
+    }
+
+    function applyDeliveryStatus(data, skipRefresh) {
+      if (!data || !data.status) return;
+      if (!current) { pendingDeliveryEvent = data; return; }
+      if (data.status === 'cancelled') {
+        current.delivery_status = '';
+        current.delivery_assigned_at = '';
+        current.delivery_picked_up_at = '';
+        current.delivery_in_transit_at = '';
+        paint();
+        if (!skipRefresh) refresh();
+        return;
+      }
+      current.delivery_status = data.status;
+      current.delivery_assigned_at = data.assigned_at || current.delivery_assigned_at;
+      current.delivery_picked_up_at = data.picked_up_at || current.delivery_picked_up_at;
+      if (data.status === 'in_transit') current.delivery_in_transit_at = data.updated_at || new Date().toISOString();
+      current.delivery_delivered_at = data.delivered_at || current.delivery_delivered_at;
+      if (data.status === 'delivered') {
+        current.status = 'completed';
+        current.completed_at = data.delivered_at || data.updated_at || current.completed_at;
+      }
+      paint();
+      if (!skipRefresh) refresh();
     }
 
     function refresh() {
       fetch('/api/storefront/orders/' + orderId, { headers: { 'Authorization': 'Bearer ' + CustomerAuth.getAccessToken() } })
         .then(function(res) { if (res.status === 404) throw new Error('missing'); if (!res.ok) throw new Error('failed'); return res.json(); })
-        .then(function(order) { current = order; paint(); })
+        .then(function(order) {
+          var liveDelivery = current ? {
+            status: current.delivery_status,
+            assigned: current.delivery_assigned_at,
+            pickedUp: current.delivery_picked_up_at,
+            inTransit: current.delivery_in_transit_at,
+            delivered: current.delivery_delivered_at
+          } : null;
+          current = order;
+          if (liveDelivery) {
+            current.delivery_status = liveDelivery.status || current.delivery_status;
+            current.delivery_assigned_at = liveDelivery.assigned || current.delivery_assigned_at;
+            current.delivery_picked_up_at = liveDelivery.pickedUp || current.delivery_picked_up_at;
+            current.delivery_in_transit_at = liveDelivery.inTransit || current.delivery_in_transit_at;
+            current.delivery_delivered_at = liveDelivery.delivered || current.delivery_delivered_at;
+          }
+          if (pendingStatusEvent) {
+            var queuedStatus = pendingStatusEvent;
+            pendingStatusEvent = null;
+            applyStatus(queuedStatus.status, queuedStatus.reason, true);
+          }
+          if (pendingDeliveryEvent) {
+            var queuedDelivery = pendingDeliveryEvent;
+            pendingDeliveryEvent = null;
+            applyDeliveryStatus(queuedDelivery, true);
+          }
+          paint();
+        })
         .catch(function(err) {
           if (err.message === 'missing' && detailMissing) {
             detailPage.style.display = 'none';
@@ -1541,7 +1623,8 @@
       stream.onmessage = function(event) {
         try {
           var data = JSON.parse(event.data);
-          applyStatus(data.status, data.cancel_reason);
+          if (data.type === 'delivery_status_update') applyDeliveryStatus(data);
+          else if (data.type === 'status_update') applyStatus(data.status, data.cancel_reason);
         } catch (e) {}
       };
     }
