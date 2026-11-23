@@ -1,0 +1,13 @@
+{%- comment -%}
+  Outputs `v` only when it is a plain hex colour (#rgb, #rgba, #rrggbb,
+  #rrggbbaa). Anything else (rgb(), names, text with ; or }) prints
+  nothing, so owner input can never break out of the <style> block.
+  Usage: {%- capture c -%}{% render 'css-color', v: theme.color_primary %}{%- endcapture -%}
+{%- endcomment -%}
+{%- assign tq_cc = v | append: '' | strip | downcase -%}
+{%- assign tq_cc_head = tq_cc | slice: 0, 1 -%}
+{%- assign tq_cc_rest = tq_cc | slice: 1, 8 | remove: '0' | remove: '1' | remove: '2' | remove: '3' | remove: '4' | remove: '5' | remove: '6' | remove: '7' | remove: '8' | remove: '9' | remove: 'a' | remove: 'b' | remove: 'c' | remove: 'd' | remove: 'e' | remove: 'f' -%}
+{%- assign tq_cc_n = tq_cc.size -%}
+{%- if tq_cc_head == '#' and tq_cc_rest.size == 0 -%}
+  {%- if tq_cc_n == 4 or tq_cc_n == 5 or tq_cc_n == 7 or tq_cc_n == 9 -%}{{ tq_cc }}{%- endif -%}
+{%- endif -%}

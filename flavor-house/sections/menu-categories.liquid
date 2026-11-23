@@ -11,10 +11,11 @@
 
     {% if menu_categories.size > 0 %}
       <div class="grid-{{ section.settings.columns | default: 3 }}">
-        {% for cat in menu_categories limit: section.settings.limit | default: 6 %}
-          <a href="/collection/{{ cat.handle }}" class="category-card">
+        {%- assign fh_cat_limit = section.settings.limit | default: 6 -%}
+        {% for cat in menu_categories limit: fh_cat_limit %}
+          <a href="{{ cat.url }}" class="category-card">
             {% if cat.image %}
-              <img src="{{ cat.image }}" alt="{{ cat.title }}" loading="lazy">
+              <img src="{{ cat.image | image_width: 480 }}" srcset="{{ cat.image | image_srcset: '240,360,480,720' }}" sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 320px" alt="{{ cat.title }}" width="600" height="400" loading="lazy" decoding="async">
             {% else %}
               <div style="width:100%;height:100%;background:linear-gradient(135deg, var(--color-primary), var(--color-dark));"></div>
             {% endif %}

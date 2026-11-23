@@ -6,7 +6,7 @@
       <div class="product-grid">
         <!-- Image -->
         <div class="product-image">
-          <img src="{{ product.imageUrl }}" alt="{{ product.name }}">
+          <img src="{{ product.imageUrl | image_width: 800 }}" srcset="{{ product.imageUrl | image_srcset: '480,800,1200' }}" sizes="(max-width: 768px) 100vw, 50vw" width="800" height="600" alt="{{ product.name }}" fetchpriority="high" decoding="async">
           {% if product.hasDiscount %}
             <span class="badge badge-primary" style="position:absolute;top:1rem;left:1rem;">
               -{{ product.discountPercent }}%

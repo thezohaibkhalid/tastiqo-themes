@@ -1,0 +1,45 @@
+{%- comment -%}
+  Deal card (shared snippet). Params: item (MenuItemContext), show_savings, show_choices, cta,
+  quick_add (default theme.quick_add: the button opens the theme's
+  choose-your-options pop-up instead of the item page).
+  "Limited" badge when the item has a tag named Limited; "-X%" and
+  "You save" only when the item has a compare-at price.
+{%- endcomment -%}
+{%- assign tq_qa = quick_add | if_nil: theme.quick_add -%}
+{%- assign tq_tagstr = '' -%}
+{%- if item.tags -%}{%- assign tq_tagstr = item.tags | join: ',' | downcase -%}{%- endif -%}
+<article class="tq-deal{% if item.isSoldOut %} tq-deal--soldout{% endif %}">
+  <div class="tq-deal__media">
+    {%- if item.imageUrl.size > 0 -%}
+      <img src="{{ item.imageUrl | image_width: 800 | escape }}" srcset="{{ item.imageUrl | image_srcset: '400,600,800,1200' | escape }}" sizes="(max-width: 768px) 100vw, 50vw" alt="" width="800" height="500" loading="lazy" decoding="async">
+    {%- else -%}
+      <span class="tq-deal__ph" aria-hidden="true"></span>
+    {%- endif -%}
+    <div class="tq-deal__badges">
+      {%- if item.isSoldOut -%}<span class="tq-badge tq-badge--secondary">Sold out</span>
+      {%- elsif tq_tagstr contains 'limited' -%}<span class="tq-badge tq-badge--secondary">Limited</span>
+      {%- else -%}<span class="tq-badge">Deal</span>{%- endif -%}
+      {%- if item.hasDiscount -%}<span class="tq-badge tq-deal__off">-{{ item.discountPercent }}%</span>{%- endif -%}
+    </div>
+  </div>
+  <div class="tq-deal__body">
+    <h3 class="tq-deal__title"><a href="{{ item.url | escape }}">{{ item.name | escape }}</a></h3>
+    {%- if item.description.size > 0 -%}<p class="tq-deal__desc">{{ item.description | truncate: 120 | escape }}</p>{%- endif -%}
+    {%- if show_choices and item.modifier_groups and item.modifier_groups.size > 0 -%}
+      <ul class="tq-deal__choices" aria-label="You choose">
+        {%- for g in item.modifier_groups limit: 3 -%}<li>{{ g.title | escape }}</li>{%- endfor -%}
+      </ul>
+    {%- endif -%}
+    <div class="tq-deal__foot">
+      <div class="tq-deal__price">
+        {%- if item.hasDiscount -%}<span class="tq-deal__was"><span class="tq-sr">Was </span>{{ item.compareAtPriceMoney }}</span>{%- endif -%}
+        <span class="tq-deal__now">{%- if item.hasDiscount -%}<span class="tq-sr">Now </span>{%- endif -%}{{ item.priceMoney }}</span>
+        {%- if show_savings and item.hasDiscount -%}<span class="tq-deal__save">You save {{ item.savingsMoney }}</span>{%- endif -%}
+      </div>
+      {%- unless item.isSoldOut -%}
+        <a href="{{ item.url | escape }}" class="cb-btn cb-btn-primary cb-btn-sm tq-deal__cta" aria-label="{{ cta | default: 'Order now' | escape }}: {{ item.name | escape }}"{% if tq_qa %} data-tq-add data-id="{{ item.id | escape }}" data-name="{{ item.name | escape }}" data-price="{{ item.price }}" data-price-money="{{ item.priceMoney | escape }}" data-image="{{ item.imageUrl | escape }}" data-url="{{ item.url | escape }}"{% endif %}>{{ cta | default: 'Order now' | escape }}</a>
+        {%- if tq_qa and item.hasModifiers -%}<script type="application/json" data-tq-mods>{{ item.modifier_groups | json }}</script>{%- endif -%}
+      {%- endunless -%}
+    </div>
+  </div>
+</article>

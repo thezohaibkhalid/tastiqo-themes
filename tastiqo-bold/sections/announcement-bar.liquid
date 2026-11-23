@@ -1,0 +1,75 @@
+{%- comment -%}
+  Announcement bar: short messages above the header.
+  layout: static (first message) | rotating (fades through messages,
+  pauses on hover/focus, off with reduced motion) | marquee (scrolling
+  ticker; static with reduced motion).
+  Blocks: message {text, link}. Ends with <!--tb:main-->.
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+{%- assign tq_layout = s.layout | default: 'rotating' -%}
+{%- assign tq_n = 0 -%}
+{%- for block in section.blocks -%}{%- if block.settings.text.size > 0 -%}{%- assign tq_n = tq_n | plus: 1 -%}{%- endif -%}{%- endfor -%}
+{%- if tq_n > 0 -%}
+<div class="tb-announce tb-announce--{{ tq_layout }} tb-tone--{{ s.tone | default: 'accent' }}"{% if tq_layout == 'rotating' and tq_n > 1 %} data-tb-rotate data-interval="{{ s.interval | default: 5 }}"{% endif %} role="region" aria-label="Announcements">
+  <div class="tb-container tb-announce__inner">
+    {%- if tq_layout == 'marquee' -%}
+      <div class="tb-marquee"><div class="tb-marquee__track">
+        {%- for i in (1..2) -%}
+          {%- for block in section.blocks -%}{%- if block.settings.text.size > 0 -%}
+            <span class="tb-marquee__item"{% if i == 2 %} aria-hidden="true"{% endif %} data-block-id="{{ block.id }}" data-block-type="message">{%- if block.settings.link.size > 0 -%}<a href="{% render 'safe-url', url: block.settings.link %}"{% if i == 2 %} tabindex="-1"{% endif %}>{{ block.settings.text | escape }}</a>{%- else -%}{{ block.settings.text | escape }}{%- endif -%}</span>
+          {%- endif -%}{%- endfor -%}
+        {%- endfor -%}
+      </div></div>
+    {%- else -%}
+      {%- assign tq_i = 0 -%}
+      {%- for block in section.blocks -%}{%- if block.settings.text.size > 0 -%}
+        {%- if tq_layout == 'static' and tq_i > 0 -%}{%- break -%}{%- endif -%}
+        <p class="tb-announce__msg{% if tq_i == 0 %} is-active{% endif %}" data-block-id="{{ block.id }}" data-block-type="message"{% if tq_i > 0 %} hidden{% endif %}>
+          {%- if block.settings.link.size > 0 -%}<a href="{% render 'safe-url', url: block.settings.link %}">{{ block.settings.text | escape }}</a>{%- else -%}{{ block.settings.text | escape }}{%- endif -%}
+        </p>
+        {%- assign tq_i = tq_i | plus: 1 -%}
+      {%- endif -%}{%- endfor -%}
+    {%- endif -%}
+  </div>
+</div>
+{%- endif -%}
+<!--tb:main-->
+
+{% schema %}
+{
+  "name": "Announcement bar",
+  "description": "Short messages above the header: free delivery, new deals, timings.",
+  "icon": "Megaphone",
+  "group": "header",
+  "max_blocks": 6,
+  "settings": [
+    { "type": "select", "id": "layout", "label": "Layout", "default": "rotating", "options": [
+      { "value": "static", "label": "One message" },
+      { "value": "rotating", "label": "Rotating messages" },
+      { "value": "marquee", "label": "Scrolling ticker" }
+    ] },
+    { "type": "range", "id": "interval", "label": "Time per message", "min": 3, "max": 10, "step": 1, "unit": "s", "default": 5 },
+    { "type": "select", "id": "tone", "label": "Colour", "default": "accent", "options": [
+      { "value": "accent", "label": "Highlight colour" },
+      { "value": "primary", "label": "Primary colour" },
+      { "value": "deep", "label": "Bars colour" }
+    ] }
+  ],
+  "blocks": [
+    { "type": "message", "name": "Message", "settings": [
+      { "type": "text", "id": "text", "label": "Text", "default": "Free delivery on orders over Rs 1,500" },
+      { "type": "url", "id": "link", "label": "Link (optional)" }
+    ] }
+  ],
+  "presets": [
+    { "name": "Announcement bar – Rotating", "category": "Header", "settings": { "layout": "rotating" }, "blocks": [
+      { "type": "message", "settings": { "text": "Free delivery on orders over Rs 1,500" } },
+      { "type": "message", "settings": { "text": "New: Midnight deals from 10 PM" } }
+    ] },
+    { "name": "Announcement bar – Ticker", "category": "Header", "settings": { "layout": "marquee" }, "blocks": [
+      { "type": "message", "settings": { "text": "Hot & fresh, made to order" } },
+      { "type": "message", "settings": { "text": "Order online for delivery or pickup" } }
+    ] }
+  ]
+}
+{% endschema %}

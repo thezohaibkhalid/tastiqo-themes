@@ -1,0 +1,10 @@
+{%- comment -%} Social links from Settings → Social links (restaurant.social). {%- endcomment -%}
+{%- assign tq_soc = restaurant.social -%}
+{%- if tq_soc.instagram.size > 0 or tq_soc.facebook.size > 0 or tq_soc.tiktok.size > 0 or tq_soc.youtube.size > 0 -%}
+<ul class="tb-social" role="list" aria-label="Social media">
+  {%- if tq_soc.instagram.size > 0 -%}<li><a class="tb-iconbtn" href="{% render 'safe-url', url: tq_soc.instagram %}" target="_blank" rel="noopener" aria-label="Instagram">{% render 'icon', name: 'instagram' %}</a></li>{%- endif -%}
+  {%- if tq_soc.facebook.size > 0 -%}<li><a class="tb-iconbtn" href="{% render 'safe-url', url: tq_soc.facebook %}" target="_blank" rel="noopener" aria-label="Facebook">{% render 'icon', name: 'facebook' %}</a></li>{%- endif -%}
+  {%- if tq_soc.tiktok.size > 0 -%}<li><a class="tb-iconbtn" href="{% render 'safe-url', url: tq_soc.tiktok %}" target="_blank" rel="noopener" aria-label="TikTok">{% render 'icon', name: 'tiktok' %}</a></li>{%- endif -%}
+  {%- if tq_soc.youtube.size > 0 -%}<li><a class="tb-iconbtn" href="{% render 'safe-url', url: tq_soc.youtube %}" target="_blank" rel="noopener" aria-label="YouTube">{% render 'icon', name: 'youtube' %}</a></li>{%- endif -%}
+</ul>
+{%- endif -%}

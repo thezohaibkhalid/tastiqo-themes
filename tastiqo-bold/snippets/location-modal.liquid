@@ -1,0 +1,43 @@
+{%- comment -%}
+  Order mode + branch / delivery-area chooser. Delivery: city → area
+  (/api/storefront/service-areas) → the branch that serves it. Pickup:
+  choose a branch. Saving posts to /api/storefront/set-branch, which sets
+  the branch cookie (menu and prices follow the branch).
+{%- endcomment -%}
+<dialog class="tb-modal" id="tb-location" aria-labelledby="tb-location-title" data-tb-location-modal>
+  <div class="tb-modal__panel tb-modal__panel--narrow">
+    <button type="button" class="tb-iconbtn tb-modal__close" data-tb-close aria-label="Close">{% render 'icon', name: 'close' %}</button>
+    <div class="tb-modal__body">
+      <h2 class="tb-modal__title" id="tb-location-title">How do you want your food?</h2>
+      <div class="tb-toggle tb-toggle--lg" role="radiogroup" aria-label="Order type">
+        <button type="button" role="radio" aria-checked="true" class="tb-toggle__opt" data-tb-set-mode="delivery">{% render 'icon', name: 'scooter' %} Delivery</button>
+        <button type="button" role="radio" aria-checked="false" class="tb-toggle__opt" data-tb-set-mode="pickup">{% render 'icon', name: 'store' %} Pickup</button>
+      </div>
+      <div data-tb-loc-delivery>
+        <label class="tb-field"><span class="tb-field__label">City</span>
+          <select data-tb-city><option value="">Loading…</option></select>
+        </label>
+        <label class="tb-field"><span class="tb-field__label">Area</span>
+          <select data-tb-area disabled><option value="">Choose your city first</option></select>
+        </label>
+        <p class="tb-fine" data-tb-area-info></p>
+      </div>
+      <div data-tb-loc-pickup hidden>
+        <fieldset class="tb-branchlist">
+          <legend class="tb-field__label">Pick up from</legend>
+          {%- for b in branch_selector.branches -%}
+            <label class="tb-branchopt">
+              <input type="radio" name="tb-branch" value="{{ b.id | escape }}"{% if b.is_current %} checked{% endif %}>
+              <span><strong>{{ b.name | escape }}</strong>{% if b.address.size > 0 %}<br><span class="tb-fine">{{ b.address | escape }}{% if b.city.size > 0 %}, {{ b.city | escape }}{% endif %}</span>{% endif %}</span>
+              <span class="tb-status{% if b.is_open %} tb-status--open{% endif %}">{% if b.is_open %}Open{% else %}Closed{% endif %}</span>
+            </label>
+          {%- endfor -%}
+        </fieldset>
+      </div>
+      <p class="tb-error" role="alert" data-tb-loc-error hidden></p>
+    </div>
+    <div class="tb-modal__foot">
+      <button type="button" class="tb-btn tb-btn--primary tb-btn--lg tb-btn--block" data-tb-loc-save>Start my order</button>
+    </div>
+  </div>
+</dialog>

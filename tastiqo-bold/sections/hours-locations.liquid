@@ -1,0 +1,88 @@
+{%- comment -%}
+  Opening hours and branches (from your branch settings: address, phone,
+  hours in 12-hour time, open/closed now in the restaurant's timezone).
+  layout: cards (one card per branch) | split (today's hours + branch
+  list) | list (compact rows).
+  Each branch: Directions (its Google Maps link, or a map search for the
+  address), Call, and "Order from here" (switches the branch).
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+{%- assign tq_layout = s.layout | default: 'cards' -%}
+{%- capture tq_today -%}{% render 'today-name' %}{%- endcapture -%}
+<section class="tb-section tb-visit tb-visit--{{ tq_layout }}" id="{{ s.anchor | default: 'locations' | handleize }}" aria-labelledby="tb-visit-{{ section.id }}">
+  <div class="tb-container">
+    <div class="tq-head{% if tq_layout != 'cards' %} tq-head--row{% endif %}">
+      <div>
+        {%- if s.eyebrow.size > 0 -%}<span class="tq-head__eyebrow">{{ s.eyebrow | escape }}</span>{%- endif -%}
+        {%- if s.heading_level == 'h1' -%}<h1 class="tq-head__title" id="tb-visit-{{ section.id }}">{{ s.title | default: 'Hours & locations' | escape }}</h1>{%- else -%}<h2 class="tq-head__title" id="tb-visit-{{ section.id }}">{{ s.title | default: 'Hours & locations' | escape }}</h2>{%- endif -%}
+        {%- if s.subtitle.size > 0 -%}<p class="tq-head__sub">{{ s.subtitle | escape }}</p>{%- endif -%}
+      </div>
+    </div>
+    <ul class="tb-visit__list{% if tq_layout == 'cards' %} tq-grid{% endif %}" style="--tq-cols: {% if locations.size < 3 %}{{ locations.size | default: 1 }}{% else %}3{% endif %};" role="list">
+      {%- for loc in locations -%}
+        {%- assign tq_addr = loc.address -%}
+        {%- if loc.city.size > 0 -%}{%- assign tq_addr = tq_addr | append: ', ' | append: loc.city -%}{%- endif -%}
+        {%- assign tq_map = loc.maps_url -%}
+        {%- unless tq_map.size > 0 -%}{%- capture tq_map -%}https://www.google.com/maps/search/?api=1&query={{ restaurant.name | append: ' ' | append: tq_addr | url_encode }}{%- endcapture -%}{%- endunless -%}
+        <li class="tb-visit__item">
+          <div class="tb-visit__head">
+            <h3 class="tb-visit__name">{{ loc.name | escape }}</h3>
+            {% render 'open-status', is_open: loc.is_open, hours: loc.hours %}
+          </div>
+          {%- if tq_addr.size > 0 -%}<p class="tb-visit__addr">{% render 'icon', name: 'pin' %}<span>{{ tq_addr | escape }}</span></p>{%- endif -%}
+          {%- if s.show_hours and loc.hours.size > 0 -%}
+            <details class="tb-hours"{% if tq_layout != 'list' %} open{% endif %}>
+              <summary>{% render 'icon', name: 'clock' %} Opening hours</summary>
+              <table class="tb-hours__table">
+                <caption class="tq-sr">Opening hours, {{ loc.name | escape }}</caption>
+                <tbody>
+                  {%- for h in loc.hours -%}
+                    <tr{% if h.day == tq_today %} class="is-today" aria-current="date"{% endif %}>
+                      <th scope="row">{{ h.day | escape }}</th>
+                      <td>{%- if h.closed -%}Closed{%- else -%}{{ h.open | escape }} – {{ h.close | escape }}{%- endif -%}</td>
+                    </tr>
+                  {%- endfor -%}
+                </tbody>
+              </table>
+            </details>
+          {%- endif -%}
+          <div class="tb-visit__actions">
+            {%- if s.show_map_link -%}<a class="tb-btn tb-btn--secondary tb-btn--sm" href="{% render 'safe-url', url: tq_map %}" target="_blank" rel="noopener">{% render 'icon', name: 'directions' %} Directions<span class="tq-sr"> to {{ loc.name | escape }} (opens Google Maps)</span></a>{%- endif -%}
+            {%- if s.show_call and loc.phone.size > 0 -%}<a class="tb-btn tb-btn--secondary tb-btn--sm" href="{{ loc.phone | phone_link | escape }}">{% render 'icon', name: 'phone' %} Call<span class="tq-sr"> {{ loc.name | escape }}</span></a>{%- endif -%}
+            {%- if s.show_order_button and locations.size > 1 -%}<button type="button" class="tb-btn tb-btn--primary tb-btn--sm" data-tb-pick-branch="{{ loc.id | escape }}">Order from here<span class="tq-sr">: {{ loc.name | escape }}</span></button>{%- endif -%}
+          </div>
+        </li>
+      {%- endfor -%}
+    </ul>
+    {%- if locations.size == 0 -%}<p class="tb-empty">Add your branch address and opening hours in Settings → Branches.</p>{%- endif -%}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Hours & locations",
+  "description": "Branches with address, opening hours, directions and call buttons.",
+  "icon": "Clock",
+  "settings": [
+    { "type": "paragraph", "id": "_info", "label": "Addresses, phone numbers and opening hours come from Settings → Branches, so they are always up to date." },
+    { "type": "select", "id": "layout", "label": "Layout", "default": "cards", "options": [
+      { "value": "cards", "label": "Cards" },
+      { "value": "split", "label": "Wide rows" },
+      { "value": "list", "label": "Compact list (hours folded)" }
+    ] },
+    { "type": "text", "id": "eyebrow", "label": "Small heading", "default": "Visit us" },
+    { "type": "text", "id": "title", "label": "Title", "default": "Hours & locations" },
+    { "type": "select", "id": "heading_level", "label": "Title level", "default": "h2", "options": [ { "value": "h1", "label": "Page title (use once per page)" }, { "value": "h2", "label": "Section title" } ] },
+    { "type": "text", "id": "subtitle", "label": "Subtitle", "default": "" },
+    { "type": "checkbox", "id": "show_hours", "label": "Show opening hours", "default": true },
+    { "type": "checkbox", "id": "show_map_link", "label": "Show Directions button", "default": true, "info": "Opens Google Maps. Uses the branch's Google Maps link when you have set one." },
+    { "type": "checkbox", "id": "show_call", "label": "Show Call button", "default": true },
+    { "type": "checkbox", "id": "show_order_button", "label": "Show 'Order from here' (more than one branch)", "default": true },
+    { "type": "text", "id": "anchor", "label": "Anchor name", "default": "locations" }
+  ],
+  "presets": [
+    { "name": "Hours & locations – Cards", "category": "Visit us", "settings": { "layout": "cards" } },
+    { "name": "Hours & locations – List", "category": "Visit us", "settings": { "layout": "list" } }
+  ]
+}
+{% endschema %}

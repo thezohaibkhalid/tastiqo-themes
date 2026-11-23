@@ -1,0 +1,72 @@
+{%- comment -%}
+  About / our story.
+  layout: image-left | image-right | centered (text only) | stats (text
+  with a row of numbers). Blocks: stat {value, label}.
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+{%- assign tq_layout = s.layout | default: 'image-right' -%}
+{%- assign tq_text = s.text | default: restaurant.description -%}
+<section class="tb-section tb-about tb-about--{{ tq_layout }}" id="{{ s.anchor | default: 'about' | handleize }}" aria-labelledby="tb-about-{{ section.id }}">
+  <div class="tb-container tb-about__grid">
+    <div class="tb-about__copy">
+      {%- if s.eyebrow.size > 0 -%}<span class="tq-head__eyebrow">{{ s.eyebrow | escape }}</span>{%- endif -%}
+      {%- if s.heading_level == 'h1' -%}<h1 class="tq-head__title" id="tb-about-{{ section.id }}">{{ s.title | default: restaurant.name | escape }}</h1>{%- else -%}<h2 class="tq-head__title" id="tb-about-{{ section.id }}">{{ s.title | default: restaurant.name | escape }}</h2>{%- endif -%}
+      {%- if tq_text.size > 0 -%}<div class="tb-prose"><p>{{ tq_text | escape | newline_to_br }}</p></div>{%- endif -%}
+      {%- assign tq_stats = 0 -%}
+      {%- for block in section.blocks -%}{%- if block.type == 'stat' -%}{%- assign tq_stats = tq_stats | plus: 1 -%}{%- endif -%}{%- endfor -%}
+      {%- if tq_stats > 0 -%}
+        <dl class="tb-stats">
+          {%- for block in section.blocks -%}{%- if block.type == 'stat' -%}
+            <div class="tb-stat" data-block-id="{{ block.id }}" data-block-type="stat"><dt>{{ block.settings.label | escape }}</dt><dd>{{ block.settings.value | escape }}</dd></div>
+          {%- endif -%}{%- endfor -%}
+        </dl>
+      {%- endif -%}
+      {%- if s.button_label.size > 0 -%}<p><a class="tb-btn tb-btn--secondary" href="{% render 'safe-url', url: s.button_link, fallback: '/menu' %}">{{ s.button_label | escape }}</a></p>{%- endif -%}
+    </div>
+    {%- if tq_layout == 'image-left' or tq_layout == 'image-right' -%}
+      {%- assign tq_img = s.image | default: restaurant.cover_image -%}
+      <div class="tb-about__media">
+        {%- if tq_img.size > 0 -%}<img src="{{ tq_img | escape }}" alt="{{ s.image_alt | escape }}" width="800" height="600" loading="lazy" decoding="async">{%- else -%}<div class="tb-ph" aria-hidden="true"></div>{%- endif -%}
+      </div>
+    {%- endif -%}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "About us",
+  "description": "Your story, a photo and a few proud numbers.",
+  "icon": "BookOpen",
+  "max_blocks": 4,
+  "settings": [
+    { "type": "select", "id": "layout", "label": "Layout", "default": "image-right", "options": [
+      { "value": "image-right", "label": "Text left, photo right" },
+      { "value": "image-left", "label": "Photo left, text right" },
+      { "value": "centered", "label": "Centred text" },
+      { "value": "stats", "label": "Text with numbers" }
+    ] },
+    { "type": "text", "id": "eyebrow", "label": "Small heading", "default": "Our story" },
+    { "type": "text", "id": "title", "label": "Title", "default": "Made fresh, served fast", "info": "Leave empty to show your restaurant name." },
+    { "type": "select", "id": "heading_level", "label": "Title level", "default": "h2", "options": [ { "value": "h1", "label": "Page title (use once per page)" }, { "value": "h2", "label": "Section title" } ] },
+    { "type": "textarea", "id": "text", "label": "Text", "default": "", "info": "Leave empty to use the description from your restaurant settings." },
+    { "type": "image_picker", "id": "image", "label": "Photo", "info": "Landscape, about 1200 × 900 px. Leave empty to use your cover photo." },
+    { "type": "text", "id": "image_alt", "label": "Photo description" },
+    { "type": "text", "id": "button_label", "label": "Button text", "default": "See the menu" },
+    { "type": "url", "id": "button_link", "label": "Button link", "default": "#menu" },
+    { "type": "text", "id": "anchor", "label": "Anchor name", "default": "about" }
+  ],
+  "blocks": [
+    { "type": "stat", "name": "Number", "settings": [
+      { "type": "text", "id": "value", "label": "Number", "default": "10+" },
+      { "type": "text", "id": "label", "label": "Label", "default": "years of flavour" }
+    ] }
+  ],
+  "presets": [
+    { "name": "About – Photo and text", "category": "Story", "settings": { "layout": "image-right" }, "blocks": [
+      { "type": "stat", "settings": { "value": "100%", "label": "fresh, never frozen" } },
+      { "type": "stat", "settings": { "value": "30 min", "label": "average delivery" } }
+    ] },
+    { "name": "About – Centred", "category": "Story", "settings": { "layout": "centered" } }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,230 @@
+{%- comment -%}
+  Hero carousel — owner-managed slides (blocks of type "slide").
+
+  layout: slideshow (rotating slides) | image (first visible slide only).
+  Each slide: desktop + optional phone image, badge, heading, text and a
+  button that points at a menu category, a menu item or a web address.
+  Optional "Show from / Show until" dates use the restaurant's local date
+  (utils.today). Slides whose button targets a category/item that is
+  hidden at the visitor's branch fall back to /menu.
+
+  Performance: the first visible slide's image is eager + fetchpriority
+  high (LCP); all other slides lazy-load. Images carry width/height so
+  nothing shifts. No library: CSS scroll-snap + the ~2 KB TQCarousel
+  script in assets/theme.js (works without JS as a swipeable strip).
+  Accessibility: carousel/slide roles, labelled dots, pause button,
+  keyboard arrows, autoplay pauses on hover/focus and is off for
+  prefers-reduced-motion.
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+{%- assign tq_today = utils.today -%}
+{%- assign tq_count = 0 -%}
+{%- capture tq_ids -%}|{%- for block in section.blocks -%}
+  {%- if block.type == 'slide' -%}
+    {%- assign tq_show = true -%}
+    {%- if tq_today.size > 0 -%}
+      {%- if block.settings.starts_on.size > 0 and block.settings.starts_on > tq_today -%}{%- assign tq_show = false -%}{%- endif -%}
+      {%- if block.settings.ends_on.size > 0 and block.settings.ends_on < tq_today -%}{%- assign tq_show = false -%}{%- endif -%}
+    {%- endif -%}
+    {%- if tq_show -%}{{ block.id }}|{%- endif -%}
+  {%- endif -%}
+{%- endfor -%}{%- endcapture -%}
+{%- for block in section.blocks -%}
+  {%- capture tq_needle -%}|{{ block.id }}|{%- endcapture -%}
+  {%- if tq_ids contains tq_needle -%}{%- assign tq_count = tq_count | plus: 1 -%}{%- endif -%}
+{%- endfor -%}
+{%- if s.layout == 'image' and tq_count > 1 -%}{%- assign tq_count = 1 -%}{%- endif -%}
+{%- assign tq_auto = false -%}
+{%- if s.autoplay and tq_count > 1 -%}{%- assign tq_auto = true -%}{%- endif -%}
+{%- assign tq_shade = s.overlay_opacity | if_nil: 40 | divided_by: 100.0 -%}
+
+<section class="tq-hero tq-hero--{{ s.height | default: 'medium' }} tq-hero--{{ s.text_alignment | default: 'left' }}"
+  data-tq-carousel data-autoplay="{{ tq_auto }}" data-interval="{{ s.interval | default: 6 }}"
+  aria-roledescription="carousel" aria-label="{{ s.label | default: 'Highlights' | escape }}"
+  style="--tq-shade: {{ tq_shade }};">
+  <div class="tq-hero__track" data-tq-track>
+    {%- assign tq_i = 0 -%}
+    {%- for block in section.blocks -%}
+      {%- capture tq_needle -%}|{{ block.id }}|{%- endcapture -%}
+      {%- unless tq_ids contains tq_needle -%}{%- continue -%}{%- endunless -%}
+      {%- if tq_i >= tq_count -%}{%- break -%}{%- endif -%}
+      {%- assign tq_i = tq_i | plus: 1 -%}
+      {%- assign b = block.settings -%}
+
+      {%- assign tq_href = '' -%}
+      {%- if b.link_type == 'collection' -%}
+        {%- assign tq_target = menu_categories | where: 'id', b.link_collection | first -%}
+        {%- if tq_target -%}{%- assign tq_href = tq_target.url -%}{%- else -%}{%- assign tq_href = '/menu' -%}{%- endif -%}
+      {%- elsif b.link_type == 'product' -%}
+        {%- assign tq_target = featured.all | where: 'id', b.link_product | first -%}
+        {%- if tq_target -%}{%- assign tq_href = tq_target.url -%}{%- else -%}{%- assign tq_href = '/menu' -%}{%- endif -%}
+      {%- elsif b.link_type == 'url' -%}
+        {%- assign tq_href = b.link_url | default: '/menu' | strip -%}
+        {%- assign tq_head = tq_href | slice: 0, 1 -%}
+        {%- assign tq_scheme = tq_href | slice: 0, 8 | downcase -%}
+        {%- unless tq_head == '/' or tq_head == '#' or tq_scheme == 'https://' or tq_scheme contains 'http://' -%}
+          {%- assign tq_href = '/menu' -%}
+        {%- endunless -%}
+      {%- endif -%}
+      {%- assign tq_img = b.image | default: b.mobile_image -%}
+
+      <div class="tq-hero__slide{% if b.text_tone == 'dark' %} tq-hero__slide--dark{% endif %}" role="group" aria-roledescription="slide" aria-label="{{ tq_i }} / {{ tq_count }}" data-block-id="{{ block.id }}" data-block-type="slide">
+        {%- if tq_img.size > 0 -%}
+          <picture class="tq-hero__media">
+            {%- if b.mobile_image.size > 0 and b.image.size > 0 -%}
+              <source media="(max-width: 767px)" srcset="{{ b.mobile_image | image_width: 750 | escape }}" width="750" height="1000">
+            {%- endif -%}
+            <img src="{{ tq_img | image_width: 1600 | escape }}" srcset="{{ tq_img | image_srcset: '640,960,1280,1600' | escape }}" sizes="100vw" alt="{{ b.image_alt | escape }}" width="1600" height="700" decoding="async" {% if tq_i == 1 %}loading="eager" fetchpriority="high"{% else %}loading="lazy" fetchpriority="low"{% endif %}>
+          </picture>
+        {%- else -%}
+          <div class="tq-hero__media tq-hero__media--fallback" aria-hidden="true"></div>
+        {%- endif -%}
+        <div class="tq-hero__shade" aria-hidden="true"></div>
+        {%- if tq_href.size > 0 and b.whole_slide_link -%}
+          <a class="tq-hero__stretch" href="{{ tq_href | escape }}" tabindex="-1" aria-hidden="true"></a>
+        {%- endif -%}
+        <div class="tq-hero__content">
+          <div class="tq-hero__copy">
+            {%- if b.eyebrow.size > 0 -%}<span class="tq-hero__eyebrow">{{ b.eyebrow | escape }}</span>{%- endif -%}
+            {%- if b.heading.size > 0 -%}
+              {%- if tq_i == 1 -%}<h1 class="tq-hero__title">{{ b.heading | escape }}</h1>{%- else -%}<h2 class="tq-hero__title">{{ b.heading | escape }}</h2>{%- endif -%}
+            {%- endif -%}
+            {%- if b.subheading.size > 0 -%}<p class="tq-hero__sub">{{ b.subheading | escape | newline_to_br }}</p>{%- endif -%}
+            {%- if b.button_label.size > 0 and tq_href.size > 0 -%}
+              <div class="tq-hero__actions"><a href="{{ tq_href | escape }}" class="cb-btn cb-btn-primary cb-btn-lg">{{ b.button_label | escape }}</a></div>
+            {%- endif -%}
+          </div>
+        </div>
+      </div>
+    {%- endfor -%}
+
+    {%- if tq_count == 0 -%}
+      {%- comment -%} No slides yet (or all scheduled out): one slide from the restaurant profile. {%- endcomment -%}
+      <div class="tq-hero__slide" role="group" aria-roledescription="slide" aria-label="1 / 1">
+        {%- if restaurant.cover_image.size > 0 -%}
+          <picture class="tq-hero__media"><img src="{{ restaurant.cover_image | image_width: 1600 | escape }}" srcset="{{ restaurant.cover_image | image_srcset: '640,960,1280,1600' | escape }}" sizes="100vw" alt="" width="1600" height="700" loading="eager" fetchpriority="high" decoding="async"></picture>
+        {%- else -%}
+          <div class="tq-hero__media tq-hero__media--fallback" aria-hidden="true"></div>
+        {%- endif -%}
+        <div class="tq-hero__shade" aria-hidden="true"></div>
+        <div class="tq-hero__content">
+          <div class="tq-hero__copy">
+            <h1 class="tq-hero__title">{{ s.fallback_heading | default: restaurant.name | escape }}</h1>
+            {%- assign tq_sub = s.fallback_subheading | default: restaurant.tagline -%}
+            {%- if tq_sub.size > 0 -%}<p class="tq-hero__sub">{{ tq_sub | escape }}</p>{%- endif -%}
+            <div class="tq-hero__actions"><a href="/menu" class="cb-btn cb-btn-primary cb-btn-lg">{{ s.fallback_button_label | default: 'View menu' | escape }}</a></div>
+          </div>
+        </div>
+      </div>
+    {%- endif -%}
+  </div>
+
+  {%- if tq_count > 1 -%}
+    {%- if s.show_arrows -%}
+      <button type="button" class="tq-hero__arrow tq-hero__arrow--prev" data-tq-prev aria-label="Previous slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <button type="button" class="tq-hero__arrow tq-hero__arrow--next" data-tq-next aria-label="Next slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
+    {%- endif -%}
+    <div class="tq-hero__bar">
+      {%- if s.show_dots -%}
+        <div class="tq-hero__dots" role="group" aria-label="Choose a slide">
+          {%- assign tq_d = 0 -%}
+          {%- for block in section.blocks -%}
+            {%- capture tq_needle -%}|{{ block.id }}|{%- endcapture -%}
+            {%- unless tq_ids contains tq_needle -%}{%- continue -%}{%- endunless -%}
+            {%- if tq_d >= tq_count -%}{%- break -%}{%- endif -%}
+            <button type="button" class="tq-hero__dot" data-tq-dot="{{ tq_d }}" aria-label="Show slide {{ tq_d | plus: 1 }} of {{ tq_count }}" aria-current="{% if tq_d == 0 %}true{% else %}false{% endif %}"></button>
+            {%- assign tq_d = tq_d | plus: 1 -%}
+          {%- endfor -%}
+        </div>
+      {%- endif -%}
+      {%- if tq_auto -%}
+        <button type="button" class="tq-hero__toggle" data-tq-toggle aria-pressed="false" aria-label="Pause slideshow" data-label-pause="Pause slideshow" data-label-play="Play slideshow">
+          <svg class="tq-i-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+          <svg class="tq-i-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>
+        </button>
+      {%- endif -%}
+    </div>
+  {%- endif -%}
+</section>
+
+{% schema %}
+{
+  "name": "Hero carousel",
+  "description": "Rotating banner of slides — promote deals, new items or categories.",
+  "icon": "GalleryHorizontal",
+  "max_blocks": 8,
+  "settings": [
+    { "type": "select", "id": "layout", "label": "Layout", "default": "slideshow", "options": [
+      { "value": "slideshow", "label": "Slideshow (rotating slides)" },
+      { "value": "image", "label": "Single image (first slide only)" }
+    ] },
+    { "type": "header", "id": "_h_slideshow", "label": "Slideshow" },
+    { "type": "checkbox", "id": "autoplay", "label": "Rotate slides automatically", "default": true },
+    { "type": "range", "id": "interval", "label": "Time per slide", "min": 3, "max": 10, "step": 1, "unit": "s", "default": 6 },
+    { "type": "checkbox", "id": "show_arrows", "label": "Show arrows (desktop)", "default": true },
+    { "type": "checkbox", "id": "show_dots", "label": "Show slide dots", "default": true },
+    { "type": "header", "id": "_h_look", "label": "Look" },
+    { "type": "select", "id": "height", "label": "Height", "default": "medium", "options": [
+      { "value": "small", "label": "Small" },
+      { "value": "medium", "label": "Medium" },
+      { "value": "large", "label": "Large" }
+    ] },
+    { "type": "select", "id": "text_alignment", "label": "Text position", "default": "left", "options": [
+      { "value": "left", "label": "Left" },
+      { "value": "center", "label": "Centre" },
+      { "value": "right", "label": "Right" }
+    ] },
+    { "type": "range", "id": "overlay_opacity", "label": "Image darkening", "min": 0, "max": 80, "step": 5, "unit": "%", "default": 40, "info": "Darkens images so white text stays readable." },
+    { "type": "text", "id": "label", "label": "Name for screen readers", "default": "Highlights" },
+    { "type": "header", "id": "_h_fallback", "label": "When there are no slides" },
+    { "type": "text", "id": "fallback_heading", "label": "Heading", "placeholder": "Your restaurant name", "info": "Shown with your cover photo until you add slides (or when every slide is scheduled out)." },
+    { "type": "textarea", "id": "fallback_subheading", "label": "Text", "placeholder": "Your tagline" },
+    { "type": "text", "id": "fallback_button_label", "label": "Button text", "default": "View menu" }
+  ],
+  "blocks": [
+    {
+      "type": "slide",
+      "name": "Slide",
+      "settings": [
+        { "type": "header", "id": "_h_image", "label": "Image" },
+        { "type": "image_picker", "id": "image", "label": "Desktop image", "info": "Landscape, at least 1600 × 700 px. Text sits on the left, so keep the food on the right." },
+        { "type": "image_picker", "id": "mobile_image", "label": "Phone image (optional)", "info": "Portrait, 750 × 1000 px. Leave empty to reuse the desktop image." },
+        { "type": "text", "id": "image_alt", "label": "Image description", "info": "Describes the photo for screen readers and Google. Leave empty if the photo is decorative." },
+        { "type": "header", "id": "_h_text", "label": "Text" },
+        { "type": "text", "id": "eyebrow", "label": "Badge", "placeholder": "Limited time", "default": "New" },
+        { "type": "text", "id": "heading", "label": "Heading", "default": "Family Feast — feeds 4" },
+        { "type": "textarea", "id": "subheading", "label": "Text", "default": "A large pizza, two burgers, fries and drinks. Save more when you share." },
+        { "type": "select", "id": "text_tone", "label": "Text colour", "default": "light", "options": [
+          { "value": "light", "label": "White text (dark photo)" },
+          { "value": "dark", "label": "Dark text (light photo)" }
+        ] },
+        { "type": "header", "id": "_h_button", "label": "Button" },
+        { "type": "text", "id": "button_label", "label": "Button text", "default": "Order now", "info": "Leave empty for no button." },
+        { "type": "select", "id": "link_type", "label": "Button opens", "default": "collection", "options": [
+          { "value": "collection", "label": "A menu category" },
+          { "value": "product", "label": "A menu item (e.g. a deal)" },
+          { "value": "url", "label": "A web address" }
+        ] },
+        { "type": "collection", "id": "link_collection", "label": "Menu category", "info": "Used when the button opens a menu category. If the category is hidden at a branch, the button opens the full menu." },
+        { "type": "product", "id": "link_product", "label": "Menu item", "info": "Used when the button opens a menu item." },
+        { "type": "url", "id": "link_url", "label": "Web address", "placeholder": "/menu or https://…", "info": "Used when the button opens a web address. Must start with /, # or http(s)://" },
+        { "type": "checkbox", "id": "whole_slide_link", "label": "Make the whole slide clickable", "default": true },
+        { "type": "header", "id": "_h_schedule", "label": "Schedule (optional)" },
+        { "type": "date", "id": "starts_on", "label": "Show from", "info": "Your restaurant's local date. Leave empty to show straight away." },
+        { "type": "date", "id": "ends_on", "label": "Show until", "info": "Last day the slide is shown. Leave empty to keep it." }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Hero – Slideshow",
+      "category": "Hero",
+      "settings": {},
+      "blocks": [
+        { "type": "slide", "settings": { "eyebrow": "Deal", "heading": "Family Feast — feeds 4", "subheading": "A large pizza, two burgers, fries and drinks. Save more when you share.", "button_label": "See deals", "link_type": "collection" } },
+        { "type": "slide", "settings": { "eyebrow": "New", "heading": "Fresh from our kitchen", "subheading": "Discover this week's new dishes.", "button_label": "View menu", "link_type": "url", "link_url": "/menu" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,16 @@
+{%- comment -%}
+  Section heading (eyebrow / title / subtitle / optional link).
+  Params: eyebrow, title, subtitle, align ('left' | 'center'), link_url,
+  link_label, heading_tag ('h1' | 'h2', default h2).
+{%- endcomment -%}
+{%- assign tq_ht = 'h2' -%}{%- if heading_tag == 'h1' -%}{%- assign tq_ht = 'h1' -%}{%- endif -%}
+{%- if title.size > 0 or subtitle.size > 0 or eyebrow.size > 0 -%}
+<div class="tq-head{% if align == 'left' or link_label.size > 0 %} tq-head--row{% endif %}">
+  <div>
+    {%- if eyebrow.size > 0 -%}<span class="tq-head__eyebrow">{{ eyebrow | escape }}</span>{%- endif -%}
+    {%- if title.size > 0 -%}<{{ tq_ht }} class="tq-head__title">{{ title | escape }}</{{ tq_ht }}>{%- endif -%}
+    {%- if subtitle.size > 0 -%}<p class="tq-head__sub">{{ subtitle | escape }}</p>{%- endif -%}
+  </div>
+  {%- if link_label.size > 0 -%}<a class="tq-link" href="{% render 'safe-url', url: link_url, fallback: '/menu' %}">{{ link_label | escape }} →</a>{%- endif -%}
+</div>
+{%- endif -%}

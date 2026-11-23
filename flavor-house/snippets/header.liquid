@@ -27,7 +27,7 @@
       {% comment %} Logo + inline branch dropdown {% endcomment %}
       <div class="header-logo-group">
         <a href="/" class="header-logo">
-          {% if restaurant.logo %}
+          {% if restaurant.logo.size > 0 %}
             <img src="{{ restaurant.logo }}" alt="{{ restaurant.name }}" style="height:2rem;">
           {% else %}
             {{ restaurant.name }}

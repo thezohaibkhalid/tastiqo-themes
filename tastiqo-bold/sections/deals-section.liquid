@@ -1,0 +1,129 @@
+{%- comment -%}
+  Deals — bundles and combos. A deal is a normal menu item with its own
+  price (and optional "was" price = compare-at price); "choose 1 of N"
+  parts are modifier groups. Source: items tagged "Deals" (default) or a
+  category the owner picks (e.g. a "Deals" category).
+  Shows "was / now" and "You save" only when a compare-at price is set.
+  layout: grid | carousel (swipeable row) | banner (classic colour cards).
+  Cards: snippets/card-deal.liquid.
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+{%- assign tq_items = nil -%}
+{%- assign tq_more = '' -%}
+{%- if s.source == 'collection' -%}
+  {%- assign tq_cat = menu_categories | where: 'id', s.collection | first -%}
+  {%- if tq_cat -%}{%- assign tq_items = tq_cat.items -%}{%- assign tq_more = tq_cat.url -%}{%- endif -%}
+{%- else -%}
+  {%- assign tq_items = featured.deals -%}
+{%- endif -%}
+{%- assign tq_layout = s.layout | default: 'grid' -%}
+{%- assign tq_picked = false -%}
+{%- if s.collection.size > 0 -%}{%- assign tq_picked = true -%}{%- endif -%}
+{%- assign tq_limit = s.limit | default: 6 -%}
+{%- assign tq_has = false -%}
+{%- if tq_items and tq_items.size > 0 -%}{%- assign tq_has = true -%}{%- endif -%}
+{%- assign tq_editor = false -%}
+{%- if request.query.theme_editor == '1' -%}{%- assign tq_editor = true -%}{%- endif -%}
+
+{%- if tq_has or s.hide_when_empty == false or tq_editor -%}
+<section class="tb-section tq-deals"{% if s.anchor.size > 0 %} id="{{ s.anchor | handleize }}"{% endif %}{% if tq_layout == 'carousel' %} data-tq-carousel data-tq-row{% endif %}>
+  <div class="tb-container">
+    {%- if s.title.size > 0 or s.subtitle.size > 0 -%}
+      <div class="tq-head{% if tq_layout == 'carousel' or tq_more.size > 0 %} tq-head--row{% endif %}">
+        <div>
+          {%- if s.eyebrow.size > 0 -%}<span class="tq-head__eyebrow">{{ s.eyebrow | escape }}</span>{%- endif -%}
+          {%- if s.title.size > 0 -%}<h2 class="tq-head__title">{{ s.title | escape }}</h2>{%- endif -%}
+          {%- if s.subtitle.size > 0 -%}<p class="tq-head__sub">{{ s.subtitle | escape }}</p>{%- endif -%}
+        </div>
+        {%- if tq_layout == 'carousel' and tq_has -%}
+          <div class="tq-row__nav">
+            <button type="button" class="tq-row__btn" data-tq-prev aria-label="Previous deals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+            <button type="button" class="tq-row__btn" data-tq-next aria-label="More deals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
+          </div>
+        {%- elsif tq_more.size > 0 -%}
+          <a class="tq-link" href="{{ tq_more }}">{{ s.view_all_label | default: 'All deals' | escape }} →</a>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+
+    {%- if tq_has -%}
+      {%- if tq_layout == 'banner' -%}
+        <div class="tq-grid" style="--tq-cols: 2;">
+          {%- for item in tq_items limit: tq_limit -%}
+            <div class="deal-card tq-deal-banner">
+              <div class="deal-card-info">
+                {%- if item.hasDiscount -%}<span class="tq-badge tq-badge--secondary" style="margin-bottom: .5rem;">{{ item.discountPercent }}% OFF</span>{%- endif -%}
+                <h3>{{ item.name | escape }}</h3>
+                {%- if item.description.size > 0 -%}<p>{{ item.description | truncatewords: 14 | escape }}</p>{%- endif -%}
+                <div class="deal-card-prices">
+                  <span class="current">{{ item.priceMoney }}</span>
+                  {%- if item.hasDiscount -%}<span class="original">{{ item.compareAtPriceMoney }}</span>{%- endif -%}
+                </div>
+                {%- if item.isSoldOut -%}<span class="tq-badge" style="margin-top: .5rem;">Sold out</span>{%- else -%}<a href="{{ item.url }}" class="tb-btn tb-btn--primary tb-btn--sm" style="margin-top: .75rem;">{{ s.button_label | default: 'Order now' | escape }}</a>{%- endif -%}
+              </div>
+              {%- if item.imageUrl.size > 0 -%}<div class="deal-card-image"><img src="{{ item.imageUrl | escape }}" alt="" width="160" height="160" loading="lazy" decoding="async"></div>{%- endif -%}
+            </div>
+          {%- endfor -%}
+        </div>
+      {%- elsif tq_layout == 'carousel' -%}
+        <ul class="tq-row__track" data-tq-track style="--tq-cols: {{ s.columns | default: 3 }};" role="list">
+          {%- for item in tq_items limit: tq_limit -%}
+            <li>{%- render 'card-deal', item: item, show_savings: s.show_savings, show_choices: s.show_choices, cta: s.button_label -%}</li>
+          {%- endfor -%}
+        </ul>
+      {%- else -%}
+        <ul class="tq-grid" style="--tq-cols: {{ s.columns | default: 3 }};" role="list">
+          {%- for item in tq_items limit: tq_limit -%}
+            <li>{%- render 'card-deal', item: item, show_savings: s.show_savings, show_choices: s.show_choices, cta: s.button_label -%}</li>
+          {%- endfor -%}
+        </ul>
+      {%- endif -%}
+    {%- else -%}
+      <p class="tq-head__sub" style="text-align: center;">
+        {%- if tq_editor and s.source == 'collection' and tq_picked == false -%}Pick the category that holds your deals in the section settings.
+        {%- elsif tq_editor and s.source != 'collection' -%}No items are tagged “Deals” yet. Add the Deals tag to a menu item, or pick a category in the section settings.
+        {%- else -%}{{ s.empty_text | default: 'No deals right now — check back soon!' | escape }}{%- endif -%}
+      </p>
+    {%- endif -%}
+  </div>
+</section>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Deals",
+  "description": "Bundles and combo offers with was/now prices and 'You save'.",
+  "icon": "BadgePercent",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Small heading", "default": "Deals" },
+    { "type": "text", "id": "title", "label": "Title", "default": "Today's Deals" },
+    { "type": "text", "id": "subtitle", "label": "Subtitle", "default": "Limited time offers you don't want to miss" },
+    { "type": "header", "id": "_h_source", "label": "Which deals" },
+    { "type": "select", "id": "source", "label": "Show", "default": "tag", "options": [
+      { "value": "tag", "label": "Items tagged “Deals”" },
+      { "value": "collection", "label": "Items in a category" }
+    ] },
+    { "type": "collection", "id": "collection", "label": "Deals category", "info": "Used when Show is 'Items in a category'. Items appear in the category's menu order." },
+    { "type": "range", "id": "limit", "label": "Maximum deals", "min": 1, "max": 12, "step": 1, "default": 6 },
+    { "type": "header", "id": "_h_layout", "label": "Layout" },
+    { "type": "select", "id": "layout", "label": "Layout", "default": "grid", "options": [
+      { "value": "grid", "label": "Cards" },
+      { "value": "carousel", "label": "Swipeable row" },
+      { "value": "banner", "label": "Colour banners (classic)" }
+    ] },
+    { "type": "range", "id": "columns", "label": "Cards per row", "min": 2, "max": 4, "step": 1, "default": 3 },
+    { "type": "checkbox", "id": "show_savings", "label": "Show “You save” (needs a compare-at price)", "default": true },
+    { "type": "checkbox", "id": "show_choices", "label": "Show what customers choose (e.g. “Choose your pizza”)", "default": true },
+    { "type": "text", "id": "button_label", "label": "Button text", "default": "Order now" },
+    { "type": "text", "id": "view_all_label", "label": "Link to the category", "default": "All deals" },
+    { "type": "header", "id": "_h_empty", "label": "When there are no deals" },
+    { "type": "checkbox", "id": "hide_when_empty", "label": "Hide this section", "default": true },
+    { "type": "text", "id": "empty_text", "label": "Otherwise show", "default": "No deals right now — check back soon!" },
+    { "type": "text", "id": "anchor", "label": "Anchor name", "default": "deals", "info": "Links to #deals jump to this section." }
+  ],
+  "presets": [
+    { "name": "Deals – Cards", "category": "Menu & deals", "settings": {} },
+    { "name": "Deals – Swipeable row", "category": "Menu & deals", "settings": { "layout": "carousel" } }
+  ]
+}
+{% endschema %}

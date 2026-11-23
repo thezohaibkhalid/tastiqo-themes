@@ -3,7 +3,7 @@
   <div class="tq-bs-modal" role="document">
     <div class="tq-bs-logo">
       {%- if sel_logo != blank -%}
-        <img src="{{ sel_logo }}" alt="{{ account.business_name | default: 'Store' }}" />
+        <img src="{{ sel_logo }}" alt="{{ account.business_name | default: 'Store' }}" loading="lazy" decoding="async" />
       {%- else -%}
         <span class="tq-bs-logo-text">{{ account.business_name | default: 'Store' }}</span>
       {%- endif -%}

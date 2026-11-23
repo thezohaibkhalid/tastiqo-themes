@@ -1,0 +1,96 @@
+{%- comment -%}
+  Item page: photo, description, price, choices (modifier groups with
+  their min / max rules), quantity and Add to order; related items.
+  Works without JavaScript as a readable page; theme.js validates the
+  choices and adds the item to the cart.
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+{%- if product -%}
+<section class="tb-section tb-pdp" aria-labelledby="tb-pdp-title">
+  <div class="tb-container">
+    <nav class="tb-crumbs" aria-label="Breadcrumb">
+      <ol role="list">
+        <li><a href="/">Home</a></li>
+        <li><a href="/menu">Menu</a></li>
+        {%- if product.collectionTitle.size > 0 -%}<li><a href="{{ product.collectionUrl | escape }}">{{ product.collectionTitle | escape }}</a></li>{%- endif -%}
+        <li aria-current="page">{{ product.name | escape }}</li>
+      </ol>
+    </nav>
+    <div class="tb-pdp__grid">
+      <div class="tb-pdp__media">
+        {%- if product.imageUrl.size > 0 -%}
+          <img src="{{ product.imageUrl | escape }}" alt="{{ product.name | escape }}" width="900" height="675" loading="eager" fetchpriority="high" decoding="async">
+        {%- else -%}<div class="tb-ph" aria-hidden="true"></div>{%- endif -%}
+        {%- if product.hasDiscount -%}<span class="tq-badge tq-badge--sale tb-pdp__badge">-{{ product.discountPercent }}%</span>{%- endif -%}
+      </div>
+      <div class="tb-pdp__info">
+        <h1 class="tb-pdp__title" id="tb-pdp-title">{{ product.name | escape }}</h1>
+        {%- if product.description.size > 0 -%}<p class="tb-pdp__desc">{{ product.description | escape | newline_to_br }}</p>{%- endif -%}
+        <p class="tb-pdp__price">
+          <span class="tb-price">{{ product.priceMoney }}</span>
+          {%- if product.hasDiscount -%}<span class="tb-was"><span class="tq-sr">Was </span>{{ product.compareAtPriceMoney }}</span>{%- endif -%}
+        </p>
+        {%- if product.isSoldOut -%}
+          <p class="tb-notice">Sold out at this branch right now.</p>
+        {%- else -%}
+        <form class="tb-itemform" data-tb-item-page data-id="{{ product.id | escape }}" data-name="{{ product.name | escape }}" data-price="{{ product.price }}" data-image="{{ product.imageUrl | escape }}" data-url="/item/{{ product.handle | escape }}" novalidate>
+          <div data-tb-item-groups>
+            {%- for group in product.modifier_groups -%}
+              {%- assign tq_multi = false -%}{%- if group.max > 1 or group.max == 0 -%}{%- assign tq_multi = true -%}{%- endif -%}
+              <fieldset class="tb-group" data-tb-group data-id="{{ group.id | escape }}" data-min="{{ group.min }}" data-max="{{ group.max }}" data-required="{{ group.required }}">
+                <legend class="tb-group__title">{{ group.title | escape }}
+                  <span class="tb-group__rule">{% if group.required or group.min > 0 %}Required{% else %}Optional{% endif %}{% if group.max == 1 %} · choose 1{% elsif group.max > 1 %} · up to {{ group.max }}{% endif %}</span>
+                </legend>
+                {%- for opt in group.options -%}
+                  <label class="tb-opt">
+                    <input type="{% if tq_multi %}checkbox{% else %}radio{% endif %}" name="g-{{ group.id | escape }}" value="{{ opt.id | escape }}" data-price="{{ opt.price_delta }}" data-label="{{ opt.label | escape }}"{% if opt.is_default and tq_multi == false %} checked{% endif %}>
+                    <span class="tb-opt__label">{{ opt.label | escape }}</span>
+                    {%- if opt.price_delta > 0 -%}<span class="tb-opt__price">+{{ opt.price_delta_money }}</span>{%- endif -%}
+                  </label>
+                {%- endfor -%}
+              </fieldset>
+            {%- endfor -%}
+          </div>
+          <label class="tb-field">
+            <span class="tb-field__label">Special instructions <span class="tb-fine">(optional)</span></span>
+            <textarea name="notes" rows="2" maxlength="200" placeholder="e.g. no onions"></textarea>
+          </label>
+          <div class="tb-itemform__foot">
+            <div class="tb-qty" data-tb-qty>
+              <button type="button" class="tb-qty__btn" data-tb-step="-1" aria-label="Fewer">{% render 'icon', name: 'minus' %}</button>
+              <output class="tb-qty__val" data-tb-qty-val aria-live="polite">1</output>
+              <button type="button" class="tb-qty__btn" data-tb-step="1" aria-label="More">{% render 'icon', name: 'plus' %}</button>
+            </div>
+            <button type="submit" class="tb-btn tb-btn--primary tb-btn--lg tb-grow" data-tb-item-submit>Add to order · {{ product.priceMoney }}</button>
+          </div>
+          <p class="tb-error" role="alert" data-tb-item-error hidden></p>
+        </form>
+        {%- endif -%}
+      </div>
+    </div>
+    {%- if s.show_related and product.relatedItems.size > 0 -%}
+      <div class="tb-pdp__related">
+        <h2 class="tq-head__title">{{ s.related_title | default: 'You might also like' | escape }}</h2>
+        <ul class="tq-grid" style="--tq-cols: 4;" role="list">
+          {%- for item in product.relatedItems -%}<li>{%- render 'card-item', item: item, style: 'image-top', show_description: false -%}</li>{%- endfor -%}
+        </ul>
+      </div>
+    {%- endif -%}
+  </div>
+</section>
+{%- else -%}
+<section class="tb-section"><div class="tb-container"><p class="tb-empty">This item is not available. <a href="/menu">See the menu</a></p></div></section>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Item details",
+  "description": "Photo, price, choices and Add to order for one menu item.",
+  "icon": "Package",
+  "settings": [
+    { "type": "checkbox", "id": "show_related", "label": "Show related items", "default": true },
+    { "type": "text", "id": "related_title", "label": "Related items title", "default": "You might also like" }
+  ],
+  "presets": [ { "name": "Item details", "category": "Item page", "settings": {} } ]
+}
+{% endschema %}

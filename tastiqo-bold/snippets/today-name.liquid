@@ -1,0 +1,21 @@
+{%- comment -%}
+  Prints today's weekday ("Monday" … "Sunday") in the restaurant's
+  timezone, from utils.today (YYYY-MM-DD). Prints nothing when unknown.
+  (Sakamoto's day-of-week method; restaurant.hours uses the same names.)
+{%- endcomment -%}
+{%- assign tq_dp = utils.today | append: '' | split: '-' -%}
+{%- if tq_dp.size == 3 -%}
+  {%- assign tq_y = tq_dp[0] | times: 1 -%}
+  {%- assign tq_m = tq_dp[1] | times: 1 -%}
+  {%- assign tq_d = tq_dp[2] | times: 1 -%}
+  {%- assign tq_t = '0,3,2,5,0,3,5,1,4,6,2,4' | split: ',' -%}
+  {%- if tq_m < 3 -%}{%- assign tq_y = tq_y | minus: 1 -%}{%- endif -%}
+  {%- assign tq_mi = tq_m | minus: 1 -%}
+  {%- assign tq_tv = tq_t[tq_mi] | times: 1 -%}
+  {%- assign tq_y4 = tq_y | divided_by: 4 | floor -%}
+  {%- assign tq_y100 = tq_y | divided_by: 100 | floor -%}
+  {%- assign tq_y400 = tq_y | divided_by: 400 | floor -%}
+  {%- assign tq_w = tq_y | plus: tq_y4 | minus: tq_y100 | plus: tq_y400 | plus: tq_tv | plus: tq_d | modulo: 7 -%}
+  {%- assign tq_names = 'Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday' | split: ',' -%}
+  {{- tq_names[tq_w] -}}
+{%- endif -%}

@@ -1,0 +1,96 @@
+{%- comment -%}
+  Cart + checkout (/cart and /checkout). The cart lives on the phone
+  (localStorage); prices, tax, delivery fee and availability are always
+  re-checked by the server when the order is placed. Steps: items →
+  delivery or pickup (area + saved address) → sign in with an email code
+  → payment → Place order (POST /api/storefront/orders).
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+<section class="tb-section tb-checkout" aria-labelledby="tb-co-title" data-tb-checkout>
+  <div class="tb-container">
+    <h1 class="tq-head__title" id="tb-co-title">{{ s.title | default: 'Your order' | escape }}</h1>
+    <noscript><p class="tb-notice">Please turn on JavaScript to order online, or call us{% if restaurant.phone.size > 0 %} on <a href="{{ restaurant.phone | phone_link | escape }}">{{ restaurant.phone | escape }}</a>{% endif %}.</p></noscript>
+    <div class="tb-empty tb-checkout__empty" data-tb-co-empty hidden>
+      <p>Your cart is empty.</p>
+      <a class="tb-btn tb-btn--primary" href="/menu">See the menu</a>
+    </div>
+    <div class="tb-checkout__grid" data-tb-co-body>
+      <div class="tb-checkout__main">
+        <div class="tb-card">
+          <h2 class="tb-card__title">1. Your items</h2>
+          <div data-tb-co-lines></div>
+          <a class="tb-linkbtn" href="/menu">+ Add more items</a>
+        </div>
+        <div class="tb-card">
+          <h2 class="tb-card__title">2. Delivery or pickup</h2>
+          <div class="tb-toggle tb-toggle--lg" role="radiogroup" aria-label="Order type">
+            <button type="button" role="radio" aria-checked="true" class="tb-toggle__opt" data-tb-set-mode="delivery">{% render 'icon', name: 'scooter' %} Delivery</button>
+            <button type="button" role="radio" aria-checked="false" class="tb-toggle__opt" data-tb-set-mode="pickup">{% render 'icon', name: 'store' %} Pickup</button>
+          </div>
+          <button type="button" class="tb-placebtn" data-tb-open-location>
+            {% render 'icon', name: 'pin' %}
+            <span><span class="tb-fine" data-tb-place-prefix>Deliver to</span><br><strong data-tb-place-label>Choose your area</strong></span>
+            <span class="tb-modepill__change">Change</span>
+          </button>
+          <div data-tb-co-address hidden>
+            <h3 class="tb-field__label">Delivery address</h3>
+            <div data-tb-co-addresses></div>
+            <details class="tb-newaddr" data-tb-co-newaddr>
+              <summary>+ Add a new address</summary>
+              <form data-tb-co-addr-form novalidate>
+                <label class="tb-field"><span class="tb-field__label">House / street</span><input name="address_line1" autocomplete="address-line1" required maxlength="200" placeholder="House 12, Street 4, Block B"></label>
+                <label class="tb-field"><span class="tb-field__label">Nearest landmark <span class="tb-fine">(optional)</span></span><input name="address_line2" autocomplete="address-line2" maxlength="200"></label>
+                <label class="tb-field"><span class="tb-field__label">Notes for the rider <span class="tb-fine">(optional)</span></span><input name="delivery_notes" maxlength="200" placeholder="Ring the bell twice"></label>
+                <div class="tb-row">
+                  <button type="button" class="tb-btn tb-btn--secondary tb-btn--sm" data-tb-co-geo>{% render 'icon', name: 'pin' %} Use my current location</button>
+                  <span class="tb-fine" data-tb-co-geo-status>Helps the rider find you.</span>
+                </div>
+                <button type="submit" class="tb-btn tb-btn--primary">Save address</button>
+              </form>
+            </details>
+          </div>
+        </div>
+        <div class="tb-card">
+          <h2 class="tb-card__title">3. Your details</h2>
+          <div data-tb-co-auth>{% render 'login-form' %}</div>
+          <div data-tb-co-me hidden>
+            <p>Signed in as <strong data-tb-co-me-name></strong> <span class="tb-fine" data-tb-co-me-email></span></p>
+            <label class="tb-field"><span class="tb-field__label">Mobile number</span><input type="tel" autocomplete="tel" data-tb-co-phone placeholder="03xx xxxxxxx"></label>
+          </div>
+        </div>
+        <div class="tb-card">
+          <h2 class="tb-card__title">4. Payment</h2>
+          <label class="tb-opt"><input type="radio" name="tb-pay" value="cash" checked><span class="tb-opt__label"><strong>Cash</strong> — pay on delivery or at pickup</span></label>
+          {%- if theme.checkout_note.size > 0 -%}<p class="tb-fine">{{ theme.checkout_note | escape }}</p>{%- endif -%}
+        </div>
+      </div>
+      <aside class="tb-checkout__summary" aria-label="Order summary">
+        <div class="tb-card tb-card--sticky">
+          <h2 class="tb-card__title">Summary</h2>
+          <div class="tb-sumrow"><span>Subtotal</span><span data-tb-co-subtotal></span></div>
+          <div class="tb-sumrow" data-tb-co-feerow hidden><span>Delivery fee</span><span data-tb-co-fee></span></div>
+          <div class="tb-sumrow tb-sumrow--total"><span>Estimated total</span><strong data-tb-co-total></strong></div>
+          <p class="tb-fine">Final prices, taxes and fees are confirmed when you place the order.</p>
+          <p class="tb-notice" data-tb-co-minorder hidden></p>
+          {%- unless restaurant.is_open -%}<p class="tb-notice tb-notice--warn">We're closed right now. {% render 'open-status', is_open: restaurant.is_open, hours: restaurant.hours %}</p>{%- endunless -%}
+          <label class="tb-field"><span class="tb-field__label">Note for the kitchen <span class="tb-fine">(optional)</span></span><textarea rows="2" maxlength="300" data-tb-co-notes></textarea></label>
+          <button type="button" class="tb-btn tb-btn--primary tb-btn--lg tb-btn--block" data-tb-co-place>Place order</button>
+          <p class="tb-error" role="alert" data-tb-co-error hidden></p>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Cart & checkout",
+  "description": "Cart, delivery or pickup, sign in and place the order.",
+  "icon": "ShoppingBag",
+  "settings": [
+    { "type": "text", "id": "title", "label": "Title", "default": "Your order" },
+    { "type": "paragraph", "id": "_info", "label": "The note above the Place order button is in Theme settings → Ordering." }
+  ],
+  "presets": [ { "name": "Cart & checkout", "category": "Ordering", "settings": {} } ]
+}
+{% endschema %}

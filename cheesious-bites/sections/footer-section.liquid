@@ -10,7 +10,7 @@
       <a href="/" class="cb-footer-logo">
         {% assign footer_logo = theme.logo_image | default: theme.settings.logo_image | default: restaurant.logo %}
         {% if footer_logo != blank %}
-          <img src="{{ footer_logo }}" alt="{{ restaurant.name }}">
+          <img src="{{ footer_logo }}" alt="{{ restaurant.name }}" loading="lazy" decoding="async">
         {% else %}
           <span class="cb-logo-mark">🧀</span>
           <span>{{ restaurant.name | default: "Cheesious Bites" }}</span>

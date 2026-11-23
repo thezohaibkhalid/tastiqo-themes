@@ -1,0 +1,58 @@
+{%- comment -%}
+  Sticky, horizontally scrollable category tabs. Each tab jumps to that
+  category in the full menu on this page (#menu-<handle>) and the active
+  tab follows the scroll position. On a page without the full menu the
+  tabs open the category pages instead.
+  layout: pills | underline | photos (round category photos).
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+{%- assign tq_layout = s.layout | default: 'pills' -%}
+{%- assign tq_anchor = true -%}
+{%- if s.link_to == 'pages' -%}{%- assign tq_anchor = false -%}{%- endif -%}
+{%- assign tq_n = 0 -%}
+{%- for cat in menu_categories -%}{%- if cat.items.size > 0 -%}{%- assign tq_n = tq_n | plus: 1 -%}{%- endif -%}{%- endfor -%}
+{%- if tq_n > 0 -%}
+<nav class="tb-cattabs tb-cattabs--{{ tq_layout }}{% if s.sticky %} is-sticky{% endif %}" aria-label="{{ s.label | default: 'Menu categories' | escape }}" data-tb-cattabs>
+  <div class="tb-container tb-cattabs__inner">
+    <ul class="tb-cattabs__list" role="list">
+      {%- for cat in menu_categories -%}
+        {%- if cat.items.size > 0 -%}
+          <li>
+            <a class="tb-cattab" href="{% if tq_anchor %}#menu-{{ cat.handle | escape }}{% else %}{{ cat.url | escape }}{% endif %}" data-href="{{ cat.url | escape }}"{% if tq_anchor %} data-tb-cattab="menu-{{ cat.handle | escape }}"{% endif %}>
+              {%- if tq_layout == 'photos' -%}
+                <span class="tb-cattab__img">{%- if cat.image.size > 0 -%}<img src="{{ cat.image | escape }}" alt="" width="56" height="56" loading="lazy" decoding="async">{%- endif -%}</span>
+              {%- endif -%}
+              <span class="tb-cattab__label">{{ cat.title | escape }}</span>
+            </a>
+          </li>
+        {%- endif -%}
+      {%- endfor -%}
+    </ul>
+  </div>
+</nav>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Category tabs",
+  "description": "Sticky, swipeable menu categories that jump to the menu below.",
+  "icon": "Rows3",
+  "settings": [
+    { "type": "select", "id": "layout", "label": "Layout", "default": "pills", "options": [
+      { "value": "pills", "label": "Pills" },
+      { "value": "underline", "label": "Underlined tabs" },
+      { "value": "photos", "label": "Round photos" }
+    ] },
+    { "type": "checkbox", "id": "sticky", "label": "Stick under the header while scrolling", "default": true },
+    { "type": "select", "id": "link_to", "label": "Tabs open", "default": "anchors", "options": [
+      { "value": "anchors", "label": "The category in the full menu on this page" },
+      { "value": "pages", "label": "The category page" }
+    ], "info": "Use the first option when the page also has the Full menu section." },
+    { "type": "text", "id": "label", "label": "Name for screen readers", "default": "Menu categories" }
+  ],
+  "presets": [
+    { "name": "Category tabs – Pills", "category": "Menu & deals", "settings": { "layout": "pills" } },
+    { "name": "Category tabs – Round photos", "category": "Menu & deals", "settings": { "layout": "photos" } }
+  ]
+}
+{% endschema %}

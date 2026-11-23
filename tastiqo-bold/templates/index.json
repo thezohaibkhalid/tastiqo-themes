@@ -1,0 +1,281 @@
+{
+  "name": "Home",
+  "sections": {
+    "announcement": {
+      "type": "announcement-bar",
+      "settings": {
+        "layout": "rotating",
+        "tone": "accent"
+      },
+      "blocks": [
+        {
+          "id": "msg-1",
+          "type": "message",
+          "settings": {
+            "text": "Hot & fresh — order online for delivery or pickup"
+          }
+        },
+        {
+          "id": "msg-2",
+          "type": "message",
+          "settings": {
+            "text": "New deals every week. Tap Deals below!",
+            "link": "#deals"
+          }
+        }
+      ]
+    },
+    "order-bar": {
+      "type": "order-bar",
+      "settings": {
+        "layout": "strip",
+        "show_status": true,
+        "show_phone": true
+      }
+    },
+    "header": {
+      "type": "header",
+      "settings": {
+        "layout": "classic",
+        "show_mode_pill": false,
+        "show_account": true
+      }
+    },
+    "hero": {
+      "type": "hero-carousel",
+      "settings": {
+        "layout": "slideshow",
+        "autoplay": true,
+        "interval": 6,
+        "height": "medium",
+        "text_alignment": "left",
+        "overlay_opacity": 40
+      },
+      "blocks": [
+        {
+          "id": "slide-1",
+          "type": "slide",
+          "settings": {
+            "eyebrow": "Deal",
+            "heading": "Family Feast — feeds 4",
+            "subheading": "Pizza, burgers, fries and drinks for the whole family. Save more when you share.",
+            "button_label": "See deals",
+            "link_type": "url",
+            "link_url": "#deals"
+          }
+        },
+        {
+          "id": "slide-2",
+          "type": "slide",
+          "settings": {
+            "eyebrow": "New",
+            "heading": "Smashed, stacked, saucy",
+            "subheading": "Our burgers are smashed to order on a hot griddle.",
+            "button_label": "Order now",
+            "link_type": "url",
+            "link_url": "#menu"
+          }
+        }
+      ]
+    },
+    "order-panel": {
+      "type": "order-bar",
+      "settings": {
+        "layout": "panel",
+        "title": "Hungry? Order in a minute",
+        "subtitle": "Choose delivery or pickup and we'll show you the menu and prices for your branch.",
+        "cta_label": "Start my order",
+        "cta_link": "#menu",
+        "show_status": true
+      }
+    },
+    "categories": {
+      "type": "featured-categories",
+      "settings": {
+        "title": "What are you craving?",
+        "layout": "carousel",
+        "card_style": "circle",
+        "limit": 10,
+        "show_all_link": false
+      }
+    },
+    "deals": {
+      "type": "deals-section",
+      "settings": {
+        "eyebrow": "Deals",
+        "title": "Deals that hit different",
+        "subtitle": "Combos for one, two or the whole family.",
+        "source": "tag",
+        "layout": "carousel",
+        "columns": 3,
+        "limit": 8,
+        "anchor": "deals"
+      }
+    },
+    "popular": {
+      "type": "product-showcase",
+      "settings": {
+        "eyebrow": "Most loved",
+        "title": "Crowd favourites",
+        "source": "popular",
+        "layout": "carousel",
+        "card_style": "image-top",
+        "columns": 4,
+        "limit": 8
+      }
+    },
+    "tabs": {
+      "type": "category-tabs",
+      "settings": {
+        "layout": "pills",
+        "sticky": true,
+        "link_to": "anchors"
+      }
+    },
+    "menu": {
+      "type": "menu-grid",
+      "settings": {
+        "title": "Our menu",
+        "layout": "grid",
+        "card_style": "inherit",
+        "columns": 4,
+        "show_search": true
+      }
+    },
+    "cta": {
+      "type": "order-cta",
+      "settings": {
+        "layout": "banner",
+        "tone": "primary",
+        "title": "Craving something? We deliver.",
+        "button_label": "Order now",
+        "button_link": "#menu",
+        "secondary": "call"
+      }
+    },
+    "about": {
+      "type": "about",
+      "settings": {
+        "layout": "image-right",
+        "eyebrow": "Our story",
+        "title": "Made fresh, served fast",
+        "button_label": "See the menu",
+        "button_link": "#menu"
+      },
+      "blocks": [
+        {
+          "id": "stat-1",
+          "type": "stat",
+          "settings": {
+            "value": "100%",
+            "label": "fresh, never frozen"
+          }
+        },
+        {
+          "id": "stat-2",
+          "type": "stat",
+          "settings": {
+            "value": "30 min",
+            "label": "average delivery"
+          }
+        },
+        {
+          "id": "stat-3",
+          "type": "stat",
+          "settings": {
+            "value": "4.8★",
+            "label": "customer rating"
+          }
+        }
+      ]
+    },
+    "reviews": {
+      "type": "reviews",
+      "settings": {
+        "layout": "cards",
+        "title": "What our customers say",
+        "columns": 3
+      },
+      "blocks": [
+        {
+          "id": "rev-1",
+          "type": "review",
+          "settings": {
+            "name": "Ayesha K.",
+            "rating": 5,
+            "text": "Hot, fresh and on time. The zinger is the best in town!",
+            "source": "Google"
+          }
+        },
+        {
+          "id": "rev-2",
+          "type": "review",
+          "settings": {
+            "name": "Hamza R.",
+            "rating": 5,
+            "text": "The family deal fed all five of us. Great value.",
+            "source": "Facebook"
+          }
+        },
+        {
+          "id": "rev-3",
+          "type": "review",
+          "settings": {
+            "name": "Sara M.",
+            "rating": 4,
+            "text": "Loved the loaded fries. Pickup was ready in 15 minutes.",
+            "source": "In store"
+          }
+        }
+      ]
+    },
+    "visit": {
+      "type": "hours-locations",
+      "settings": {
+        "layout": "cards",
+        "title": "Hours & locations"
+      }
+    },
+    "contact": {
+      "type": "contact",
+      "settings": {
+        "layout": "cards"
+      }
+    },
+    "footer": {
+      "type": "footer",
+      "settings": {
+        "layout": "columns"
+      }
+    },
+    "mobile-bar": {
+      "type": "mobile-bar",
+      "settings": {
+        "layout": "tabs"
+      }
+    }
+  },
+  "order": [
+    "hero",
+    "order-panel",
+    "categories",
+    "deals",
+    "popular",
+    "tabs",
+    "menu",
+    "cta",
+    "about",
+    "reviews",
+    "visit",
+    "contact"
+  ],
+  "header_order": [
+    "announcement",
+    "order-bar",
+    "header"
+  ],
+  "footer_order": [
+    "footer",
+    "mobile-bar"
+  ]
+}

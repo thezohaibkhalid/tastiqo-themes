@@ -93,6 +93,28 @@
     onReady: function(cb) {
       if (this._ready) { cb(); return; }
       this._readyCallbacks.push(cb);
+      this._loadLeaflet();
+    },
+    // Perf: Leaflet (~150 KB JS+CSS from unpkg) used to load on every page.
+    // It is now fetched the first time a map is actually needed.
+    _loadLeaflet: function() {
+      if (window.L || this._leafletLoading) return;
+      this._leafletLoading = true;
+      var self = this;
+      var css = document.createElement('link');
+      css.rel = 'stylesheet';
+      css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      css.integrity = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
+      css.crossOrigin = '';
+      document.head.appendChild(css);
+      var js = document.createElement('script');
+      js.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      js.integrity = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
+      js.crossOrigin = '';
+      js.async = true;
+      js.onload = function() { self._fireReady(); };
+      js.onerror = function() { self._leafletLoading = false; };
+      document.head.appendChild(js);
     },
     _fireReady: function() {
       this._ready = true;
@@ -218,7 +240,7 @@
     },
   };
 
-  TastiqoMap._waitForLeaflet();
+  if (window.L) TastiqoMap._fireReady(); // Leaflet already on the page (e.g. custom theme code)
   window.TastiqoMap = TastiqoMap;
 
   /* -----------------------------------------------
@@ -249,210 +271,11 @@
   }
 
   /* -----------------------------------------------
-     Checkout flow
+     Checkout
+     The checkout is owned by Tastiqo and served at /checkout on this
+     website (contact, delivery or pickup, payment, confirmation). Themes
+     link to it and keep only the cart UI; they never place orders.
   ----------------------------------------------- */
-  function prepareCheckout() {
-    if (!CustomerAuth.isLoggedIn()) return { needAuth: true };
-
-    var items = TastiqoCart.getItems();
-    if (!items.length) return { error: 'Your cart is empty.' };
-
-    var branchId = getBranchId();
-    if (!branchId) {
-      if (typeof window.TQBranchSelector === 'function') window.TQBranchSelector();
-      return { error: 'Please select your city and area first.' };
-    }
-
-    var saved = { areaId: null, areaName: '', orderType: 'delivery' };
-    try {
-      saved.areaId = localStorage.getItem('tq_storefront_area_id');
-      saved.areaName = localStorage.getItem('tq_storefront_area_name') || '';
-      saved.orderType = localStorage.getItem('tq_storefront_order_type') || 'delivery';
-    } catch (e) {}
-    var orderType = saved.orderType === 'pickup' ? 'pickup' : 'delivery';
-    if (orderType === 'delivery' && !saved.areaId) {
-      if (typeof window.TQBranchSelector === 'function') window.TQBranchSelector();
-      return { error: 'Please select your delivery area.' };
-    }
-
-    var addrId = window._cbSelectedAddressId;
-    var selectedAddr = null;
-    if (orderType === 'delivery') {
-      if (!addrId) return { error: 'Please choose a delivery address before placing the order.' };
-      selectedAddr = (window._addressCache || []).find(function(a) { return a.id === addrId; });
-      if (!selectedAddr || typeof selectedAddr.lat !== 'number' || typeof selectedAddr.lng !== 'number') {
-        return { error: 'This address has no map pin. Tap "Adjust pin / edit" to drop one — the rider needs it to find you.' };
-      }
-    }
-
-    var quote = deliveryQuote;
-    if (orderType === 'delivery' && quote.min > 0 && TastiqoCart.getSubtotal() < quote.min) {
-      return { error: 'The minimum order is ' + formatMoney(quote.min) + '.' };
-    }
-
-    return {
-      items: items,
-      branchId: branchId,
-      orderType: orderType,
-      addrId: addrId,
-      areaId: saved.areaId,
-      areaName: saved.areaName,
-      address: selectedAddr,
-      quote: quote
-    };
-  }
-
-  function ensureOrderReview() {
-    var overlay = document.getElementById('cb-order-review');
-    if (overlay) return overlay;
-    overlay = document.createElement('div');
-    overlay.id = 'cb-order-review';
-    overlay.className = 'cb-auth-modal-backdrop';
-    overlay.setAttribute('role', 'dialog');
-    overlay.setAttribute('aria-modal', 'true');
-    overlay.innerHTML =
-      '<div class="cb-auth-modal" style="max-width:28rem;">' +
-        '<button type="button" class="cb-auth-modal-close" id="cb-order-review-close" aria-label="Close">×</button>' +
-        '<div class="cb-auth-header">' +
-          '<h2>Confirm your order</h2>' +
-          '<p>Nothing is sent until you place the order.</p>' +
-        '</div>' +
-        '<div id="cb-order-review-body"></div>' +
-        '<label for="cb-order-note" style="display:block;margin-top:14px;font-size:0.85rem;font-weight:600;">Note for the kitchen <span style="font-weight:400;color:var(--cb-text-muted);">(optional)</span></label>' +
-        '<textarea id="cb-order-note" rows="2" maxlength="300" style="width:100%;margin-top:6px;padding:0.6rem 0.75rem;border:1px solid var(--cb-border);border-radius:8px;font:inherit;resize:vertical;"></textarea>' +
-        '<div id="cb-order-review-error" style="display:none;background:#FEF2F2;color:var(--cb-error,#dc2626);padding:0.625rem 0.875rem;border-radius:8px;font-size:0.8rem;margin-top:12px;"></div>' +
-        '<button type="button" class="cb-btn cb-btn-primary cb-btn-block cb-btn-lg" id="cb-order-place" style="margin-top:14px;">Place order</button>' +
-        '<button type="button" class="cb-btn cb-btn-outline cb-btn-block" id="cb-order-back" style="margin-top:8px;">Back to cart</button>' +
-      '</div>';
-    document.body.appendChild(overlay);
-    overlay.addEventListener('click', function(e) {
-      if (e.target === overlay) closeOrderReview();
-    });
-    document.getElementById('cb-order-review-close').addEventListener('click', closeOrderReview);
-    document.getElementById('cb-order-back').addEventListener('click', closeOrderReview);
-    document.getElementById('cb-order-place').addEventListener('click', doCheckout);
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape' && overlay.classList.contains('is-open')) closeOrderReview();
-    });
-    return overlay;
-  }
-
-  function closeOrderReview() {
-    var overlay = document.getElementById('cb-order-review');
-    if (overlay) overlay.classList.remove('is-open');
-    var placeBtn = document.getElementById('cb-order-place');
-    if (placeBtn && !placeBtn.dataset.placing) {
-      placeBtn.disabled = false;
-      placeBtn.textContent = 'Place order';
-    }
-  }
-
-  function openOrderReview() {
-    var ctx = prepareCheckout();
-    if (ctx.needAuth) { openAuthModal(); return; }
-    if (ctx.error) { showCheckoutError(ctx.error); return; }
-    var cartError = document.getElementById('cb-checkout-error');
-    if (cartError) cartError.style.display = 'none';
-
-    var fee = ctx.orderType === 'delivery' ? (ctx.quote.fee || 0) : 0;
-    var subtotal = TastiqoCart.getSubtotal();
-    var rows = ctx.items.map(function(item) {
-      var mods = item.modifiers && item.modifiers.length
-        ? '<div style="color:var(--cb-text-muted);font-size:0.75rem;">' + escHTML(item.modifiers.map(function(m) { return m.name; }).join(', ')) + '</div>'
-        : '';
-      return '<div style="display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--cb-border);font-size:0.9rem;">' +
-        '<div><strong>' + item.quantity + '× ' + escHTML(item.name) + '</strong>' + mods + '</div>' +
-        '<div style="white-space:nowrap;font-weight:700;">' + formatMoney(item.unit_price * item.quantity) + '</div>' +
-      '</div>';
-    }).join('');
-
-    var where = ctx.orderType === 'pickup'
-      ? '<strong>Pickup</strong>'
-      : '<strong>Delivery</strong>' + (ctx.areaName ? ' · ' + escHTML(ctx.areaName) : '');
-    if (ctx.address) {
-      where += '<div style="margin-top:4px;">' + escHTML(ctx.address.label || 'Address') + ' — ' + escHTML(ctx.address.address_line1 || '') + '</div>';
-    }
-    var pay = ctx.orderType === 'pickup' ? 'Pay with cash when you collect it' : 'Pay with cash on delivery';
-
-    var body = document.getElementById('cb-order-review-body') || ensureOrderReview().querySelector('#cb-order-review-body');
-    ensureOrderReview();
-    body = document.getElementById('cb-order-review-body');
-    body.innerHTML =
-      rows +
-      '<div style="margin-top:12px;font-size:0.85rem;line-height:1.45;">' + where + '</div>' +
-      '<div style="display:flex;justify-content:space-between;padding-top:12px;font-size:0.9rem;"><span>Subtotal</span><span>' + formatMoney(subtotal) + '</span></div>' +
-      (fee > 0 ? '<div style="display:flex;justify-content:space-between;padding-top:6px;font-size:0.9rem;"><span>Delivery</span><span>' + formatMoney(fee) + '</span></div>' : '') +
-      '<div style="display:flex;justify-content:space-between;padding-top:10px;margin-top:8px;border-top:1px solid var(--cb-border);font-weight:700;font-size:1.05rem;"><span>Total</span><span>' + formatMoney(subtotal + fee) + '</span></div>' +
-      '<div style="margin-top:8px;font-size:0.8rem;color:var(--cb-text-muted);">' + pay + '</div>';
-
-    var reviewError = document.getElementById('cb-order-review-error');
-    if (reviewError) reviewError.style.display = 'none';
-    document.getElementById('cb-order-review').classList.add('is-open');
-  }
-
-  function doCheckout() {
-    var ctx = prepareCheckout();
-    if (ctx.needAuth) { openAuthModal(); return; }
-    if (ctx.error) {
-      var reviewError = document.getElementById('cb-order-review-error');
-      if (reviewError) { reviewError.textContent = ctx.error; reviewError.style.display = 'block'; }
-      else showCheckoutError(ctx.error);
-      return;
-    }
-
-    var noteEl = document.getElementById('cb-order-note');
-    var apiItems = ctx.items.map(function(it) {
-      return {
-        product_id: it.product_id,
-        quantity: it.quantity,
-        modifier_ids: (it.modifiers || []).map(function(m) { return m.id; }),
-        notes: it.notes || ''
-      };
-    });
-
-    var body = {
-      branch_id: ctx.branchId,
-      order_type: ctx.orderType,
-      payment_method: 'cash',
-      items: apiItems,
-      address_id: ctx.orderType === 'delivery' ? ctx.addrId : undefined,
-      delivery_area_id: ctx.orderType === 'delivery' ? ctx.areaId : undefined,
-      customer_notes: noteEl ? noteEl.value.trim() : ''
-    };
-
-    var placeBtn = document.getElementById('cb-order-place');
-    if (placeBtn) { placeBtn.disabled = true; placeBtn.dataset.placing = '1'; placeBtn.textContent = 'Placing order...'; }
-
-    fetch('/api/storefront/orders', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + CustomerAuth.getAccessToken()
-      },
-      body: JSON.stringify(body)
-    })
-    .then(function(res) {
-      if (!res.ok) return res.json().then(function(d) { throw new Error(d.error || 'Failed to place order'); });
-      return res.json();
-    })
-    .then(function(order) {
-      TastiqoCart.clear();
-      if (order && order.id) window.location.href = '/account/orders/' + order.id;
-      else window.location.href = '/account/orders';
-    })
-    .catch(function(err) {
-      var reviewError = document.getElementById('cb-order-review-error');
-      var message = err.message || 'Failed to place order. Please try again.';
-      if (reviewError) { reviewError.textContent = message; reviewError.style.display = 'block'; }
-      else showCheckoutError(message);
-      if (placeBtn) { placeBtn.disabled = false; delete placeBtn.dataset.placing; placeBtn.textContent = 'Place order'; }
-    });
-  }
-
-  function showCheckoutError(msg) {
-    var el = document.getElementById('cb-checkout-error');
-    if (el) { el.textContent = msg; el.style.display = 'block'; }
-  }
 
   /* -----------------------------------------------
      Add to Cart (Product Detail Page)
@@ -609,18 +432,12 @@
     if (!cartPage) return;
 
     renderCart();
-    renderDeliveryPicker();
     window.addEventListener('cart:updated', renderCart);
-
-    var checkoutBtn = document.getElementById('cb-checkout-btn');
-    if (checkoutBtn) {
-      checkoutBtn.textContent = 'Review order →';
-      checkoutBtn.addEventListener('click', openOrderReview);
-    }
+    // The checkout button is a plain link to the platform checkout (/checkout).
   }
 
-  // Selected address for the in-flight checkout. Set by renderDeliveryPicker;
-  // read by doCheckout. Kept on window for cross-call access without a
+  // Selected address (kept for the account pages' address picker).
+  // Kept on window for cross-call access without a
   // module-level closure.
   window._cbSelectedAddressId = null;
 
@@ -2044,3 +1861,170 @@
   initBranchPopup();
 
 })();
+
+/* >>> tq-merch carousel (generated, keep in sync across themes) */
+/* ===============================================================
+   Tastiqo carousel (shared by hero-carousel, deals and showcase
+   sections). Vanilla, dependency-free, ~2 KB.
+
+   Markup contract (see sections/hero-carousel.liquid):
+     [data-tq-carousel]            root; data-autoplay="true|false",
+                                   data-interval="<seconds>"
+       [data-tq-track]             horizontal scroll-snap container
+         > children                one per slide (data-block-id optional)
+       [data-tq-prev] [data-tq-next]   optional arrow buttons
+       [data-tq-dot="<index>"]     optional dot buttons
+       [data-tq-toggle]            optional play/pause button
+
+   Works without JS (native swipe/scroll-snap). With JS: arrows, dots,
+   keyboard, autoplay that pauses on hover/focus/hidden tab and is off
+   for prefers-reduced-motion. Re-initialises when the theme editor
+   swaps a section (tastiqo:section:load) and jumps to a slide when
+   the owner selects its block (tastiqo:block:select).
+   =============================================================== */
+(function () {
+  if (window.TQCarousel) return;
+  var reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+  function init(root) {
+    if (!root || root.__tqCarousel) return;
+    var track = root.querySelector('[data-tq-track]');
+    if (!track) return;
+    var slides = Array.prototype.slice.call(track.children);
+    var n = slides.length;
+    var dots = Array.prototype.slice.call(root.querySelectorAll('[data-tq-dot]'));
+    var prev = root.querySelector('[data-tq-prev]');
+    var next = root.querySelector('[data-tq-next]');
+    var toggle = root.querySelector('[data-tq-toggle]');
+    var interval = Math.max(3, parseFloat(root.getAttribute('data-interval')) || 5) * 1000;
+    var autoplay = root.getAttribute('data-autoplay') === 'true' && !reduceMotion && n > 1;
+    // data-tq-row: a row of several cards (deals, showcase) — arrows page
+    // by the visible width, no dots / autoplay / inert slides.
+    var row = root.hasAttribute('data-tq-row');
+    if (row) autoplay = false;
+    var idx = 0, timer = null, userPaused = !autoplay, hovering = false, focused = false;
+    var api = { go: go, pause: function () { setUserPaused(true); } };
+    root.__tqCarousel = api;
+    root.style.setProperty('--tq-interval', interval + 'ms');
+    if (!autoplay && toggle) toggle.hidden = true;
+
+    function rtl() { return getComputedStyle(track).direction === 'rtl'; }
+    function go(i, instant) {
+      if (!n) return;
+      i = ((i % n) + n) % n;
+      var target = slides[i];
+      var left = target.offsetLeft - track.offsetLeft;
+      if (rtl()) left = -(track.scrollWidth - track.clientWidth - left);
+      track.scrollTo({ left: left, behavior: (instant || reduceMotion) ? 'auto' : 'smooth' });
+      setActive(i);
+    }
+    function setActive(i) {
+      if (i === idx && root.__tqStarted) return;
+      root.__tqStarted = true;
+      idx = i;
+      for (var d = 0; d < dots.length; d++) {
+        var on = d === i;
+        dots[d].setAttribute('aria-current', on ? 'true' : 'false');
+        dots[d].classList.remove('is-active');
+        if (on) { void dots[d].offsetWidth; dots[d].classList.add('is-active'); }
+      }
+      if (!row) {
+        for (var s = 0; s < n; s++) {
+          if (s === i) { slides[s].removeAttribute('inert'); slides[s].removeAttribute('aria-hidden'); }
+          else { slides[s].setAttribute('inert', ''); slides[s].setAttribute('aria-hidden', 'true'); }
+        }
+      }
+      schedule();
+    }
+    function playing() { return autoplay && !userPaused && !hovering && !focused && !document.hidden; }
+    function schedule() {
+      clearTimeout(timer);
+      root.classList.toggle('is-playing', playing());
+      track.setAttribute('aria-live', playing() ? 'off' : 'polite');
+      if (playing()) timer = setTimeout(function () { go(idx + 1); }, interval);
+    }
+    function setUserPaused(p) {
+      userPaused = p;
+      if (toggle) {
+        toggle.setAttribute('aria-pressed', p ? 'true' : 'false');
+        toggle.setAttribute('aria-label', p ? (toggle.getAttribute('data-label-play') || 'Play slideshow') : (toggle.getAttribute('data-label-pause') || 'Pause slideshow'));
+      }
+      schedule();
+    }
+
+    function page(dir) {
+      var dx = track.clientWidth * 0.9 * dir * (rtl() ? -1 : 1);
+      track.scrollBy({ left: dx, behavior: reduceMotion ? 'auto' : 'smooth' });
+    }
+    if (prev) prev.addEventListener('click', function () { row ? page(-1) : go(idx - 1); });
+    if (next) next.addEventListener('click', function () { row ? page(1) : go(idx + 1); });
+    if (row) {
+      var sync = function () {
+        var max = track.scrollWidth - track.clientWidth - 2;
+        var pos = Math.abs(track.scrollLeft);
+        if (prev) prev.disabled = pos <= 2;
+        if (next) next.disabled = pos >= max;
+      };
+      track.addEventListener('scroll', sync, { passive: true });
+      window.addEventListener('resize', sync);
+      sync();
+      return;
+    }
+    dots.forEach(function (dot) {
+      dot.addEventListener('click', function () { go(parseInt(dot.getAttribute('data-tq-dot'), 10) || 0); });
+    });
+    if (toggle) toggle.addEventListener('click', function () { setUserPaused(!userPaused); });
+    root.addEventListener('mouseenter', function () { hovering = true; schedule(); });
+    root.addEventListener('mouseleave', function () { hovering = false; schedule(); });
+    root.addEventListener('focusin', function () { focused = true; schedule(); });
+    root.addEventListener('focusout', function (e) { if (!root.contains(e.relatedTarget)) { focused = false; schedule(); } });
+    track.addEventListener('touchstart', function () { setUserPaused(true); }, { passive: true });
+    document.addEventListener('visibilitychange', schedule);
+    root.addEventListener('keydown', function (e) {
+      if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+      var back = rtl() ? 'ArrowRight' : 'ArrowLeft';
+      var fwd = rtl() ? 'ArrowLeft' : 'ArrowRight';
+      if (e.key === back) { e.preventDefault(); go(idx - 1); }
+      else if (e.key === fwd) { e.preventDefault(); go(idx + 1); }
+    });
+
+    // Keep dots in sync with manual swipes / scrolls.
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting && en.intersectionRatio >= 0.6) {
+            var i = slides.indexOf(en.target);
+            if (i >= 0 && i !== idx) setActive(i);
+          }
+        });
+      }, { root: track, threshold: [0.6] });
+      slides.forEach(function (s) { io.observe(s); });
+    }
+    setActive(0);
+  }
+
+  function initAll(scope) {
+    var list = (scope || document).querySelectorAll ? (scope || document).querySelectorAll('[data-tq-carousel]') : [];
+    if (scope && scope.matches && scope.matches('[data-tq-carousel]')) init(scope);
+    for (var i = 0; i < list.length; i++) init(list[i]);
+  }
+
+  window.TQCarousel = { init: init, initAll: initAll };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { initAll(document); });
+  } else {
+    initAll(document);
+  }
+  document.addEventListener('tastiqo:section:load', function (e) { initAll(e.detail && e.detail.target); });
+  document.addEventListener('tastiqo:block:select', function (e) {
+    var el = e.detail && e.detail.target;
+    if (!el || !el.closest) return;
+    var root = el.closest('[data-tq-carousel]');
+    if (!root || !root.__tqCarousel) return;
+    var track = root.querySelector('[data-tq-track]');
+    var slide = el.closest('[data-tq-track] > *');
+    var i = Array.prototype.indexOf.call(track.children, slide);
+    if (i >= 0) { root.__tqCarousel.pause(); root.__tqCarousel.go(i, true); }
+  });
+})();
+/* <<< tq-merch carousel */

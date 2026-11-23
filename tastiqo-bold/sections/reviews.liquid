@@ -1,0 +1,82 @@
+{%- comment -%}
+  Customer reviews the owner copies in (blocks), with stars.
+  layout: cards | carousel (swipeable row) | quote (one big quote).
+  Only real reviews, please: no ratings are invented and no review
+  structured data is emitted.
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+{%- assign tq_layout = s.layout | default: 'cards' -%}
+{%- if section.blocks.size > 0 -%}
+<section class="tb-section tb-reviews tb-reviews--{{ tq_layout }}" aria-labelledby="tb-rev-{{ section.id }}"{% if tq_layout == 'carousel' %} data-tq-carousel data-tq-row{% endif %}>
+  <div class="tb-container">
+    <div class="tq-head{% if tq_layout == 'carousel' or s.summary.size > 0 %} tq-head--row{% endif %}">
+      <div>
+        {%- if s.eyebrow.size > 0 -%}<span class="tq-head__eyebrow">{{ s.eyebrow | escape }}</span>{%- endif -%}
+        <h2 class="tq-head__title" id="tb-rev-{{ section.id }}">{{ s.title | default: 'What our customers say' | escape }}</h2>
+      </div>
+      {%- if s.summary.size > 0 -%}
+        {%- if s.summary_link.size > 0 -%}<a class="tb-reviews__summary" href="{% render 'safe-url', url: s.summary_link %}" rel="noopener" target="_blank">{% render 'icon', name: 'star' %} {{ s.summary | escape }}</a>
+        {%- else -%}<span class="tb-reviews__summary">{% render 'icon', name: 'star' %} {{ s.summary | escape }}</span>{%- endif -%}
+      {%- elsif tq_layout == 'carousel' -%}
+        <div class="tq-row__nav">
+          <button type="button" class="tq-row__btn" data-tq-prev aria-label="Previous reviews"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+          <button type="button" class="tq-row__btn" data-tq-next aria-label="More reviews"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
+        </div>
+      {%- endif -%}
+    </div>
+    <ul class="{% if tq_layout == 'carousel' %}tq-row__track{% elsif tq_layout == 'quote' %}tb-reviews__quote{% else %}tq-grid{% endif %}" style="--tq-cols: {{ s.columns | default: 3 }};" role="list"{% if tq_layout == 'carousel' %} data-tq-track{% endif %}>
+      {%- for block in section.blocks -%}
+        {%- if tq_layout == 'quote' and forloop.index > 1 -%}{%- break -%}{%- endif -%}
+        {%- assign b = block.settings -%}
+        {%- assign tq_r = b.rating | default: 5 -%}
+        <li class="tb-review" data-block-id="{{ block.id }}" data-block-type="review">
+          <figure>
+            <div class="tb-stars" role="img" aria-label="{{ tq_r }} out of 5 stars">
+              {%- for i in (1..5) -%}<span class="tb-star{% if i <= tq_r %} is-on{% endif %}">{% render 'icon', name: 'star' %}</span>{%- endfor -%}
+            </div>
+            <blockquote class="tb-review__text"><p>{{ b.text | escape }}</p></blockquote>
+            <figcaption class="tb-review__who"><strong>{{ b.name | escape }}</strong>{% if b.source.size > 0 %}<span class="tb-fine"> · {{ b.source | escape }}</span>{% endif %}</figcaption>
+          </figure>
+        </li>
+      {%- endfor -%}
+    </ul>
+  </div>
+</section>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Reviews",
+  "description": "Real customer reviews with star ratings.",
+  "icon": "MessageSquareQuote",
+  "max_blocks": 12,
+  "settings": [
+    { "type": "select", "id": "layout", "label": "Layout", "default": "cards", "options": [
+      { "value": "cards", "label": "Cards" },
+      { "value": "carousel", "label": "Swipeable row" },
+      { "value": "quote", "label": "One big quote" }
+    ] },
+    { "type": "text", "id": "eyebrow", "label": "Small heading", "default": "Reviews" },
+    { "type": "text", "id": "title", "label": "Title", "default": "What our customers say" },
+    { "type": "text", "id": "summary", "label": "Rating summary (optional)", "placeholder": "4.8 on Google · 1,200 reviews", "info": "Only use numbers you can show, e.g. from your Google Business profile." },
+    { "type": "url", "id": "summary_link", "label": "Summary link", "placeholder": "https://g.page/…" },
+    { "type": "range", "id": "columns", "label": "Cards per row", "min": 2, "max": 4, "step": 1, "default": 3 }
+  ],
+  "blocks": [
+    { "type": "review", "name": "Review", "settings": [
+      { "type": "text", "id": "name", "label": "Customer name", "default": "Ayesha K." },
+      { "type": "range", "id": "rating", "label": "Stars", "min": 1, "max": 5, "step": 1, "default": 5 },
+      { "type": "textarea", "id": "text", "label": "Review", "default": "Hot, fresh and on time. The zinger is the best in town!" },
+      { "type": "text", "id": "source", "label": "Source", "default": "Google", "placeholder": "Google, Facebook, in store" }
+    ] }
+  ],
+  "presets": [
+    { "name": "Reviews – Cards", "category": "Social proof", "settings": { "layout": "cards" }, "blocks": [
+      { "type": "review", "settings": { "name": "Ayesha K.", "text": "Hot, fresh and on time. The zinger is the best in town!" } },
+      { "type": "review", "settings": { "name": "Hamza R.", "text": "Family deal fed all five of us. Great value.", "source": "Facebook" } },
+      { "type": "review", "settings": { "name": "Sara M.", "rating": 4, "text": "Loved the loaded fries. Pickup was ready in 15 minutes.", "source": "In store" } }
+    ] },
+    { "name": "Reviews – Swipeable", "category": "Social proof", "settings": { "layout": "carousel" } }
+  ]
+}
+{% endschema %}

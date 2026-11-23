@@ -1,7 +1,13 @@
 {% comment %} Hero Banner — Full-width hero with background image, text, and CTAs {% endcomment %}
 
 <section class="hero-banner">
-  <div class="hero-banner-bg" style="background-image: url('{{ restaurant.cover_image | default: '' }}');"></div>
+  {%- comment -%} Perf: a real <img> (not a CSS background) so the LCP image is discovered by the
+      preload scanner, gets fetchpriority=high and a viewport-sized rendition. {%- endcomment -%}
+  {% if restaurant.cover_image != blank %}
+    <img class="hero-banner-bg" src="{{ restaurant.cover_image | image_width: 1280 }}" srcset="{{ restaurant.cover_image | image_srcset: '640,960,1280,1920' }}" sizes="100vw" alt="" fetchpriority="high" decoding="async" style="width:100%;height:100%;object-fit:cover;">
+  {% else %}
+    <div class="hero-banner-bg"></div>
+  {% endif %}
   <div class="hero-banner-overlay" style="background: rgba(0,0,0,{{ section.settings.overlay_opacity | default: 60 | divided_by: 100.0 }});"></div>
 
   <div class="hero-banner-content" style="text-align: {{ section.settings.alignment | default: 'center' }};">

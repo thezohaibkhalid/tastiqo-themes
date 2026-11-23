@@ -1,0 +1,36 @@
+{%- comment -%}
+  Order history (/account/orders) for signed-in customers, newest first,
+  with status and a Track link. Guests can track an order with the
+  tracking code from their confirmation and their phone number.
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+<section class="tb-section tb-orders" aria-labelledby="tb-orders-title">
+  <div class="tb-container tb-container--narrow">
+    <h1 class="tq-head__title" id="tb-orders-title">{{ s.title | default: 'My orders' | escape }}</h1>
+    <div class="tb-card" data-tb-orders data-limit="20" data-paged="1"><p class="tb-fine">Loading…</p></div>
+    {%- if s.show_tracking_form -%}
+      <div class="tb-card">
+        <h2 class="tb-card__title">Track an order without signing in</h2>
+        <form class="tb-trackform" data-tb-track-form novalidate>
+          <label class="tb-field"><span class="tb-field__label">Tracking code</span><input name="tracking_code" required autocomplete="off" maxlength="40"></label>
+          <label class="tb-field"><span class="tb-field__label">Phone number used for the order</span><input name="phone" type="tel" required autocomplete="tel" maxlength="20"></label>
+          <button type="submit" class="tb-btn tb-btn--primary">Track</button>
+        </form>
+        <div data-tb-track-result></div>
+      </div>
+    {%- endif -%}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Order history",
+  "description": "The customer's orders, plus tracking by code.",
+  "icon": "ReceiptText",
+  "settings": [
+    { "type": "text", "id": "title", "label": "Title", "default": "My orders" },
+    { "type": "checkbox", "id": "show_tracking_form", "label": "Show 'Track an order' form", "default": true }
+  ],
+  "presets": [ { "name": "Order history", "category": "Account", "settings": {} } ]
+}
+{% endschema %}

@@ -1,0 +1,27 @@
+{%- comment -%}
+  Email sign-in with a one-time code (/api/storefront/customer/auth).
+  Used on /account/login, /account and at checkout. theme.js drives it.
+  Param: heading (optional).
+{%- endcomment -%}
+<div class="tb-login" data-tb-login>
+  {%- if heading.size > 0 -%}<h2 class="tb-login__title">{{ heading | escape }}</h2>{%- endif -%}
+  <form class="tb-login__step" data-tb-login-email novalidate>
+    <label class="tb-field"><span class="tb-field__label">Email</span>
+      <input type="email" name="email" autocomplete="email" inputmode="email" required placeholder="you@example.com">
+    </label>
+    <label class="tb-field"><span class="tb-field__label">Your name <span class="tb-fine">(first time only)</span></span>
+      <input type="text" name="full_name" autocomplete="name" maxlength="80">
+    </label>
+    <button type="submit" class="tb-btn tb-btn--primary tb-btn--block">Send me a code</button>
+    <p class="tb-fine">We'll email you a 6-digit code. No password needed.</p>
+  </form>
+  <form class="tb-login__step" data-tb-login-code hidden novalidate>
+    <p>Enter the code we sent to <strong data-tb-login-to></strong>.</p>
+    <label class="tb-field"><span class="tb-field__label">6-digit code</span>
+      <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*" maxlength="8" required>
+    </label>
+    <button type="submit" class="tb-btn tb-btn--primary tb-btn--block">Sign in</button>
+    <p class="tb-login__links"><button type="button" class="tb-linkbtn" data-tb-login-resend>Send a new code</button> · <button type="button" class="tb-linkbtn" data-tb-login-back>Use another email</button></p>
+  </form>
+  <p class="tb-error" role="alert" data-tb-login-error hidden></p>
+</div>

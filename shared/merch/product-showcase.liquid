@@ -1,0 +1,128 @@
+{%- comment -%}
+  Product showcase — a row or grid of menu items from one category, a tag
+  (Popular, New, …) or hand-picked items (blocks, in the owner's order).
+  Items hidden or unavailable at the visitor's branch are skipped.
+  layout: carousel (swipeable row) | grid. card_style (passed to
+  snippets/card-item.liquid): image-top | compact.
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+{%- assign tq_src = s.source | default: 'collection' -%}
+{%- assign tq_items = nil -%}
+{%- assign tq_more = '' -%}
+{%- case tq_src -%}
+  {%- when 'collection' -%}
+    {%- assign tq_cat = menu_categories | where: 'id', s.collection | first -%}
+    {%- if tq_cat -%}{%- assign tq_items = tq_cat.items -%}{%- assign tq_more = tq_cat.url -%}{%- endif -%}
+  {%- when 'popular' -%}{%- assign tq_items = featured.popular -%}
+  {%- when 'new' -%}{%- assign tq_items = featured.new -%}
+  {%- when 'deals' -%}{%- assign tq_items = featured.deals -%}
+  {%- when 'spicy' -%}{%- assign tq_items = featured.spicy -%}
+  {%- when 'veg' -%}{%- assign tq_items = featured.veg -%}
+{%- endcase -%}
+{%- assign tq_n = 0 -%}
+{%- if tq_src == 'handpicked' -%}
+  {%- for block in section.blocks -%}
+    {%- assign tq_p = featured.all | where: 'id', block.settings.product | first -%}
+    {%- if tq_p -%}{%- assign tq_n = tq_n | plus: 1 -%}{%- endif -%}
+  {%- endfor -%}
+{%- elsif tq_items -%}
+  {%- assign tq_n = tq_items.size -%}
+{%- endif -%}
+{%- assign tq_layout = s.layout | default: 'carousel' -%}
+{%- assign tq_limit = s.limit | default: 8 -%}
+{%- assign tq_editor = false -%}
+{%- if request.query.theme_editor == '1' -%}{%- assign tq_editor = true -%}{%- endif -%}
+
+{%- if tq_n > 0 or tq_editor -%}
+<section class="%%SECTION%% tq-showcase"{% if tq_layout == 'carousel' %} data-tq-carousel data-tq-row{% endif %}>
+  <div class="%%CONTAINER%%">
+    <div class="tq-head tq-head--row">
+      <div>
+        {%- if s.eyebrow.size > 0 -%}<span class="tq-head__eyebrow">{{ s.eyebrow | escape }}</span>{%- endif -%}
+        {%- assign tq_title = s.title -%}
+        {%- unless tq_title.size > 0 -%}{%- if tq_cat -%}{%- assign tq_title = tq_cat.title -%}{%- endif -%}{%- endunless -%}
+        {%- if tq_title.size > 0 -%}<h2 class="tq-head__title">{{ tq_title | escape }}</h2>{%- endif -%}
+        {%- if s.subtitle.size > 0 -%}<p class="tq-head__sub">{{ s.subtitle | escape }}</p>{%- endif -%}
+      </div>
+      {%- if tq_layout == 'carousel' and tq_n > 0 -%}
+        <div class="tq-row__nav">
+          <button type="button" class="tq-row__btn" data-tq-prev aria-label="Previous items"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+          <button type="button" class="tq-row__btn" data-tq-next aria-label="More items"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
+        </div>
+      {%- endif -%}
+    </div>
+
+    {%- if tq_n > 0 -%}
+      <ul class="{% if tq_layout == 'carousel' %}tq-row__track{% else %}tq-grid{% endif %}"{% if tq_layout == 'carousel' %} data-tq-track{% endif %} style="--tq-cols: {{ s.columns | default: 4 }};" role="list">
+        {%- if tq_src == 'handpicked' -%}
+          {%- for block in section.blocks limit: tq_limit -%}
+            {%- assign item = featured.all | where: 'id', block.settings.product | first -%}
+            {%- if item -%}<li data-block-id="{{ block.id }}" data-block-type="product">{%- render 'card-item', item: item, style: s.card_style -%}</li>{%- endif -%}
+          {%- endfor -%}
+        {%- else -%}
+          {%- for item in tq_items limit: tq_limit -%}
+            <li>{%- render 'card-item', item: item, style: s.card_style -%}</li>
+          {%- endfor -%}
+        {%- endif -%}
+      </ul>
+      {%- if s.show_view_all and tq_more.size > 0 -%}
+        <p style="text-align: center; margin-top: 1.5rem;"><a class="tq-link" href="{{ tq_more }}">{{ s.view_all_label | default: 'View all' | escape }} →</a></p>
+      {%- endif -%}
+    {%- else -%}
+      <p class="tq-head__sub" style="text-align: center;">Choose a category, a tag or add items in the section settings.</p>
+    {%- endif -%}
+  </div>
+</section>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Product showcase",
+  "description": "A row of items from a category, a tag (Popular, New…) or items you pick.",
+  "icon": "Star",
+  "max_blocks": 16,
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Small heading", "default": "" },
+    { "type": "text", "id": "title", "label": "Title", "default": "", "info": "Leave empty to use the category name." },
+    { "type": "textarea", "id": "subtitle", "label": "Subtitle", "default": "" },
+    { "type": "header", "id": "_h_source", "label": "Which items" },
+    { "type": "select", "id": "source", "label": "Show", "default": "collection", "options": [
+      { "value": "collection", "label": "Items in a category" },
+      { "value": "handpicked", "label": "Items I pick (add Item blocks)" },
+      { "value": "popular", "label": "Items tagged Popular" },
+      { "value": "new", "label": "Items tagged New" },
+      { "value": "deals", "label": "Items tagged Deals" },
+      { "value": "spicy", "label": "Items tagged Spicy" },
+      { "value": "veg", "label": "Items tagged Veg" }
+    ] },
+    { "type": "collection", "id": "collection", "label": "Category", "info": "Used when Show is 'Items in a category'." },
+    { "type": "range", "id": "limit", "label": "Maximum items", "min": 2, "max": 16, "step": 1, "default": 8 },
+    { "type": "header", "id": "_h_layout", "label": "Layout" },
+    { "type": "select", "id": "layout", "label": "Layout", "default": "carousel", "options": [
+      { "value": "carousel", "label": "Swipeable row" },
+      { "value": "grid", "label": "Grid" }
+    ] },
+    { "type": "select", "id": "card_style", "label": "Card style", "default": "image-top", "options": [
+      { "value": "image-top", "label": "Photo on top" },
+      { "value": "compact", "label": "Compact (photo on the side)" }
+    ] },
+    { "type": "range", "id": "columns", "label": "Items per row", "min": 2, "max": 5, "step": 1, "default": 4 },
+    { "type": "checkbox", "id": "show_view_all", "label": "Show link to the category", "default": true },
+    { "type": "text", "id": "view_all_label", "label": "Link text", "default": "View all" }
+  ],
+  "blocks": [
+    {
+      "type": "product",
+      "name": "Item",
+      "settings": [
+        { "type": "product", "id": "product", "label": "Menu item" }
+      ]
+    }
+  ],
+  "presets": [
+    { "name": "Product showcase – From a category", "category": "Menu & deals", "settings": { "source": "collection" } },
+    { "name": "Product showcase – Popular items", "category": "Menu & deals", "settings": { "source": "popular", "title": "Most loved" } },
+    { "name": "Product showcase – Hand-picked", "category": "Menu & deals", "settings": { "source": "handpicked", "title": "Chef's picks" } }
+  ]
+}
+{% endschema %}

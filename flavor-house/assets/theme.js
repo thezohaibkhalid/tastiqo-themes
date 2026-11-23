@@ -85,7 +85,29 @@
     _addrMarker: null,
     _ckMap: null,
     _ckMarker: null,
-    onReady(cb) { if (this._ready) { cb(); return; } this._readyCallbacks.push(cb); },
+    onReady(cb) { if (this._ready) { cb(); return; } this._readyCallbacks.push(cb); this._loadLeaflet(); },
+    // Perf: Leaflet (~150 KB JS+CSS from unpkg) used to load on every page.
+    // It is now fetched the first time a map is actually needed.
+    _loadLeaflet: function() {
+      if (window.L || this._leafletLoading) return;
+      this._leafletLoading = true;
+      var self = this;
+      var css = document.createElement('link');
+      css.rel = 'stylesheet';
+      css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      css.integrity = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
+      css.crossOrigin = '';
+      document.head.appendChild(css);
+      var js = document.createElement('script');
+      js.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      js.integrity = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
+      js.crossOrigin = '';
+      js.async = true;
+      js.onload = function() { self._fireReady(); };
+      js.onerror = function() { self._leafletLoading = false; };
+      document.head.appendChild(js);
+    },
+
     _fireReady() {
       this._ready = true;
       this._readyCallbacks.forEach(cb => { try { cb(); } catch {} });
@@ -197,7 +219,7 @@
       requestAnimationFrame(() => { if (this._ckMap) this._ckMap.invalidateSize(); });
     },
   };
-  TastiqoMap._waitForLeaflet();
+  if (window.L) TastiqoMap._fireReady(); // Leaflet already on the page (e.g. custom theme code)
   window.TastiqoMap = TastiqoMap;
 
   /* -----------------------------------------------
@@ -874,15 +896,25 @@
         return;
       }
 
+      // Customer wording for the backend status codes (same as the
+      // cheesious-bites theme): pending → Order placed … completed by type.
+      const orderStatusLabel = (status, type) => ({
+        pending: 'Order placed',
+        confirmed: 'Confirmed',
+        preparing: 'Preparing',
+        ready: type === 'delivery' ? 'Ready for delivery' : type === 'pickup' ? 'Ready for pickup' : 'Ready',
+        completed: type === 'delivery' ? 'Delivered' : 'Completed',
+        cancelled: 'Cancelled',
+      })[status] || status || '';
       const html = data.orders.map(o => {
         const date = new Date(o.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
         return `
           <div class="order-card">
             <div class="order-card-info">
               <div class="order-card-number">${o.order_number}</div>
-              <div class="order-card-meta">${date} &middot; ${o.order_type}</div>
+              <div class="order-card-meta">${date} &middot; ${({ delivery: 'Delivery', pickup: 'Pickup', dine_in: 'Dine in' })[o.order_type] || o.order_type}</div>
             </div>
-            <span class="order-status-badge ${o.status}">${o.status}</span>
+            <span class="order-status-badge ${o.status}">${orderStatusLabel(o.status, o.order_type)}</span>
             <div class="order-card-total">${o.currency} ${parseFloat(o.total).toFixed(2)}</div>
           </div>
         `;
@@ -913,101 +945,10 @@
   }
 
   /* -----------------------------------------------
-     Checkout flow
+     Checkout
+     The checkout is owned by Tastiqo and served at /checkout on this
+     website. Themes link to it and keep only the cart UI.
   ----------------------------------------------- */
-  async function doCheckout() {
-    if (!CustomerAuth.isLoggedIn()) {
-      openAuthModal();
-      return;
-    }
-
-    const items = TastiqoCart.getItems();
-    if (!items.length) return;
-
-    const branchId = getBranchId();
-    if (!branchId) {
-      if (typeof window.TQBranchSelector === 'function') window.TQBranchSelector();
-      showCheckoutError('Please select your city and area first.');
-      return;
-    }
-
-    let saved = {};
-    try {
-      saved = {
-        areaId: localStorage.getItem('tq_storefront_area_id'),
-        orderType: localStorage.getItem('tq_storefront_order_type') || 'delivery',
-      };
-    } catch (e) {}
-    const orderType = saved.orderType === 'pickup' ? 'pickup' : 'delivery';
-    if (orderType === 'delivery' && !saved.areaId) {
-      if (typeof window.TQBranchSelector === 'function') window.TQBranchSelector();
-      showCheckoutError('Please select your delivery area.');
-      return;
-    }
-
-    const addrId = window._fhSelectedAddressId;
-    if (orderType === 'delivery') {
-      if (!addrId) {
-        showCheckoutError('Please choose a delivery address before placing the order.');
-        return;
-      }
-      const selectedAddr = (window._addressCache || []).find(a => a.id === addrId);
-      if (!selectedAddr || typeof selectedAddr.lat !== 'number' || typeof selectedAddr.lng !== 'number') {
-        showCheckoutError('This address has no map pin. Tap "Adjust pin / edit" to drop one — the rider needs it to find you.');
-        return;
-      }
-    }
-
-    if (orderType === 'delivery' && deliveryQuote.min > 0 && TastiqoCart.getSubtotal() < deliveryQuote.min) {
-      showCheckoutError('The minimum order is ' + formatMoney(deliveryQuote.min) + '.');
-      return;
-    }
-
-    const apiItems = items.map(it => ({
-      product_id: it.product_id,
-      quantity: it.quantity,
-      modifier_ids: (it.modifiers || []).map(m => m.id),
-      notes: it.notes || ''
-    }));
-
-    const body = {
-      branch_id: branchId,
-      order_type: orderType,
-      payment_method: 'cash',
-      items: apiItems,
-      address_id: orderType === 'delivery' ? addrId : undefined,
-      delivery_area_id: orderType === 'delivery' ? saved.areaId : undefined,
-      customer_notes: ''
-    };
-
-    const checkoutBtn = document.getElementById('fh-checkout-btn');
-    if (checkoutBtn) { checkoutBtn.disabled = true; checkoutBtn.textContent = 'Placing order...'; }
-
-    try {
-      const res = await fetch('/api/storefront/orders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + CustomerAuth.getAccessToken()
-        },
-        body: JSON.stringify(body)
-      });
-      if (!res.ok) {
-        const d = await res.json();
-        throw new Error(d.error || 'Failed to place order');
-      }
-      TastiqoCart.clear();
-      window.location.href = '/account/orders';
-    } catch (err) {
-      showCheckoutError(err.message || 'Failed to place order. Please try again.');
-      if (checkoutBtn) { checkoutBtn.disabled = false; checkoutBtn.textContent = 'Proceed to Checkout →'; }
-    }
-  }
-
-  function showCheckoutError(msg) {
-    const el = document.getElementById('fh-checkout-error');
-    if (el) { el.textContent = msg; el.style.display = 'block'; }
-  }
 
   /* -----------------------------------------------
      Quantity stepper (data-fh-qty)
@@ -1162,11 +1103,8 @@
     if (!cartPage) return;
 
     renderCart();
-    renderDeliveryPicker();
     window.addEventListener('cart:updated', renderCart);
-
-    const checkoutBtn = document.getElementById('fh-checkout-btn');
-    if (checkoutBtn) checkoutBtn.addEventListener('click', doCheckout);
+    // The checkout button is a plain link to the platform checkout (/checkout).
   }
 
   window._fhSelectedAddressId = null;
@@ -1809,3 +1747,170 @@
   initBranchPopup();
 
 })();
+
+/* >>> tq-merch carousel (generated, keep in sync across themes) */
+/* ===============================================================
+   Tastiqo carousel (shared by hero-carousel, deals and showcase
+   sections). Vanilla, dependency-free, ~2 KB.
+
+   Markup contract (see sections/hero-carousel.liquid):
+     [data-tq-carousel]            root; data-autoplay="true|false",
+                                   data-interval="<seconds>"
+       [data-tq-track]             horizontal scroll-snap container
+         > children                one per slide (data-block-id optional)
+       [data-tq-prev] [data-tq-next]   optional arrow buttons
+       [data-tq-dot="<index>"]     optional dot buttons
+       [data-tq-toggle]            optional play/pause button
+
+   Works without JS (native swipe/scroll-snap). With JS: arrows, dots,
+   keyboard, autoplay that pauses on hover/focus/hidden tab and is off
+   for prefers-reduced-motion. Re-initialises when the theme editor
+   swaps a section (tastiqo:section:load) and jumps to a slide when
+   the owner selects its block (tastiqo:block:select).
+   =============================================================== */
+(function () {
+  if (window.TQCarousel) return;
+  var reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+  function init(root) {
+    if (!root || root.__tqCarousel) return;
+    var track = root.querySelector('[data-tq-track]');
+    if (!track) return;
+    var slides = Array.prototype.slice.call(track.children);
+    var n = slides.length;
+    var dots = Array.prototype.slice.call(root.querySelectorAll('[data-tq-dot]'));
+    var prev = root.querySelector('[data-tq-prev]');
+    var next = root.querySelector('[data-tq-next]');
+    var toggle = root.querySelector('[data-tq-toggle]');
+    var interval = Math.max(3, parseFloat(root.getAttribute('data-interval')) || 5) * 1000;
+    var autoplay = root.getAttribute('data-autoplay') === 'true' && !reduceMotion && n > 1;
+    // data-tq-row: a row of several cards (deals, showcase) — arrows page
+    // by the visible width, no dots / autoplay / inert slides.
+    var row = root.hasAttribute('data-tq-row');
+    if (row) autoplay = false;
+    var idx = 0, timer = null, userPaused = !autoplay, hovering = false, focused = false;
+    var api = { go: go, pause: function () { setUserPaused(true); } };
+    root.__tqCarousel = api;
+    root.style.setProperty('--tq-interval', interval + 'ms');
+    if (!autoplay && toggle) toggle.hidden = true;
+
+    function rtl() { return getComputedStyle(track).direction === 'rtl'; }
+    function go(i, instant) {
+      if (!n) return;
+      i = ((i % n) + n) % n;
+      var target = slides[i];
+      var left = target.offsetLeft - track.offsetLeft;
+      if (rtl()) left = -(track.scrollWidth - track.clientWidth - left);
+      track.scrollTo({ left: left, behavior: (instant || reduceMotion) ? 'auto' : 'smooth' });
+      setActive(i);
+    }
+    function setActive(i) {
+      if (i === idx && root.__tqStarted) return;
+      root.__tqStarted = true;
+      idx = i;
+      for (var d = 0; d < dots.length; d++) {
+        var on = d === i;
+        dots[d].setAttribute('aria-current', on ? 'true' : 'false');
+        dots[d].classList.remove('is-active');
+        if (on) { void dots[d].offsetWidth; dots[d].classList.add('is-active'); }
+      }
+      if (!row) {
+        for (var s = 0; s < n; s++) {
+          if (s === i) { slides[s].removeAttribute('inert'); slides[s].removeAttribute('aria-hidden'); }
+          else { slides[s].setAttribute('inert', ''); slides[s].setAttribute('aria-hidden', 'true'); }
+        }
+      }
+      schedule();
+    }
+    function playing() { return autoplay && !userPaused && !hovering && !focused && !document.hidden; }
+    function schedule() {
+      clearTimeout(timer);
+      root.classList.toggle('is-playing', playing());
+      track.setAttribute('aria-live', playing() ? 'off' : 'polite');
+      if (playing()) timer = setTimeout(function () { go(idx + 1); }, interval);
+    }
+    function setUserPaused(p) {
+      userPaused = p;
+      if (toggle) {
+        toggle.setAttribute('aria-pressed', p ? 'true' : 'false');
+        toggle.setAttribute('aria-label', p ? (toggle.getAttribute('data-label-play') || 'Play slideshow') : (toggle.getAttribute('data-label-pause') || 'Pause slideshow'));
+      }
+      schedule();
+    }
+
+    function page(dir) {
+      var dx = track.clientWidth * 0.9 * dir * (rtl() ? -1 : 1);
+      track.scrollBy({ left: dx, behavior: reduceMotion ? 'auto' : 'smooth' });
+    }
+    if (prev) prev.addEventListener('click', function () { row ? page(-1) : go(idx - 1); });
+    if (next) next.addEventListener('click', function () { row ? page(1) : go(idx + 1); });
+    if (row) {
+      var sync = function () {
+        var max = track.scrollWidth - track.clientWidth - 2;
+        var pos = Math.abs(track.scrollLeft);
+        if (prev) prev.disabled = pos <= 2;
+        if (next) next.disabled = pos >= max;
+      };
+      track.addEventListener('scroll', sync, { passive: true });
+      window.addEventListener('resize', sync);
+      sync();
+      return;
+    }
+    dots.forEach(function (dot) {
+      dot.addEventListener('click', function () { go(parseInt(dot.getAttribute('data-tq-dot'), 10) || 0); });
+    });
+    if (toggle) toggle.addEventListener('click', function () { setUserPaused(!userPaused); });
+    root.addEventListener('mouseenter', function () { hovering = true; schedule(); });
+    root.addEventListener('mouseleave', function () { hovering = false; schedule(); });
+    root.addEventListener('focusin', function () { focused = true; schedule(); });
+    root.addEventListener('focusout', function (e) { if (!root.contains(e.relatedTarget)) { focused = false; schedule(); } });
+    track.addEventListener('touchstart', function () { setUserPaused(true); }, { passive: true });
+    document.addEventListener('visibilitychange', schedule);
+    root.addEventListener('keydown', function (e) {
+      if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+      var back = rtl() ? 'ArrowRight' : 'ArrowLeft';
+      var fwd = rtl() ? 'ArrowLeft' : 'ArrowRight';
+      if (e.key === back) { e.preventDefault(); go(idx - 1); }
+      else if (e.key === fwd) { e.preventDefault(); go(idx + 1); }
+    });
+
+    // Keep dots in sync with manual swipes / scrolls.
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting && en.intersectionRatio >= 0.6) {
+            var i = slides.indexOf(en.target);
+            if (i >= 0 && i !== idx) setActive(i);
+          }
+        });
+      }, { root: track, threshold: [0.6] });
+      slides.forEach(function (s) { io.observe(s); });
+    }
+    setActive(0);
+  }
+
+  function initAll(scope) {
+    var list = (scope || document).querySelectorAll ? (scope || document).querySelectorAll('[data-tq-carousel]') : [];
+    if (scope && scope.matches && scope.matches('[data-tq-carousel]')) init(scope);
+    for (var i = 0; i < list.length; i++) init(list[i]);
+  }
+
+  window.TQCarousel = { init: init, initAll: initAll };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { initAll(document); });
+  } else {
+    initAll(document);
+  }
+  document.addEventListener('tastiqo:section:load', function (e) { initAll(e.detail && e.detail.target); });
+  document.addEventListener('tastiqo:block:select', function (e) {
+    var el = e.detail && e.detail.target;
+    if (!el || !el.closest) return;
+    var root = el.closest('[data-tq-carousel]');
+    if (!root || !root.__tqCarousel) return;
+    var track = root.querySelector('[data-tq-track]');
+    var slide = el.closest('[data-tq-track] > *');
+    var i = Array.prototype.indexOf.call(track.children, slide);
+    if (i >= 0) { root.__tqCarousel.pause(); root.__tqCarousel.go(i, true); }
+  });
+})();
+/* <<< tq-merch carousel */

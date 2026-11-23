@@ -1,0 +1,40 @@
+{%- comment -%}
+  Menu item card (shared snippet, section-library contract).
+  Params: item (MenuItemContext), style (image-top | compact | list),
+          show_description (default true), show_tags (default false:
+          first of Popular / New / Spicy / Veg as a badge),
+          quick_add (default theme.quick_add): an "Add" button for the
+          theme's cart (data-tq-add; items with choices carry their
+          modifier groups as JSON for the pop-up). Themes without a quick
+          add cart leave theme.quick_add unset and get the plain card.
+{%- endcomment -%}
+{%- assign tq_style = style | default: 'image-top' -%}
+{%- assign tq_qa = quick_add | if_nil: theme.quick_add -%}
+<article class="tq-card tq-card--{{ tq_style }}{% if item.isSoldOut %} tq-card--soldout{% endif %}">
+  <div class="tq-card__media">
+    {%- if item.imageUrl.size > 0 -%}<img src="{{ item.imageUrl | image_width: 480 | escape }}" srcset="{{ item.imageUrl | image_srcset: '240,360,480,720' | escape }}" sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 320px" alt="" width="600" height="450" loading="lazy" decoding="async">{%- endif -%}
+    {%- if item.isSoldOut -%}<span class="tq-badge tq-badge--secondary">Sold out</span>
+    {%- elsif item.hasDiscount -%}<span class="tq-badge tq-badge--sale">-{{ item.discountPercent }}%</span>
+    {%- elsif show_tags and item.tags -%}
+      {%- assign tq_tags = item.tags | join: ',' | downcase | split: ',' -%}
+      {%- if tq_tags contains 'popular' -%}<span class="tq-badge">Popular</span>
+      {%- elsif tq_tags contains 'new' -%}<span class="tq-badge">New</span>
+      {%- elsif tq_tags contains 'spicy' -%}<span class="tq-badge tq-badge--hot">Spicy</span>
+      {%- elsif tq_tags contains 'veg' or tq_tags contains 'vegetarian' -%}<span class="tq-badge tq-badge--veg">Veg</span>{%- endif -%}
+    {%- endif -%}
+  </div>
+  <div class="tq-card__body">
+    <h3 class="tq-card__title"><a href="{{ item.url | escape }}">{{ item.name | escape }}</a></h3>
+    {%- if show_description != false and item.description.size > 0 -%}<p class="tq-card__desc">{{ item.description | escape }}</p>{%- endif -%}
+    <div class="tq-card__foot">
+      <span class="tq-card__price">{{ item.priceMoney }}</span>
+      {%- if item.hasDiscount -%}<span class="tq-card__was"><span class="tq-sr">Was </span>{{ item.compareAtPriceMoney }}</span>{%- endif -%}
+      {%- if tq_qa and item.isSoldOut != true -%}
+        <button type="button" class="tq-add" data-tq-add data-id="{{ item.id | escape }}" data-name="{{ item.name | escape }}" data-price="{{ item.price }}" data-price-money="{{ item.priceMoney | escape }}" data-image="{{ item.imageUrl | escape }}" data-url="{{ item.url | escape }}" aria-label="Add {{ item.name | escape }}{% if item.hasModifiers %} (choose options){% endif %}">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg><span>{{ theme.quick_add_label | default: 'Add' | escape }}</span>
+        </button>
+        {%- if item.hasModifiers -%}<script type="application/json" data-tq-mods>{{ item.modifier_groups | json }}</script>{%- endif -%}
+      {%- endif -%}
+    </div>
+  </div>
+</article>

@@ -1,0 +1,102 @@
+{%- comment -%}
+  Featured categories — the owner picks categories (blocks) and drags them
+  into the order customers should see them. With no blocks it falls back
+  to the first categories of the menu. Categories hidden at the visitor's
+  branch are skipped automatically.
+  layout: grid (wraps) | carousel (swipeable row with arrows).
+  card_style (passed to snippets/card-category.liquid): circle (app-style
+  round photos) | image-tile (photo cards) | chip (compact pills).
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+{%- assign tq_layout = s.layout | default: 'grid' -%}
+{%- assign tq_card = s.card_style | default: 'circle' -%}
+{%- case tq_card -%}{%- when 'image-tile' -%}{%- assign tq_list = 'tiles' -%}{%- when 'chip' -%}{%- assign tq_list = 'chips' -%}{%- else -%}{%- assign tq_list = 'circles' -%}{%- endcase -%}
+{%- assign tq_editor = false -%}
+{%- if request.query.theme_editor == '1' -%}{%- assign tq_editor = true -%}{%- endif -%}
+
+<section class="%%SECTION%% tq-fc"{% if tq_layout == 'carousel' %} data-tq-carousel data-tq-row{% endif %}>
+  <div class="%%CONTAINER%%">
+    {%- if s.title.size > 0 or s.subtitle.size > 0 -%}
+      <div class="tq-head{% if s.show_all_link or tq_layout == 'carousel' %} tq-head--row{% endif %}">
+        <div>
+          {%- if s.eyebrow.size > 0 -%}<span class="tq-head__eyebrow">{{ s.eyebrow | escape }}</span>{%- endif -%}
+          {%- if s.title.size > 0 -%}<h2 class="tq-head__title">{{ s.title | escape }}</h2>{%- endif -%}
+          {%- if s.subtitle.size > 0 -%}<p class="tq-head__sub">{{ s.subtitle | escape }}</p>{%- endif -%}
+        </div>
+        {%- if tq_layout == 'carousel' -%}
+          <div class="tq-row__nav">
+            {%- if s.show_all_link -%}<a class="tq-link" href="/menu" style="align-self: center; margin-right: 8px;">{{ s.all_link_label | default: 'Full menu' | escape }} →</a>{%- endif -%}
+            <button type="button" class="tq-row__btn" data-tq-prev aria-label="Previous categories"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+            <button type="button" class="tq-row__btn" data-tq-next aria-label="More categories"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
+          </div>
+        {%- elsif s.show_all_link -%}<a class="tq-link" href="/menu">{{ s.all_link_label | default: 'Full menu' | escape }} →</a>{%- endif -%}
+      </div>
+    {%- endif -%}
+
+    <ul class="tq-cats tq-cats--{{ tq_list }}{% if tq_layout == 'carousel' %} tq-cats--scroll{% endif %}"{% if tq_layout == 'carousel' %} data-tq-track{% endif %} style="--tq-cols: {{ s.columns | default: 4 }};" role="list">
+      {%- if section.blocks.size > 0 -%}
+        {%- for block in section.blocks -%}
+          {%- assign cat = menu_categories | where: 'id', block.settings.collection | first -%}
+          {%- if cat -%}
+            <li data-block-id="{{ block.id }}" data-block-type="category">
+              {%- render 'card-category', cat: cat, style: tq_card, title: block.settings.custom_title, image: block.settings.custom_image, badge: block.settings.badge, show_count: s.show_count -%}
+            </li>
+          {%- elsif tq_editor -%}
+            <li data-block-id="{{ block.id }}" data-block-type="category" style="border: 2px dashed currentColor; opacity: .5; border-radius: 12px; padding: 12px; font-size: .8rem; display: grid; place-items: center; min-height: 80px; text-align: center;">
+              {%- if block.settings.collection.size > 0 -%}Hidden at this branch{%- else -%}Pick a category{%- endif -%}
+            </li>
+          {%- endif -%}
+        {%- endfor -%}
+      {%- else -%}
+        {%- for cat in menu_categories limit: s.limit -%}
+          <li>{%- render 'card-category', cat: cat, style: tq_card, show_count: s.show_count -%}</li>
+        {%- endfor -%}
+      {%- endif -%}
+    </ul>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Featured categories",
+  "description": "Show the categories you want first — e.g. Deals, Burgers, Pizza — in your order.",
+  "icon": "LayoutGrid",
+  "max_blocks": 12,
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Small heading", "default": "" },
+    { "type": "text", "id": "title", "label": "Title", "default": "What are you craving?" },
+    { "type": "textarea", "id": "subtitle", "label": "Subtitle", "default": "" },
+    { "type": "select", "id": "layout", "label": "Layout", "default": "grid", "options": [
+      { "value": "grid", "label": "Grid" },
+      { "value": "carousel", "label": "Swipeable row" }
+    ] },
+    { "type": "select", "id": "card_style", "label": "Card style", "default": "circle", "options": [
+      { "value": "circle", "label": "Round photos (app style)" },
+      { "value": "image-tile", "label": "Photo cards" },
+      { "value": "chip", "label": "Compact pills" }
+    ] },
+    { "type": "range", "id": "columns", "label": "Cards per row (photo cards)", "min": 2, "max": 6, "step": 1, "default": 4 },
+    { "type": "checkbox", "id": "show_count", "label": "Show number of items (photo cards)", "default": true },
+    { "type": "range", "id": "limit", "label": "How many to show when none are picked", "min": 2, "max": 12, "step": 1, "default": 8, "info": "Add Category blocks below to choose exactly which categories appear, in which order." },
+    { "type": "checkbox", "id": "show_all_link", "label": "Show 'Full menu' link", "default": true },
+    { "type": "text", "id": "all_link_label", "label": "Link text", "default": "Full menu" }
+  ],
+  "blocks": [
+    {
+      "type": "category",
+      "name": "Category",
+      "settings": [
+        { "type": "collection", "id": "collection", "label": "Category" },
+        { "type": "text", "id": "custom_title", "label": "Display name (optional)", "info": "Leave empty to use the category name." },
+        { "type": "image_picker", "id": "custom_image", "label": "Image (optional)", "info": "Leave empty to use the category photo. Square images work best." },
+        { "type": "text", "id": "badge", "label": "Badge (optional)", "placeholder": "Hot" }
+      ]
+    }
+  ],
+  "presets": [
+    { "name": "Featured categories – Round photos", "category": "Menu & deals", "settings": { "card_style": "circle" } },
+    { "name": "Featured categories – Photo cards", "category": "Menu & deals", "settings": { "card_style": "image-tile", "layout": "grid" } },
+    { "name": "Featured categories – Pills", "category": "Menu & deals", "settings": { "card_style": "chip", "title": "" } }
+  ]
+}
+{% endschema %}

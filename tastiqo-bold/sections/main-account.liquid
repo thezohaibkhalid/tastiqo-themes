@@ -1,0 +1,54 @@
+{%- comment -%}
+  Customer account (/account): profile, saved addresses, latest orders
+  and sign out. Signed-out visitors see the email-code sign in.
+  layout: dashboard (cards) | simple (one column).
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+<section class="tb-section tb-account tb-account--{{ s.layout | default: 'dashboard' }}" aria-labelledby="tb-acc-title" data-tb-account>
+  <div class="tb-container tb-container--narrow">
+    <h1 class="tq-head__title" id="tb-acc-title">{{ s.title | default: 'My account' | escape }}</h1>
+    <div data-tb-acc-out>
+      <p class="tq-head__sub">{{ s.signed_out_text | default: 'Sign in to see your orders and saved addresses.' | escape }}</p>
+      <div class="tb-card">{% render 'login-form' %}</div>
+    </div>
+    <div class="tb-account__grid" data-tb-acc-in hidden>
+      <div class="tb-card">
+        <h2 class="tb-card__title">Profile</h2>
+        <form data-tb-acc-profile novalidate>
+          <label class="tb-field"><span class="tb-field__label">Name</span><input name="full_name" autocomplete="name" maxlength="80"></label>
+          <label class="tb-field"><span class="tb-field__label">Mobile number</span><input name="phone" type="tel" autocomplete="tel" maxlength="20"></label>
+          <p class="tb-fine">Email: <span data-tb-acc-email></span></p>
+          <button type="submit" class="tb-btn tb-btn--primary">Save</button>
+          <p class="tb-fine" role="status" data-tb-acc-saved></p>
+        </form>
+      </div>
+      <div class="tb-card">
+        <h2 class="tb-card__title">Recent orders</h2>
+        <div data-tb-orders data-limit="3"><p class="tb-fine">Loading…</p></div>
+        <a class="tb-linkbtn" href="/account/orders">All orders →</a>
+      </div>
+      <div class="tb-card">
+        <h2 class="tb-card__title">Saved addresses</h2>
+        <div data-tb-acc-addresses><p class="tb-fine">Loading…</p></div>
+      </div>
+      <p><button type="button" class="tb-btn tb-btn--secondary" data-tb-logout>Sign out</button></p>
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Account",
+  "description": "Profile, recent orders, saved addresses, sign out.",
+  "icon": "User",
+  "settings": [
+    { "type": "select", "id": "layout", "label": "Layout", "default": "dashboard", "options": [
+      { "value": "dashboard", "label": "Cards" },
+      { "value": "simple", "label": "One column" }
+    ] },
+    { "type": "text", "id": "title", "label": "Title", "default": "My account" },
+    { "type": "text", "id": "signed_out_text", "label": "Text when signed out", "default": "Sign in to see your orders and saved addresses." }
+  ],
+  "presets": [ { "name": "Account", "category": "Account", "settings": {} } ]
+}
+{% endschema %}

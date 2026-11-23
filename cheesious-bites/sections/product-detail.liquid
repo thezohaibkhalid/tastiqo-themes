@@ -6,7 +6,7 @@
       <div class="cb-product">
         <div class="cb-product-gallery cb-anim-up">
           {% if product.imageUrl != blank %}
-            <img src="{{ product.imageUrl }}" alt="{{ product.name }}">
+            <img src="{{ product.imageUrl | image_width: 800 }}" srcset="{{ product.imageUrl | image_srcset: '480,800,1200' }}" sizes="(max-width: 768px) 100vw, 50vw" width="800" height="600" alt="{{ product.name }}" fetchpriority="high" decoding="async">
           {% else %}
             <div class="cb-skeleton" style="width:100%;height:100%;"></div>
           {% endif %}
@@ -99,7 +99,7 @@
             {% for rel in product.relatedItems %}
               <a href="{{ rel.url }}" class="cb-card--minimal">
                 <div class="cb-card-img">
-                  {% if rel.imageUrl %}<img src="{{ rel.imageUrl }}" alt="{{ rel.name }}" loading="lazy">{% else %}<div class="cb-skeleton" style="width:100%;height:100%;"></div>{% endif %}
+                  {% if rel.imageUrl %}<img src="{{ rel.imageUrl | image_width: 480 }}" srcset="{{ rel.imageUrl | image_srcset: '240,360,480,720' }}" sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 320px" width="480" height="360" alt="{{ rel.name }}" loading="lazy" decoding="async">{% else %}<div class="cb-skeleton" style="width:100%;height:100%;"></div>{% endif %}
                 </div>
                 <div class="cb-card-title">{{ rel.name }}</div>
                 <div class="cb-card-price">{{ rel.price | money }}</div>

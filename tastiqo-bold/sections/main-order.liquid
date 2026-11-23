@@ -1,0 +1,29 @@
+{%- comment -%}
+  Order tracking (/account/orders/<id>): live status steps (placed →
+  confirmed → preparing → ready / out for delivery → done), items and
+  totals. Refreshes every 20 seconds until the order is finished.
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+<section class="tb-section tb-track" aria-labelledby="tb-track-title" data-tb-order data-id="{{ request.params.id | escape }}">
+  <div class="tb-container tb-container--narrow">
+    <p><a class="tb-linkbtn" href="/account/orders">← My orders</a></p>
+    <h1 class="tq-head__title" id="tb-track-title">{{ s.title | default: 'Track your order' | escape }}</h1>
+    <div class="tb-card" data-tb-order-body aria-live="polite"><p class="tb-fine">Loading your order…</p></div>
+    {%- if restaurant.phone.size > 0 and s.show_call -%}
+      <p class="tb-fine">Questions about this order? <a href="{{ restaurant.phone | phone_link | escape }}">Call {{ restaurant.phone | escape }}</a></p>
+    {%- endif -%}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Order tracking",
+  "description": "Live status of one order.",
+  "icon": "Truck",
+  "settings": [
+    { "type": "text", "id": "title", "label": "Title", "default": "Track your order" },
+    { "type": "checkbox", "id": "show_call", "label": "Show 'Call us' line", "default": true }
+  ],
+  "presets": [ { "name": "Order tracking", "category": "Account", "settings": {} } ]
+}
+{% endschema %}

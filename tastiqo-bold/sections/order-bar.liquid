@@ -1,0 +1,79 @@
+{%- comment -%}
+  Order type + branch / delivery area.
+  layout: strip (thin bar above the header: Delivery | Pickup toggle,
+          "Deliver to …" chooser, open status) | panel (big card for the
+          home page with a Start order button).
+  Choices are remembered on the phone; the branch is stored by
+  /api/storefront/set-branch so menu and prices follow it.
+  The strip ends with <!--tb:main--> (it belongs in the header group).
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+{%- assign tq_layout = s.layout | default: 'strip' -%}
+{%- if tq_layout == 'panel' -%}
+<section class="tb-section tb-orderpanel" aria-labelledby="tb-op-{{ section.id }}">
+  <div class="tb-container">
+    <div class="tb-orderpanel__card">
+      <div class="tb-orderpanel__copy">
+        <h2 class="tb-orderpanel__title" id="tb-op-{{ section.id }}">{{ s.title | default: 'Hungry? Order in a minute' | escape }}</h2>
+        {%- if s.subtitle.size > 0 -%}<p class="tb-orderpanel__sub">{{ s.subtitle | escape }}</p>{%- endif -%}
+        {%- if s.show_status -%}{% render 'open-status', is_open: restaurant.is_open, hours: restaurant.hours %}{%- endif -%}
+      </div>
+      <div class="tb-orderpanel__controls">
+        <div class="tb-toggle tb-toggle--lg" role="radiogroup" aria-label="Order type">
+          <button type="button" role="radio" aria-checked="true" class="tb-toggle__opt" data-tb-set-mode="delivery">{% render 'icon', name: 'scooter' %} Delivery</button>
+          <button type="button" role="radio" aria-checked="false" class="tb-toggle__opt" data-tb-set-mode="pickup">{% render 'icon', name: 'store' %} Pickup</button>
+        </div>
+        <button type="button" class="tb-placebtn" data-tb-open-location>
+          {% render 'icon', name: 'pin' %}
+          <span><span class="tb-fine" data-tb-place-prefix>Deliver to</span><br><strong data-tb-place-label>{{ s.place_placeholder | default: 'Choose your area' | escape }}</strong></span>
+          {% render 'icon', name: 'chevron-down' %}
+        </button>
+        <a class="tb-btn tb-btn--primary tb-btn--lg" href="{% render 'safe-url', url: s.cta_link, fallback: '#menu' %}">{{ s.cta_label | default: 'Start my order' | escape }} {% render 'icon', name: 'arrow-right' %}</a>
+      </div>
+    </div>
+  </div>
+</section>
+{%- else -%}
+<div class="tb-orderbar" role="region" aria-label="Order type and location">
+  <div class="tb-container tb-orderbar__row">
+    <div class="tb-toggle" role="radiogroup" aria-label="Order type">
+      <button type="button" role="radio" aria-checked="true" class="tb-toggle__opt" data-tb-set-mode="delivery">{% render 'icon', name: 'scooter' %}<span>Delivery</span></button>
+      <button type="button" role="radio" aria-checked="false" class="tb-toggle__opt" data-tb-set-mode="pickup">{% render 'icon', name: 'store' %}<span>Pickup</span></button>
+    </div>
+    <button type="button" class="tb-orderbar__place" data-tb-open-location>
+      {% render 'icon', name: 'pin' %}<span class="tb-fine" data-tb-place-prefix>Deliver to</span>
+      <strong data-tb-place-label>{{ s.place_placeholder | default: 'Choose your area' | escape }}</strong>
+      <span class="tb-orderbar__change">Change</span>
+    </button>
+    {%- if s.show_status -%}<span class="tb-orderbar__status tb-hide-sm">{% render 'open-status', is_open: restaurant.is_open, hours: restaurant.hours %}</span>{%- endif -%}
+    {%- if s.show_phone and restaurant.phone.size > 0 -%}<a class="tb-orderbar__phone tb-hide-sm" href="{{ restaurant.phone | phone_link | escape }}">{% render 'icon', name: 'phone' %} {{ restaurant.phone | escape }}</a>{%- endif -%}
+  </div>
+</div>
+<!--tb:main-->
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Order type & location",
+  "description": "Delivery / Pickup toggle with the customer's area or branch.",
+  "icon": "MapPin",
+  "settings": [
+    { "type": "select", "id": "layout", "label": "Layout", "default": "strip", "options": [
+      { "value": "strip", "label": "Top bar (above the header)" },
+      { "value": "panel", "label": "Big card (for the home page)" }
+    ] },
+    { "type": "checkbox", "id": "show_status", "label": "Show open / closed status", "default": true },
+    { "type": "checkbox", "id": "show_phone", "label": "Show phone number (top bar)", "default": true },
+    { "type": "text", "id": "place_placeholder", "label": "Text before a location is chosen", "default": "Choose your area" },
+    { "type": "header", "id": "_h_panel", "label": "Big card" },
+    { "type": "text", "id": "title", "label": "Title", "default": "Hungry? Order in a minute" },
+    { "type": "text", "id": "subtitle", "label": "Text", "default": "Choose delivery or pickup and we'll show you the menu and prices for your branch." },
+    { "type": "text", "id": "cta_label", "label": "Button text", "default": "Start my order" },
+    { "type": "url", "id": "cta_link", "label": "Button link", "default": "#menu", "info": "#menu jumps to the menu on this page; /menu opens the menu page." }
+  ],
+  "presets": [
+    { "name": "Order type – Top bar", "category": "Ordering", "settings": { "layout": "strip" } },
+    { "name": "Order type – Big card", "category": "Ordering", "settings": { "layout": "panel" } }
+  ]
+}
+{% endschema %}

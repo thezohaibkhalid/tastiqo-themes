@@ -1,0 +1,29 @@
+{%- comment -%}
+  Quick-add pop-up for items with choices (size, toppings, deal parts).
+  assets/theme.js fills it from the card's modifier JSON and validates
+  each group's min / max before adding to the cart.
+{%- endcomment -%}
+<dialog class="tb-modal tb-modal--sheet" id="tb-item" aria-labelledby="tb-item-title" data-tb-item-modal>
+  <form method="dialog" class="tb-modal__panel" data-tb-item-form novalidate>
+    <button type="button" class="tb-iconbtn tb-modal__close" data-tb-close aria-label="Close">{% render 'icon', name: 'close' %}</button>
+    <div class="tb-modal__body">
+      <div class="tb-modal__media" data-tb-item-media></div>
+      <h2 class="tb-modal__title" id="tb-item-title" data-tb-item-name></h2>
+      <p class="tb-modal__price" data-tb-item-base></p>
+      <div data-tb-item-groups></div>
+      <label class="tb-field">
+        <span class="tb-field__label">Special instructions <span class="tb-fine">(optional)</span></span>
+        <textarea name="notes" rows="2" maxlength="200" placeholder="e.g. no onions"></textarea>
+      </label>
+    </div>
+    <div class="tb-modal__foot">
+      <div class="tb-qty" data-tb-qty>
+        <button type="button" class="tb-qty__btn" data-tb-step="-1" aria-label="Fewer">{% render 'icon', name: 'minus' %}</button>
+        <output class="tb-qty__val" data-tb-qty-val aria-live="polite">1</output>
+        <button type="button" class="tb-qty__btn" data-tb-step="1" aria-label="More">{% render 'icon', name: 'plus' %}</button>
+      </div>
+      <button type="submit" class="tb-btn tb-btn--primary tb-btn--lg tb-grow" data-tb-item-submit>Add to order</button>
+    </div>
+    <p class="tb-error" role="alert" data-tb-item-error hidden></p>
+  </form>
+</dialog>

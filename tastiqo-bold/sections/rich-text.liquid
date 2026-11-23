@@ -1,0 +1,57 @@
+{%- comment -%}
+  Text page / text block: title + paragraphs (blocks) + optional button.
+  Used by templates/page.json (pages like Terms, Privacy, Catering) and
+  anywhere on the home page.
+  layout: narrow (reading width) | wide | centered.
+  Text is plain (line breaks kept); HTML is shown as text for safety.
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+{%- assign tq_layout = s.layout | default: 'narrow' -%}
+<section class="tb-section tb-richtext tb-richtext--{{ tq_layout }}" aria-labelledby="tb-rt-{{ section.id }}">
+  <div class="tb-container{% if tq_layout != 'wide' %} tb-container--narrow{% endif %}">
+    {%- if s.title.size > 0 -%}
+      {%- if s.heading_level == 'h1' -%}<h1 class="tq-head__title" id="tb-rt-{{ section.id }}">{{ s.title | escape }}</h1>{%- else -%}<h2 class="tq-head__title" id="tb-rt-{{ section.id }}">{{ s.title | escape }}</h2>{%- endif -%}
+    {%- endif -%}
+    <div class="tb-prose">
+      {%- for block in section.blocks -%}
+        {%- if block.type == 'heading' -%}<h3 data-block-id="{{ block.id }}" data-block-type="heading">{{ block.settings.text | escape }}</h3>
+        {%- elsif block.type == 'text' -%}<p data-block-id="{{ block.id }}" data-block-type="text">{{ block.settings.text | escape | newline_to_br }}</p>
+        {%- elsif block.type == 'button' and block.settings.label.size > 0 -%}<p data-block-id="{{ block.id }}" data-block-type="button"><a class="tb-btn tb-btn--primary" href="{% render 'safe-url', url: block.settings.link, fallback: '/menu' %}">{{ block.settings.label | escape }}</a></p>
+        {%- endif -%}
+      {%- endfor -%}
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Text",
+  "description": "A title with paragraphs — for policies, catering info or a note.",
+  "icon": "Type",
+  "max_blocks": 30,
+  "settings": [
+    { "type": "select", "id": "layout", "label": "Layout", "default": "narrow", "options": [
+      { "value": "narrow", "label": "Reading width" },
+      { "value": "wide", "label": "Full width" },
+      { "value": "centered", "label": "Centred" }
+    ] },
+    { "type": "text", "id": "title", "label": "Title", "default": "About this page" },
+    { "type": "select", "id": "heading_level", "label": "Title level", "default": "h2", "options": [
+      { "value": "h1", "label": "Page title (use once per page)" },
+      { "value": "h2", "label": "Section title" }
+    ] }
+  ],
+  "blocks": [
+    { "type": "heading", "name": "Heading", "settings": [ { "type": "text", "id": "text", "label": "Heading", "default": "A heading" } ] },
+    { "type": "text", "name": "Paragraph", "settings": [ { "type": "textarea", "id": "text", "label": "Text", "default": "Write something your customers should know." } ] },
+    { "type": "button", "name": "Button", "settings": [
+      { "type": "text", "id": "label", "label": "Button text", "default": "Order now" },
+      { "type": "url", "id": "link", "label": "Link", "default": "/menu" }
+    ] }
+  ],
+  "presets": [
+    { "name": "Text – Reading width", "category": "Story", "settings": { "layout": "narrow" }, "blocks": [ { "type": "text", "settings": {} } ] },
+    { "name": "Text – Centred", "category": "Story", "settings": { "layout": "centered" }, "blocks": [ { "type": "text", "settings": {} }, { "type": "button", "settings": {} } ] }
+  ]
+}
+{% endschema %}

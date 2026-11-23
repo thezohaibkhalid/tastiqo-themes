@@ -1,0 +1,12 @@
+{%- comment -%}
+  Prints `v` as a plain number (digits and one dot; a trailing px or %
+  is dropped), or `d` when v is empty or not a number. Keeps layout maths
+  safe from odd saved values ("", "14px", "abc").
+  Usage: {%- capture n -%}{% render 'num', v: theme.settings.page_width, d: 1280 %}{%- endcapture -%}
+{%- endcomment -%}
+{%- assign tq_nv = v | append: '' | strip | remove: 'px' | remove: '%' -%}
+{%- assign tq_nr = tq_nv | remove: '0' | remove: '1' | remove: '2' | remove: '3' | remove: '4' | remove: '5' | remove: '6' | remove: '7' | remove: '8' | remove: '9' -%}
+{%- assign tq_nok = false -%}
+{%- if tq_nr == '' or tq_nr == '.' -%}{%- assign tq_nok = true -%}{%- endif -%}
+{%- if tq_nv.size == 0 or tq_nv.size > 8 -%}{%- assign tq_nok = false -%}{%- endif -%}
+{%- if tq_nok -%}{{ tq_nv }}{%- else -%}{{ d }}{%- endif -%}

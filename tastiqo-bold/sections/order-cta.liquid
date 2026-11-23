@@ -1,0 +1,69 @@
+{%- comment -%}
+  Big "Order now" call to action.
+  layout: banner (full-width colour band) | split (photo + text) |
+          compact (slim strip with button).
+  Secondary button can call or WhatsApp the restaurant.
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+{%- assign tq_layout = s.layout | default: 'banner' -%}
+<section class="tb-section tb-cta tb-cta--{{ tq_layout }} tb-tone--{{ s.tone | default: 'primary' }}" aria-labelledby="tb-cta-{{ section.id }}">
+  <div class="tb-container">
+    <div class="tb-cta__card">
+      {%- if tq_layout == 'split' -%}
+        <div class="tb-cta__media">
+          {%- if s.image.size > 0 -%}<img src="{{ s.image | escape }}" alt="{{ s.image_alt | escape }}" width="800" height="600" loading="lazy" decoding="async">{%- else -%}<div class="tb-ph" aria-hidden="true"></div>{%- endif -%}
+        </div>
+      {%- endif -%}
+      <div class="tb-cta__copy">
+        {%- if s.eyebrow.size > 0 -%}<span class="tb-cta__eyebrow">{{ s.eyebrow | escape }}</span>{%- endif -%}
+        <h2 class="tb-cta__title" id="tb-cta-{{ section.id }}">{{ s.title | default: 'Craving something?' | escape }}</h2>
+        {%- if s.text.size > 0 and tq_layout != 'compact' -%}<p class="tb-cta__text">{{ s.text | escape }}</p>{%- endif -%}
+      </div>
+      <div class="tb-cta__actions">
+        <a class="tb-btn tb-btn--on-tone tb-btn--lg" href="{% render 'safe-url', url: s.button_link, fallback: '/menu' %}">{{ s.button_label | default: 'Order now' | escape }} {% render 'icon', name: 'arrow-right' %}</a>
+        {%- if s.secondary == 'call' and restaurant.phone.size > 0 -%}
+          <a class="tb-btn tb-btn--ghost tb-btn--lg" href="{{ restaurant.phone | phone_link | escape }}">{% render 'icon', name: 'phone' %} Call {{ restaurant.phone | escape }}</a>
+        {%- elsif s.secondary == 'whatsapp' and restaurant.social.whatsapp.size > 0 -%}
+          <a class="tb-btn tb-btn--ghost tb-btn--lg" href="{% render 'safe-url', url: restaurant.social.whatsapp %}" target="_blank" rel="noopener">{% render 'icon', name: 'whatsapp' %} WhatsApp</a>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Order now banner",
+  "description": "A bold call to action to start an order.",
+  "icon": "Megaphone",
+  "settings": [
+    { "type": "select", "id": "layout", "label": "Layout", "default": "banner", "options": [
+      { "value": "banner", "label": "Colour banner" },
+      { "value": "split", "label": "Photo and text" },
+      { "value": "compact", "label": "Slim strip" }
+    ] },
+    { "type": "select", "id": "tone", "label": "Colour", "default": "primary", "options": [
+      { "value": "primary", "label": "Primary" },
+      { "value": "accent", "label": "Highlight" },
+      { "value": "deep", "label": "Bars colour" }
+    ] },
+    { "type": "text", "id": "eyebrow", "label": "Small heading", "default": "Hot & fresh" },
+    { "type": "text", "id": "title", "label": "Title", "default": "Craving something? We deliver." },
+    { "type": "textarea", "id": "text", "label": "Text", "default": "Order online in a minute — delivery to your door or ready for pickup." },
+    { "type": "text", "id": "button_label", "label": "Button text", "default": "Order now" },
+    { "type": "url", "id": "button_link", "label": "Button link", "default": "/menu" },
+    { "type": "select", "id": "secondary", "label": "Second button", "default": "call", "options": [
+      { "value": "none", "label": "None" },
+      { "value": "call", "label": "Call us" },
+      { "value": "whatsapp", "label": "WhatsApp (from your social links)" }
+    ] },
+    { "type": "image_picker", "id": "image", "label": "Photo (Photo and text layout)" },
+    { "type": "text", "id": "image_alt", "label": "Photo description" }
+  ],
+  "presets": [
+    { "name": "Order now – Banner", "category": "Ordering", "settings": { "layout": "banner" } },
+    { "name": "Order now – Photo and text", "category": "Ordering", "settings": { "layout": "split" } },
+    { "name": "Order now – Slim strip", "category": "Ordering", "settings": { "layout": "compact", "tone": "deep" } }
+  ]
+}
+{% endschema %}

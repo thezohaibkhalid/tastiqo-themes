@@ -24,10 +24,19 @@
   {%- assign fh_body_url     = fh_font_body    | replace: ' ', '+' -%}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  {%- comment -%} Fonts stay render-blocking on purpose: loading them async (preload+onload)
+      improved FCP but caused a 0.17-0.19 CLS font swap on mobile in Lighthouse. {%- endcomment -%}
   <link href="https://fonts.googleapis.com/css2?family={{ fh_heading_url }}:wght@400;500;600;700;800&family={{ fh_body_url }}:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
   {{ 'theme.css' | asset_url | stylesheet_tag }}
 
+  {%- comment -%} Settings may be flat (editor) or grouped (bundled settings_data.json: colors.*, layout.*); empty values keep the theme.css defaults. {%- endcomment -%}
+  {%- assign fh_color_primary = theme.color_primary | default: theme.colors.color_primary -%}
+  {%- assign fh_color_secondary = theme.color_secondary | default: theme.colors.color_secondary -%}
+  {%- assign fh_color_background = theme.color_background | default: theme.colors.color_background -%}
+  {%- assign fh_color_dark = theme.color_dark | default: theme.colors.color_dark -%}
+  {%- assign fh_max_width = theme.max_width | default: theme.layout.max_width -%}
+  {%- assign fh_border_radius = theme.border_radius | default: theme.layout.border_radius -%}
   <style id="fh-theme-tokens">
     :root {
       /* Typography — editable from admin panel */
@@ -37,14 +46,14 @@
       --heading-scale:  {{ theme.heading_scale | default: 100 | divided_by: 100.0 }};
 
       /* Colors — editable from admin panel */
-      {% if theme.color_primary %}--color-primary: {{ theme.color_primary }};{% endif %}
-      {% if theme.color_secondary %}--color-secondary: {{ theme.color_secondary }};{% endif %}
-      {% if theme.color_background %}--color-background: {{ theme.color_background }};{% endif %}
-      {% if theme.color_dark %}--color-dark: {{ theme.color_dark }};{% endif %}
+      {% if fh_color_primary.size > 0 %}--color-primary: {{ fh_color_primary }};{% endif %}
+      {% if fh_color_secondary.size > 0 %}--color-secondary: {{ fh_color_secondary }};{% endif %}
+      {% if fh_color_background.size > 0 %}--color-background: {{ fh_color_background }};{% endif %}
+      {% if fh_color_dark.size > 0 %}--color-dark: {{ fh_color_dark }};{% endif %}
 
       /* Layout — editable from admin panel */
-      {% if theme.max_width %}--max-width: {{ theme.max_width }};{% endif %}
-      {% if theme.border_radius %}--radius: {{ theme.border_radius }};{% endif %}
+      {% if fh_max_width.size > 0 %}--max-width: {{ fh_max_width }};{% endif %}
+      {% if fh_border_radius.size > 0 %}--radius: {{ fh_border_radius }};{% endif %}
     }
   </style>
 </head>
@@ -107,10 +116,7 @@
 
   {% render 'customer-auth' %}
   {% render 'address-modal' %}
-  {% render 'branch-selector' %}
-
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
+  {%- comment -%} Leaflet (address map) is loaded on demand by theme.js when a map opens. {%- endcomment -%}
 
   {{ 'theme.js' | asset_url | script_tag }}
 

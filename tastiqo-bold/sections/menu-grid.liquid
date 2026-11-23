@@ -1,0 +1,91 @@
+{%- comment -%}
+  Full menu, grouped by category (server-rendered so Google sees every
+  dish). Each category has an anchor (#menu-<handle>) for the Category
+  tabs section. Optional search box filters dishes as you type.
+  layout: grid (cards) | list (two-column rows, delivery-app style) |
+          compact (one column, small photos).
+  card_style: inherit (theme default) | image-top | compact | list.
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+{%- assign tq_layout = s.layout | default: 'grid' -%}
+{%- assign tq_card = s.card_style | default: 'inherit' -%}
+{%- if tq_card == 'inherit' -%}{%- assign tq_card = theme.card_style_default | default: 'image-top' -%}{%- endif -%}
+{%- if tq_layout == 'list' or tq_layout == 'compact' -%}{%- assign tq_card = 'list' -%}{%- endif -%}
+{%- assign tq_cols = s.columns | default: 4 -%}
+{%- if tq_layout == 'list' -%}{%- assign tq_cols = 2 -%}{%- elsif tq_layout == 'compact' -%}{%- assign tq_cols = 1 -%}{%- endif -%}
+{%- assign tq_search = false -%}
+{%- if s.show_search and theme.show_search != false -%}{%- assign tq_search = true -%}{%- endif -%}
+<section class="tb-section tb-menu tb-menu--{{ tq_layout }}" id="{{ s.anchor | default: 'menu' | handleize }}" aria-labelledby="tb-menu-{{ section.id }}">
+  <div class="tb-container">
+    <div class="tq-head tq-head--row">
+      <div>
+        {%- if s.eyebrow.size > 0 -%}<span class="tq-head__eyebrow">{{ s.eyebrow | escape }}</span>{%- endif -%}
+        {%- if s.heading_level == 'h1' -%}<h1 class="tq-head__title" id="tb-menu-{{ section.id }}">{{ s.title | default: 'Menu' | escape }}</h1>{%- else -%}<h2 class="tq-head__title" id="tb-menu-{{ section.id }}">{{ s.title | default: 'Menu' | escape }}</h2>{%- endif -%}
+        {%- if s.subtitle.size > 0 -%}<p class="tq-head__sub">{{ s.subtitle | escape }}</p>{%- endif -%}
+      </div>
+      {%- if tq_search -%}
+        <div class="tb-search" role="search">
+          <label class="tq-sr" for="tb-search-{{ section.id }}">Search the menu</label>
+          {% render 'icon', name: 'search' %}
+          <input id="tb-search-{{ section.id }}" type="search" placeholder="{{ s.search_placeholder | default: 'Search the menu' | escape }}" autocomplete="off" data-tb-menu-search>
+        </div>
+      {%- endif -%}
+    </div>
+    {%- assign tq_shown = 0 -%}
+    {%- for cat in menu_categories -%}
+      {%- if cat.items.size == 0 -%}{%- continue -%}{%- endif -%}
+      {%- assign tq_shown = tq_shown | plus: 1 -%}
+      <section class="tb-menu__cat" id="menu-{{ cat.handle | escape }}" aria-labelledby="tb-mc-{{ section.id }}-{{ forloop.index }}" data-tb-menu-cat>
+        <div class="tb-menu__cathead">
+          <h3 class="tb-menu__cattitle" id="tb-mc-{{ section.id }}-{{ forloop.index }}">{{ cat.title | escape }} <span class="tb-menu__count">{{ cat.items.size }}</span></h3>
+          {%- if s.show_category_description and cat.description.size > 0 -%}<p class="tb-menu__catdesc">{{ cat.description | escape }}</p>{%- endif -%}
+        </div>
+        <ul class="tb-menu__items tq-grid" style="--tq-cols: {{ tq_cols }};" role="list">
+          {%- for item in cat.items -%}
+            <li data-tb-menu-item data-search="{{ item.name | append: ' ' | append: item.description | downcase | escape }}">
+              {%- render 'card-item', item: item, style: tq_card, show_description: s.show_description, show_tags: true -%}
+            </li>
+          {%- endfor -%}
+        </ul>
+      </section>
+    {%- endfor -%}
+    {%- if tq_shown == 0 -%}
+      <p class="tb-empty">The menu for this branch is being updated. Please check back soon.</p>
+    {%- endif -%}
+    <p class="tb-empty" data-tb-menu-noresults hidden>No dishes match your search.</p>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Full menu",
+  "description": "Every category and dish, with prices and quick Add.",
+  "icon": "UtensilsCrossed",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Small heading", "default": "" },
+    { "type": "text", "id": "title", "label": "Title", "default": "Our menu" },
+    { "type": "text", "id": "subtitle", "label": "Subtitle", "default": "" },
+    { "type": "select", "id": "heading_level", "label": "Title level", "default": "h2", "options": [ { "value": "h1", "label": "Page title (use once per page)" }, { "value": "h2", "label": "Section title" } ] },
+    { "type": "select", "id": "layout", "label": "Layout", "default": "grid", "options": [
+      { "value": "grid", "label": "Food cards" },
+      { "value": "list", "label": "Rows, two columns (delivery-app style)" },
+      { "value": "compact", "label": "Rows, one column" }
+    ] },
+    { "type": "select", "id": "card_style", "label": "Card style (Food cards layout)", "default": "inherit", "options": [
+      { "value": "inherit", "label": "Theme default" },
+      { "value": "image-top", "label": "Photo on top" },
+      { "value": "compact", "label": "Photo on the side" }
+    ] },
+    { "type": "range", "id": "columns", "label": "Cards per row (desktop)", "min": 2, "max": 5, "step": 1, "default": 4 },
+    { "type": "checkbox", "id": "show_description", "label": "Show dish descriptions", "default": true },
+    { "type": "checkbox", "id": "show_category_description", "label": "Show category descriptions", "default": true },
+    { "type": "checkbox", "id": "show_search", "label": "Show search box", "default": true },
+    { "type": "text", "id": "search_placeholder", "label": "Search box text", "default": "Search burgers, pizza, deals…" },
+    { "type": "text", "id": "anchor", "label": "Anchor name", "default": "menu", "info": "Links to #menu jump here." }
+  ],
+  "presets": [
+    { "name": "Full menu – Food cards", "category": "Menu & deals", "settings": { "layout": "grid" } },
+    { "name": "Full menu – Rows", "category": "Menu & deals", "settings": { "layout": "list" } }
+  ]
+}
+{% endschema %}

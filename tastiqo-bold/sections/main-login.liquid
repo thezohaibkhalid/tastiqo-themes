@@ -1,0 +1,24 @@
+{%- comment -%} Sign in (/account/login) with an emailed one-time code. Returns to ?return=… (same site only) or /account. {%- endcomment -%}
+{%- assign s = section.settings -%}
+<section class="tb-section tb-loginpage" aria-labelledby="tb-login-title">
+  <div class="tb-container tb-container--narrow">
+    <div class="tb-card tb-card--center" data-tb-login-page>
+      <h1 class="tq-head__title" id="tb-login-title">{{ s.title | default: 'Sign in' | escape }}</h1>
+      {%- if s.text.size > 0 -%}<p class="tq-head__sub">{{ s.text | escape }}</p>{%- endif -%}
+      {% render 'login-form' %}
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Sign in",
+  "description": "Email sign in with a one-time code.",
+  "icon": "LogIn",
+  "settings": [
+    { "type": "text", "id": "title", "label": "Title", "default": "Sign in" },
+    { "type": "text", "id": "text", "label": "Text", "default": "Track your orders and check out faster next time." }
+  ],
+  "presets": [ { "name": "Sign in", "category": "Account", "settings": {} } ]
+}
+{% endschema %}

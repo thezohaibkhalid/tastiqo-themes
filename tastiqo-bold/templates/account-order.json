@@ -1,0 +1,73 @@
+{
+  "name": "Order tracking",
+  "sections": {
+    "announcement": {
+      "type": "announcement-bar",
+      "settings": {
+        "layout": "rotating",
+        "tone": "accent"
+      },
+      "blocks": [
+        {
+          "id": "msg-1",
+          "type": "message",
+          "settings": {
+            "text": "Hot & fresh — order online for delivery or pickup"
+          }
+        },
+        {
+          "id": "msg-2",
+          "type": "message",
+          "settings": {
+            "text": "New deals every week. Tap Deals below!",
+            "link": "#deals"
+          }
+        }
+      ]
+    },
+    "order-bar": {
+      "type": "order-bar",
+      "settings": {
+        "layout": "strip",
+        "show_status": true,
+        "show_phone": true
+      }
+    },
+    "header": {
+      "type": "header",
+      "settings": {
+        "layout": "classic",
+        "show_mode_pill": false,
+        "show_account": true
+      }
+    },
+    "main": {
+      "type": "main-order",
+      "settings": {}
+    },
+    "footer": {
+      "type": "footer",
+      "settings": {
+        "layout": "columns"
+      }
+    },
+    "mobile-bar": {
+      "type": "mobile-bar",
+      "settings": {
+        "layout": "tabs"
+      }
+    }
+  },
+  "order": [
+    "main"
+  ],
+  "header_order": [
+    "announcement",
+    "order-bar",
+    "header"
+  ],
+  "footer_order": [
+    "footer",
+    "mobile-bar"
+  ]
+}

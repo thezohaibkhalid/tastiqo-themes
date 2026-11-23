@@ -1,0 +1,87 @@
+{%- comment -%}
+  Footer. layout: columns (brand, links, hours, contact) | centered |
+  minimal (one line). Links come from Website → Navigation (footer menu,
+  else main menu); legal links from the legal menu. Starts with
+  <!--tb:/main--> so the layout closes <main> before the footer group.
+{%- endcomment -%}
+<!--tb:/main-->
+{%- assign s = section.settings -%}
+{%- assign tq_layout = s.layout | default: 'columns' -%}
+{%- assign tq_links = navigation.footer -%}
+{%- unless tq_links.size > 0 -%}{%- assign tq_links = navigation.primary -%}{%- endunless -%}
+{%- assign tq_year = utils.today | slice: 0, 4 -%}
+{%- capture tq_cols -%}{% render 'num', v: theme.settings.footer_columns, d: 4 %}{%- endcapture -%}
+<footer class="tb-footer tb-footer--{{ tq_layout }}" style="--tb-footer-cols: {{ tq_cols }};">
+  <div class="tb-container">
+    {%- if tq_layout != 'minimal' -%}
+    <div class="tb-footer__grid">
+      <div class="tb-footer__brand">
+        {%- if theme.logo_image.size > 0 and s.show_logo -%}<img class="tb-footer__logo" src="{{ theme.logo_image | escape }}" alt="{{ restaurant.name | escape }}" height="44" loading="lazy" decoding="async">{%- else -%}<p class="tb-logo__text">{{ restaurant.name | escape }}</p>{%- endif -%}
+        {%- assign tq_blurb = s.text | default: restaurant.tagline -%}
+        {%- if tq_blurb.size > 0 -%}<p class="tb-footer__text">{{ tq_blurb | escape }}</p>{%- endif -%}
+        {% render 'social-links' %}
+      </div>
+      {%- if tq_links.size > 0 -%}
+        <nav class="tb-footer__col" aria-label="Footer">
+          <h2 class="tb-footer__h">{{ s.links_heading | default: 'Explore' | escape }}</h2>
+          <ul role="list">
+            {%- for link in tq_links -%}<li><a href="{% render 'safe-url', url: link.url %}">{{ link.title | escape }}</a></li>{%- endfor -%}
+            <li><a href="/account/orders">Track my order</a></li>
+          </ul>
+        </nav>
+      {%- endif -%}
+      {%- if s.show_hours and restaurant.hours.size > 0 -%}
+        <div class="tb-footer__col">
+          <h2 class="tb-footer__h">Opening hours</h2>
+          <ul class="tb-footer__hours" role="list">
+            {%- for h in restaurant.hours -%}<li><span>{{ h.day | slice: 0, 3 | escape }}</span><span>{% if h.closed %}Closed{% else %}{{ h.open | escape }} – {{ h.close | escape }}{% endif %}</span></li>{%- endfor -%}
+          </ul>
+        </div>
+      {%- endif -%}
+      <div class="tb-footer__col">
+        <h2 class="tb-footer__h">Contact</h2>
+        <ul role="list">
+          {%- if restaurant.phone.size > 0 -%}<li><a href="{{ restaurant.phone | phone_link | escape }}">{{ restaurant.phone | escape }}</a></li>{%- endif -%}
+          {%- if restaurant.email.size > 0 -%}<li><a href="mailto:{{ restaurant.email | escape }}">{{ restaurant.email | escape }}</a></li>{%- endif -%}
+          {%- if restaurant.address.size > 0 -%}<li>{{ restaurant.address | escape }}{% if restaurant.city.size > 0 %}, {{ restaurant.city | escape }}{% endif %}</li>{%- endif -%}
+        </ul>
+        {%- if s.payment_note.size > 0 -%}<p class="tb-footer__text">{{ s.payment_note | escape }}</p>{%- endif -%}
+      </div>
+    </div>
+    {%- endif -%}
+    <div class="tb-footer__bottom">
+      <p>{%- if theme.footer_copyright.size > 0 -%}{{ theme.footer_copyright | escape }}{%- else -%}© {{ tq_year }} {{ restaurant.name | escape }}{%- endif -%}</p>
+      {%- if navigation.legal.size > 0 -%}
+        <ul class="tb-footer__legal" role="list">{%- for link in navigation.legal -%}<li><a href="{% render 'safe-url', url: link.url %}">{{ link.title | escape }}</a></li>{%- endfor -%}</ul>
+      {%- endif -%}
+      {%- if tq_layout == 'minimal' -%}{% render 'social-links' %}{%- endif -%}
+      {%- if s.show_powered_by -%}<p class="tb-fine">Online ordering by Tastiqo</p>{%- endif -%}
+    </div>
+  </div>
+</footer>
+
+{% schema %}
+{
+  "name": "Footer",
+  "description": "Links, opening hours, contact details and social links.",
+  "icon": "PanelBottom",
+  "group": "footer",
+  "settings": [
+    { "type": "select", "id": "layout", "label": "Layout", "default": "columns", "options": [
+      { "value": "columns", "label": "Columns" },
+      { "value": "centered", "label": "Centred" },
+      { "value": "minimal", "label": "One line" }
+    ] },
+    { "type": "checkbox", "id": "show_logo", "label": "Show logo", "default": true },
+    { "type": "textarea", "id": "text", "label": "Short text", "default": "", "info": "Leave empty to use your tagline." },
+    { "type": "text", "id": "links_heading", "label": "Links heading", "default": "Explore" },
+    { "type": "checkbox", "id": "show_hours", "label": "Show opening hours", "default": true },
+    { "type": "text", "id": "payment_note", "label": "Payment note", "default": "Cash on delivery and pickup." },
+    { "type": "checkbox", "id": "show_powered_by", "label": "Show 'Online ordering by Tastiqo'", "default": true }
+  ],
+  "presets": [
+    { "name": "Footer – Columns", "category": "Footer", "settings": { "layout": "columns" } },
+    { "name": "Footer – One line", "category": "Footer", "settings": { "layout": "minimal" } }
+  ]
+}
+{% endschema %}

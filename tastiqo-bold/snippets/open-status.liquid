@@ -1,0 +1,17 @@
+{%- comment -%}
+  "Open now · until 11:00 PM" / "Closed · opens 12:00 PM" from existing
+  data: is_open (computed by the platform in the restaurant's timezone)
+  and today's entry in hours[] (12-hour times). Params: is_open, hours.
+{%- endcomment -%}
+{%- capture tq_today -%}{% render 'today-name' %}{%- endcapture -%}
+{%- assign tq_today_h = nil -%}
+{%- for h in hours -%}{%- if h.day == tq_today -%}{%- assign tq_today_h = h -%}{%- endif -%}{%- endfor -%}
+<span class="tb-openstatus">
+  {%- if is_open -%}
+    <span class="tb-status tb-status--open">Open now</span>
+    {%- if tq_today_h and tq_today_h.closed != true and tq_today_h.close.size > 0 -%}<span class="tb-openstatus__time"> · until {{ tq_today_h.close | escape }}</span>{%- endif -%}
+  {%- else -%}
+    <span class="tb-status">Closed</span>
+    {%- if tq_today_h and tq_today_h.closed != true and tq_today_h.open.size > 0 -%}<span class="tb-openstatus__time"> · opens {{ tq_today_h.open | escape }}</span>{%- endif -%}
+  {%- endif -%}
+</span>

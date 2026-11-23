@@ -1,0 +1,23 @@
+{%- comment -%} Page not found. {%- endcomment -%}
+{%- assign s = section.settings -%}
+<section class="tb-section tb-404" aria-labelledby="tb-404-title">
+  <div class="tb-container tb-container--narrow tb-center">
+    <p class="tb-404__big" aria-hidden="true">404</p>
+    <h1 class="tq-head__title" id="tb-404-title">{{ s.title | default: "This page isn't on the menu" | escape }}</h1>
+    <p class="tq-head__sub">{{ s.text | default: 'The link may be old or mistyped.' | escape }}</p>
+    <p><a class="tb-btn tb-btn--primary tb-btn--lg" href="/menu">{{ s.button_label | default: 'See the menu' | escape }}</a> <a class="tb-btn tb-btn--secondary tb-btn--lg" href="/">Home</a></p>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Page not found",
+  "icon": "FileQuestion",
+  "settings": [
+    { "type": "text", "id": "title", "label": "Title", "default": "This page isn't on the menu" },
+    { "type": "text", "id": "text", "label": "Text", "default": "The link may be old or mistyped." },
+    { "type": "text", "id": "button_label", "label": "Button text", "default": "See the menu" }
+  ],
+  "presets": [ { "name": "Page not found", "category": "Utility", "settings": {} } ]
+}
+{% endschema %}

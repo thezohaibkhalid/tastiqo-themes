@@ -1,0 +1,210 @@
+{%- comment -%}
+  Tastiqo Bold — page shell.
+
+  Colours: <html data-scheme="<preset>" data-mode="light|dark|auto">
+  selects a preset palette from assets/theme.css; any colour the owner
+  fills in under Theme settings → Colours is emitted below as a --u-*
+  variable and replaces that preset colour site-wide (button/badge text
+  colours are picked automatically for contrast unless set). Every
+  colour in the theme comes from these tokens, so a restaurant's brand
+  colours restyle the whole site.
+
+  Landmarks: header-group sections end with <!--tb:main--> and
+  footer-group sections start with <!--tb:/main-->; the layout wraps
+  what is between them in <main>. In the editor preview (sections are
+  wrapped in editor markers) the content is wrapped in a plain div.
+{%- endcomment -%}
+{%- assign tq_editor = false -%}
+{%- if request.query.theme_editor == '1' -%}{%- assign tq_editor = true -%}{%- endif -%}
+
+{%- assign tq_scheme = 'fire-red' -%}
+{%- if theme.color_scheme == 'cheese-yellow' or theme.color_scheme == 'charcoal' or theme.color_scheme == 'fresh-green' or theme.color_scheme == 'ocean' -%}{%- assign tq_scheme = theme.color_scheme -%}{%- endif -%}
+{%- assign tq_mode = 'light' -%}
+{%- if theme.color_mode == 'dark' or theme.color_mode == 'auto' -%}{%- assign tq_mode = theme.color_mode -%}{%- endif -%}
+
+{%- assign tq_font_list = '|Poppins|Montserrat|DM Sans|Inter|Raleway|Roboto|Open Sans|Playfair Display|Lora|' -%}
+{%- assign tq_fh = 'system' -%}{%- assign tq_fb = 'system' -%}
+{%- capture tq_needle -%}|{{ theme.font_heading }}|{%- endcapture -%}
+{%- if tq_font_list contains tq_needle -%}{%- assign tq_fh = theme.font_heading -%}{%- endif -%}
+{%- capture tq_needle -%}|{{ theme.font_body }}|{%- endcapture -%}
+{%- if tq_font_list contains tq_needle -%}{%- assign tq_fb = theme.font_body -%}{%- endif -%}
+
+{%- capture tq_n -%}{% render 'num', v: theme.settings.border_radius, d: 16 %}{%- endcapture -%}{%- assign tq_radius = tq_n | plus: 0 | round -%}
+{%- if tq_radius > 28 -%}{%- assign tq_radius = 28 -%}{%- endif -%}
+{%- assign tq_btn_radius = '999px' -%}
+{%- if theme.button_style == 'rounded' -%}{%- assign tq_r = tq_radius -%}{%- if tq_r > 14 -%}{%- assign tq_r = 14 -%}{%- endif -%}{%- capture tq_btn_radius -%}{{ tq_r }}px{%- endcapture -%}{%- elsif theme.button_style == 'square' -%}{%- assign tq_btn_radius = '0px' -%}{%- endif -%}
+{%- capture tq_n -%}{% render 'num', v: theme.settings.button_border_thickness, d: 2 %}{%- endcapture -%}{%- assign tq_btn_border = tq_n | plus: 0 | round -%}
+{%- capture tq_n -%}{% render 'num', v: theme.settings.button_scale, d: 100 %}{%- endcapture -%}{%- assign tq_btn_scale = tq_n | plus: 0 | divided_by: 100.0 -%}
+{%- capture tq_n -%}{% render 'num', v: theme.settings.base_font_size, d: 16 %}{%- endcapture -%}{%- assign tq_font_size = tq_n | plus: 0 -%}
+{%- capture tq_n -%}{% render 'num', v: theme.settings.heading_scale, d: 100 %}{%- endcapture -%}{%- assign tq_h_scale = tq_n | plus: 0 | divided_by: 100.0 -%}
+{%- capture tq_n -%}{% render 'num', v: theme.settings.body_scale, d: 100 %}{%- endcapture -%}{%- assign tq_b_scale = tq_n | plus: 0 | divided_by: 100.0 -%}
+{%- capture tq_n -%}{% render 'num', v: theme.settings.page_width, d: 1280 %}{%- endcapture -%}{%- assign tq_page_w = tq_n | plus: 0 -%}
+{%- capture tq_n -%}{% render 'num', v: theme.settings.spacing_sections, d: 56 %}{%- endcapture -%}{%- assign tq_space = tq_n | plus: 0 -%}
+{%- capture tq_n -%}{% render 'num', v: theme.settings.logo_width, d: 140 %}{%- endcapture -%}{%- assign tq_logo_w = tq_n | plus: 0 -%}
+
+{%- comment -%} Page title / description from what exists today (theme SEO settings, product, category, restaurant). {%- endcomment -%}
+{%- assign tq_page = request.page_type -%}
+{%- capture tq_title -%}
+  {%- if tq_page == 'product' and product -%}{{ product.name }} | {{ restaurant.name }}
+  {%- elsif tq_page == 'collection' and collection and request.path != '/menu' -%}{{ collection.title }} | {{ restaurant.name }}
+  {%- elsif request.path == '/menu' -%}Menu | {{ restaurant.name }}
+  {%- elsif tq_page == 'cart' or tq_page == 'checkout' -%}Your order | {{ restaurant.name }}
+  {%- elsif tq_page == 'customers/login' -%}Sign in | {{ restaurant.name }}
+  {%- elsif tq_page == 'customers/account' or tq_page == 'customers/order' -%}My orders | {{ restaurant.name }}
+  {%- elsif tq_page == '404' -%}Page not found | {{ restaurant.name }}
+  {%- elsif theme.seo_title.size > 0 -%}{{ theme.seo_title }}
+  {%- else -%}{{ restaurant.name }}{% if restaurant.tagline.size > 0 %} | {{ restaurant.tagline }}{% endif %}
+  {%- endif -%}
+{%- endcapture -%}
+{%- capture tq_desc -%}
+  {%- if tq_page == 'product' and product and product.description.size > 0 -%}{{ product.description }}
+  {%- elsif tq_page == 'collection' and collection and collection.description.size > 0 -%}{{ collection.description }}
+  {%- elsif theme.seo_description.size > 0 -%}{{ theme.seo_description }}
+  {%- elsif restaurant.description.size > 0 -%}{{ restaurant.description }}
+  {%- else -%}{{ restaurant.tagline }}{%- endif -%}
+{%- endcapture -%}
+{%- assign tq_desc = tq_desc | strip_html | strip | truncate: 160 -%}
+{%- assign tq_og_image = theme.seo_og_image -%}
+{%- if tq_page == 'product' and product and product.imageUrl.size > 0 -%}{%- assign tq_og_image = product.imageUrl -%}{%- endif -%}
+{%- unless tq_og_image.size > 0 -%}{%- assign tq_og_image = restaurant.cover_image -%}{%- endunless -%}
+{%- assign tq_noindex = false -%}
+{%- if tq_editor or tq_page == '404' or tq_page == 'cart' or tq_page == 'checkout' or tq_page == 'customers/login' or tq_page == 'customers/account' or tq_page == 'customers/order' -%}{%- assign tq_noindex = true -%}{%- endif -%}
+{%- assign tq_favicon = theme.favicon | default: restaurant.icon | default: restaurant.logo -%}
+<!doctype html>
+<html lang="{{ localization.locale | default: 'en' | escape }}" dir="{% if localization.rtl %}rtl{% else %}ltr{% endif %}" data-scheme="{{ tq_scheme }}" data-mode="{{ tq_mode }}" class="no-js{% if theme.heading_case == 'uppercase' %} tb-caps{% endif %}{% if theme.header_sticky == false %} tb-static-header{% endif %}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{{ tq_title | strip | escape }}</title>
+  {%- if tq_desc.size > 0 %}
+  <meta name="description" content="{{ tq_desc | escape }}">
+  {%- endif %}
+  {%- if tq_noindex %}
+  <meta name="robots" content="noindex">
+  {%- endif %}
+  <meta property="og:site_name" content="{{ restaurant.name | escape }}">
+  <meta property="og:title" content="{{ tq_title | strip | escape }}">
+  {%- if tq_desc.size > 0 %}
+  <meta property="og:description" content="{{ tq_desc | escape }}">
+  {%- endif %}
+  <meta property="og:type" content="website">
+  {%- if tq_og_image.size > 0 %}
+  <meta property="og:image" content="{{ tq_og_image | escape }}">
+  <meta name="twitter:card" content="summary_large_image">
+  {%- else %}
+  <meta name="twitter:card" content="summary">
+  {%- endif %}
+  {%- if tq_favicon.size > 0 %}
+  <link rel="icon" href="{{ tq_favicon | escape }}">
+  <link rel="apple-touch-icon" href="{{ tq_favicon | escape }}">
+  {%- endif %}
+  <meta name="format-detection" content="telephone=no">
+  <script>document.documentElement.className = document.documentElement.className.replace('no-js', 'js');</script>
+  <link rel="stylesheet" href="{{ 'theme.css' | asset_url }}">
+  {%- if tq_fh != 'system' or tq_fb != 'system' %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?{% if tq_fh != 'system' %}family={{ tq_fh | replace: ' ', '+' }}:wght@600;700;800&{% endif %}{% if tq_fb != 'system' and tq_fb != tq_fh %}family={{ tq_fb | replace: ' ', '+' }}:wght@400;500;700&{% endif %}display=swap">
+  {%- endif %}
+  <style id="tb-tokens">
+    :root {
+      {%- capture c -%}{% render 'css-color', v: theme.color_primary %}{%- endcapture -%}{%- if c.size > 0 %} --u-primary: {{ c }};{% endif %}
+      {%- capture c -%}{% render 'css-color', v: theme.color_secondary %}{%- endcapture -%}{%- if c.size > 0 %} --u-accent: {{ c }};{% endif %}
+      {%- capture c -%}{% render 'css-color', v: theme.color_accent %}{%- endcapture -%}{%- if c.size > 0 %} --u-deep: {{ c }};{% endif %}
+      {%- capture c -%}{% render 'css-color', v: theme.color_button %}{%- endcapture -%}{%- if c.size > 0 %} --u-button: {{ c }};{% endif %}
+      {%- capture c -%}{% render 'css-color', v: theme.color_button_text %}{%- endcapture -%}{%- if c.size > 0 %} --u-button-text: {{ c }};{% endif %}
+      {%- capture c -%}{% render 'css-color', v: theme.color_badge %}{%- endcapture -%}{%- if c.size > 0 %} --u-badge: {{ c }};{% endif %}
+      {%- capture c -%}{% render 'css-color', v: theme.color_badge_text %}{%- endcapture -%}{%- if c.size > 0 %} --u-badge-text: {{ c }};{% endif %}
+      {%- capture c -%}{% render 'css-color', v: theme.color_error %}{%- endcapture -%}{%- if c.size > 0 %} --u-sale: {{ c }};{% endif %}
+      {%- capture c -%}{% render 'css-color', v: theme.color_success %}{%- endcapture -%}{%- if c.size > 0 %} --u-success: {{ c }};{% endif %}
+      {%- capture c -%}{% render 'css-color', v: theme.color_warning %}{%- endcapture -%}{%- if c.size > 0 %} --u-warning: {{ c }};{% endif %}
+      {%- capture c -%}{% render 'css-color', v: theme.color_background %}{%- endcapture -%}{%- if c.size > 0 %} --u-bg: {{ c }};{% endif %}
+      {%- capture c -%}{% render 'css-color', v: theme.color_surface %}{%- endcapture -%}{%- if c.size > 0 %} --u-surface: {{ c }};{% endif %}
+      {%- capture c -%}{% render 'css-color', v: theme.color_text %}{%- endcapture -%}{%- if c.size > 0 %} --u-text: {{ c }};{% endif %}
+      {%- capture c -%}{% render 'css-color', v: theme.color_text_muted %}{%- endcapture -%}{%- if c.size > 0 %} --u-muted: {{ c }};{% endif %}
+      {%- capture c -%}{% render 'css-color', v: theme.color_border %}{%- endcapture -%}{%- if c.size > 0 %} --u-border: {{ c }};{% endif %}
+      --radius: {{ tq_radius }}px;
+      --btn-radius: {{ tq_btn_radius }};
+      --btn-border: {{ tq_btn_border }}px;
+      --btn-scale: {{ tq_btn_scale }};
+      --btn-shadow: {% if theme.button_shadow == 'none' %}none{% elsif theme.button_shadow == 'medium' %}0 10px 24px color-mix(in srgb, var(--c-button) 35%, transparent){% else %}0 4px 12px color-mix(in srgb, var(--c-button) 28%, transparent){% endif %};
+      --font-size: {{ tq_font_size }}px;
+      --h-scale: {{ tq_h_scale }};
+      --b-scale: {{ tq_b_scale }};
+      --page-width: {{ tq_page_w }}px;
+      --section-space: {{ tq_space }}px;
+      --logo-width: {{ tq_logo_w }}px;
+      {%- if tq_fh != 'system' %} --font-heading: '{{ tq_fh }}', var(--font-system);{% endif %}
+      {%- if tq_fb != 'system' %} --font-body: '{{ tq_fb }}', var(--font-system);{% endif %}
+    }
+    {%- if theme.button_fill == 'soft' %}
+    .tb-btn--secondary { background: color-mix(in srgb, var(--c-primary) 12%, transparent); border-color: transparent; }
+    {%- endif %}
+  </style>
+  {%- if theme.custom_css.size > 0 %}
+  <style id="tb-custom-css">{{ theme.custom_css | replace: '</', '<\/' | raw }}</style>
+  {%- endif %}
+  {%- unless tq_editor %}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Restaurant",
+    "name": {{ restaurant.name | json }}
+    {%- if restaurant.description.size > 0 %}, "description": {{ restaurant.description | strip_html | json }}{% endif %}
+    {%- if restaurant.logo.size > 0 %}, "logo": {{ restaurant.logo | json }}{% endif %}
+    {%- if restaurant.cover_image.size > 0 %}, "image": {{ restaurant.cover_image | json }}{% endif %}
+    {%- if restaurant.phone.size > 0 %}, "telephone": {{ restaurant.phone | json }}{% endif %}
+    {%- if routes.root_url.size > 0 %}, "url": {{ routes.root_url | json }}, "hasMenu": {{ routes.root_url | append: '/menu' | json }}{% endif %}
+    {%- if restaurant.address.size > 0 %}, "address": { "@type": "PostalAddress", "streetAddress": {{ restaurant.address | json }}{% if restaurant.city.size > 0 %}, "addressLocality": {{ restaurant.city | json }}{% endif %} }{% endif %}
+  }
+  </script>
+  {%- endunless %}
+</head>
+<body class="tb-body tb-page--{{ tq_page | replace: '/', '-' | default: 'index' }}{% if tq_editor %} tb-in-editor{% endif %}">
+  <a class="tb-skip" href="#main">Skip to content</a>
+  {%- assign tq_has_main = false -%}
+  {%- unless tq_editor -%}
+    {%- if content_for_layout contains '<!--tb:main-->' and content_for_layout contains '<!--tb:/main-->' -%}{%- assign tq_has_main = true -%}{%- endif -%}
+  {%- endunless -%}
+  {%- if tq_has_main -%}
+    {%- assign tq_parts = content_for_layout | split: '<!--tb:main-->' -%}
+    {%- for p in tq_parts -%}{%- unless forloop.last -%}{{ p }}{%- endunless -%}{%- endfor -%}
+    {%- assign tq_rest = tq_parts | last -%}
+    {%- assign tq_parts = tq_rest | split: '<!--tb:/main-->' -%}
+    <main id="main" class="tb-main" tabindex="-1">{{ tq_parts | first }}</main>
+    {%- for p in tq_parts -%}{%- unless forloop.first -%}{{ p }}{%- endunless -%}{%- endfor -%}
+  {%- else -%}
+    <div id="main" class="tb-main" tabindex="-1">{{ content_for_layout }}</div>
+  {%- endif -%}
+
+  {% render 'cart-drawer' %}
+  {% render 'item-modal' %}
+  {% render 'location-modal' %}
+  <div class="tb-toast" role="status" aria-live="polite" data-tb-toast></div>
+
+  <script type="application/json" id="tb-data">
+  {
+    "currency": {{ localization.currency | default: 'PKR' | json }},
+    "symbol": {{ localization.currency_symbol | default: 'Rs' | json }},
+    "minor": {{ localization.minor_units | default: 100 }},
+    "locale": {{ localization.locale | default: 'en' | json }},
+    "branch": { "id": {{ branch.id | json }}, "name": {{ branch.name | json }}, "address": {{ branch.address | json }}, "city": {{ branch.city | json }} },
+    "needs_branch": {{ branch_selector.show_popup | json }},
+    "has_multiple": {{ branch_selector.has_multiple | json }},
+    "branches": [
+      {%- for b in branch_selector.branches -%}
+        { "id": {{ b.id | json }}, "name": {{ b.name | json }}, "address": {{ b.address | json }}, "city": {{ b.city | json }}, "is_open": {{ b.is_open | json }} }{% unless forloop.last %},{% endunless %}
+      {%- endfor -%}
+    ],
+    "is_open": {{ restaurant.is_open | json }},
+    "ask_location": {% if theme.ask_location_first == false or tq_editor %}false{% else %}true{% endif %},
+    "editor": {{ tq_editor | json }},
+    "quick_add_label": {{ theme.quick_add_label | default: 'Add' | json }}
+  }
+  </script>
+  <script src="{{ 'theme.js' | asset_url }}" defer></script>
+  {%- if theme.custom_js.size > 0 %}
+  <script>try { {{ theme.custom_js | replace: '</', '<\/' | raw }} } catch (e) { console.error('custom_js', e); }</script>
+  {%- endif %}
+</body>
+</html>

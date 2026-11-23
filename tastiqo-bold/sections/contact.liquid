@@ -1,0 +1,61 @@
+{%- comment -%}
+  Contact: phone, WhatsApp, email, address and social links.
+  layout: cards (tiles) | split (text left, buttons right) | minimal
+  (one line of buttons). Empty items are skipped. Phone and address
+  default to the selected branch; email to the restaurant.
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+{%- assign tq_layout = s.layout | default: 'cards' -%}
+{%- assign tq_phone = s.phone | default: restaurant.phone -%}
+{%- assign tq_wa = s.whatsapp | default: restaurant.social.whatsapp -%}
+{%- assign tq_email = s.email | default: restaurant.email -%}
+{%- assign tq_addr = restaurant.address -%}
+{%- if restaurant.city.size > 0 and tq_addr.size > 0 -%}{%- assign tq_addr = tq_addr | append: ', ' | append: restaurant.city -%}{%- endif -%}
+{%- assign tq_wa_digits = tq_wa | remove: 'https://wa.me/' | remove: 'http://wa.me/' | remove: '+' -%}
+<section class="tb-section tb-contact tb-contact--{{ tq_layout }}" id="{{ s.anchor | default: 'contact' | handleize }}" aria-labelledby="tb-contact-{{ section.id }}">
+  <div class="tb-container tb-contact__grid">
+    <div class="tb-contact__copy">
+      {%- if s.eyebrow.size > 0 -%}<span class="tq-head__eyebrow">{{ s.eyebrow | escape }}</span>{%- endif -%}
+      {%- if s.heading_level == 'h1' -%}<h1 class="tq-head__title" id="tb-contact-{{ section.id }}">{{ s.title | default: 'Get in touch' | escape }}</h1>{%- else -%}<h2 class="tq-head__title" id="tb-contact-{{ section.id }}">{{ s.title | default: 'Get in touch' | escape }}</h2>{%- endif -%}
+      {%- if s.text.size > 0 -%}<p class="tq-head__sub">{{ s.text | escape }}</p>{%- endif -%}
+    </div>
+    <ul class="tb-contact__items" role="list">
+      {%- if tq_phone.size > 0 -%}<li><a class="tb-contact__item" href="{{ tq_phone | phone_link | escape }}">{% render 'icon', name: 'phone' %}<span><span class="tb-fine">Call us</span><strong>{{ tq_phone | escape }}</strong></span></a></li>{%- endif -%}
+      {%- if s.show_whatsapp and tq_wa_digits.size > 0 -%}<li><a class="tb-contact__item" href="{{ tq_wa_digits | whatsapp_link: s.whatsapp_message | escape }}" target="_blank" rel="noopener">{% render 'icon', name: 'whatsapp' %}<span><span class="tb-fine">WhatsApp</span><strong>Chat with us</strong></span></a></li>{%- endif -%}
+      {%- if tq_email.size > 0 -%}<li><a class="tb-contact__item" href="mailto:{{ tq_email | escape }}">{% render 'icon', name: 'mail' %}<span><span class="tb-fine">Email</span><strong>{{ tq_email | escape }}</strong></span></a></li>{%- endif -%}
+      {%- if s.show_address and tq_addr.size > 0 -%}<li><a class="tb-contact__item" href="https://www.google.com/maps/search/?api=1&amp;query={{ restaurant.name | append: ' ' | append: tq_addr | url_encode }}" target="_blank" rel="noopener">{% render 'icon', name: 'pin' %}<span><span class="tb-fine">Find us</span><strong>{{ tq_addr | escape }}</strong></span></a></li>{%- endif -%}
+    </ul>
+    {%- if s.show_social -%}{% render 'social-links' %}{%- endif -%}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Contact",
+  "description": "Call, WhatsApp, email and address buttons.",
+  "icon": "Phone",
+  "settings": [
+    { "type": "select", "id": "layout", "label": "Layout", "default": "cards", "options": [
+      { "value": "cards", "label": "Tiles" },
+      { "value": "split", "label": "Text and buttons side by side" },
+      { "value": "minimal", "label": "One row of buttons" }
+    ] },
+    { "type": "text", "id": "eyebrow", "label": "Small heading", "default": "Contact" },
+    { "type": "text", "id": "title", "label": "Title", "default": "Questions? Big orders? Talk to us." },
+    { "type": "select", "id": "heading_level", "label": "Title level", "default": "h2", "options": [ { "value": "h1", "label": "Page title (use once per page)" }, { "value": "h2", "label": "Section title" } ] },
+    { "type": "textarea", "id": "text", "label": "Text", "default": "We cater parties, offices and events. Call or WhatsApp and we'll sort it out." },
+    { "type": "text", "id": "phone", "label": "Phone (optional)", "info": "Leave empty to use the selected branch's phone." },
+    { "type": "checkbox", "id": "show_whatsapp", "label": "Show WhatsApp", "default": true },
+    { "type": "text", "id": "whatsapp", "label": "WhatsApp number (optional)", "placeholder": "+923001234567", "info": "International format. Leave empty to use the WhatsApp link from your social links." },
+    { "type": "text", "id": "whatsapp_message", "label": "WhatsApp first message", "default": "Hi! I'd like to place an order." },
+    { "type": "text", "id": "email", "label": "Email (optional)", "info": "Leave empty to use your restaurant email." },
+    { "type": "checkbox", "id": "show_address", "label": "Show address", "default": true },
+    { "type": "checkbox", "id": "show_social", "label": "Show social links", "default": true },
+    { "type": "text", "id": "anchor", "label": "Anchor name", "default": "contact" }
+  ],
+  "presets": [
+    { "name": "Contact – Tiles", "category": "Visit us", "settings": { "layout": "cards" } },
+    { "name": "Contact – One row", "category": "Visit us", "settings": { "layout": "minimal" } }
+  ]
+}
+{% endschema %}

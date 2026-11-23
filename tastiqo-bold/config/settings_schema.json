@@ -1,0 +1,152 @@
+[
+  {
+    "name": "theme_info",
+    "theme_name": "Tastiqo Bold",
+    "theme_version": "1.0.0",
+    "theme_author": "Tastiqo",
+    "theme_documentation_url": "https://docs.tastiqo.com/themes/tastiqo-bold",
+    "theme_support_url": "https://tastiqo.com/support",
+    "editor_settings": "schema"
+  },
+  {
+    "name": "Colours",
+    "settings": [
+      { "type": "paragraph", "id": "_colors_help", "label": "Start from a preset, then make it yours: any colour you fill in below replaces that preset colour everywhere on your site. Clear a box to go back to the preset. Keep text readable: dark text on light backgrounds (or the other way round) and button text that stands out from the button. Aim for a contrast of at least 4.5 : 1 (check with any 'contrast checker' website)." },
+      { "type": "select", "id": "color_scheme", "label": "Colour preset", "default": "fire-red", "options": [
+        { "value": "fire-red", "label": "Fire Red" },
+        { "value": "cheese-yellow", "label": "Cheese Yellow" },
+        { "value": "charcoal", "label": "Charcoal" },
+        { "value": "fresh-green", "label": "Fresh Green" },
+        { "value": "ocean", "label": "Ocean" }
+      ], "info": "Each preset has a light and a dark version with tested, readable contrast." },
+      { "type": "select", "id": "color_mode", "label": "Light or dark", "default": "light", "options": [
+        { "value": "light", "label": "Light" },
+        { "value": "dark", "label": "Dark" },
+        { "value": "auto", "label": "Follow the customer's phone setting" }
+      ], "info": "Dark uses the preset's dark backgrounds. Your brand colours (primary, highlight, buttons, badges) apply in both." },
+      { "type": "header", "id": "_h_brand", "label": "Brand colours (optional)" },
+      { "type": "color", "id": "color_primary", "label": "Primary", "info": "Your main brand colour: buttons, prices, active tabs. Leave empty to use the preset." },
+      { "type": "color", "id": "color_secondary", "label": "Highlight", "info": "Second brand colour: deal strip, badges, stars." },
+      { "type": "color", "id": "color_accent", "label": "Bars and footer", "info": "Background of the top order bar, the footer and the phone bottom bar. Use a dark colour so the white text on it stays readable." },
+      { "type": "color", "id": "color_button", "label": "Button background", "info": "Leave empty to use Primary." },
+      { "type": "color", "id": "color_button_text", "label": "Button text", "info": "Leave empty and the theme picks black or white text automatically for the best contrast." },
+      { "type": "header", "id": "_h_page", "label": "Page colours, light look (optional)" },
+      { "type": "color", "id": "color_background", "label": "Background" },
+      { "type": "color", "id": "color_surface", "label": "Cards and panels" },
+      { "type": "color", "id": "color_text", "label": "Text" },
+      { "type": "color", "id": "color_text_muted", "label": "Secondary text", "info": "Descriptions and small print. Must stay readable on Background." },
+      { "type": "color", "id": "color_border", "label": "Lines and borders" },
+      { "type": "header", "id": "_h_labels", "label": "Labels (optional)" },
+      { "type": "color", "id": "color_badge", "label": "Badge background", "info": "'New', 'Hot', 'Deal' labels." },
+      { "type": "color", "id": "color_badge_text", "label": "Badge text" },
+      { "type": "color", "id": "color_error", "label": "Sale and discount", "info": "'-18%' labels and crossed-out prices." },
+      { "type": "color", "id": "color_success", "label": "Open now and savings" },
+      { "type": "color", "id": "color_warning", "label": "Warnings", "info": "Closed / closing soon messages." }
+    ]
+  },
+  {
+    "name": "Logo and favicon",
+    "settings": [
+      { "type": "image_picker", "id": "logo_image", "label": "Logo", "info": "PNG or SVG with a transparent background. Leave empty to show your restaurant name in bold letters." },
+      { "type": "range", "id": "logo_width", "label": "Logo width (desktop)", "min": 60, "max": 260, "step": 5, "unit": "px", "default": 140 },
+      { "type": "image_picker", "id": "favicon", "label": "Favicon", "info": "Square image, at least 64 × 64 px. Shown in the browser tab and when customers save your site to their home screen." }
+    ]
+  },
+  {
+    "name": "Typography",
+    "settings": [
+      { "type": "font_picker", "id": "font_heading", "label": "Heading font", "default": "system", "options": [
+        { "value": "system", "label": "System (fastest)" },
+        { "value": "Poppins", "label": "Poppins" },
+        { "value": "Montserrat", "label": "Montserrat" },
+        { "value": "DM Sans", "label": "DM Sans" },
+        { "value": "Inter", "label": "Inter" },
+        { "value": "Raleway", "label": "Raleway" },
+        { "value": "Roboto", "label": "Roboto" },
+        { "value": "Open Sans", "label": "Open Sans" },
+        { "value": "Playfair Display", "label": "Playfair Display" },
+        { "value": "Lora", "label": "Lora" }
+      ], "info": "Fonts other than System load from Google Fonts, which adds a little time to the first visit." },
+      { "type": "font_picker", "id": "font_body", "label": "Body font", "default": "system", "options": [
+        { "value": "system", "label": "System (fastest)" },
+        { "value": "Inter", "label": "Inter" },
+        { "value": "DM Sans", "label": "DM Sans" },
+        { "value": "Poppins", "label": "Poppins" },
+        { "value": "Roboto", "label": "Roboto" },
+        { "value": "Open Sans", "label": "Open Sans" },
+        { "value": "Montserrat", "label": "Montserrat" },
+        { "value": "Raleway", "label": "Raleway" },
+        { "value": "Lora", "label": "Lora" }
+      ] },
+      { "type": "select", "id": "heading_case", "label": "Heading letters", "default": "none", "options": [
+        { "value": "none", "label": "As typed" },
+        { "value": "uppercase", "label": "ALL CAPS" }
+      ] },
+      { "type": "range", "id": "base_font_size", "label": "Text size", "min": 14, "max": 19, "step": 1, "unit": "px", "default": 16 },
+      { "type": "range", "id": "heading_scale", "label": "Heading size", "min": 80, "max": 130, "step": 5, "unit": "%", "default": 100 },
+      { "type": "range", "id": "body_scale", "label": "Card and menu text size", "min": 85, "max": 125, "step": 5, "unit": "%", "default": 100 }
+    ]
+  },
+  {
+    "name": "Shape and buttons",
+    "settings": [
+      { "type": "range", "id": "border_radius", "label": "Corner roundness", "min": 0, "max": 28, "step": 2, "unit": "px", "default": 16, "info": "Cards, images, panels. 0 = square corners." },
+      { "type": "select", "id": "button_style", "label": "Button shape", "default": "pill", "options": [
+        { "value": "pill", "label": "Pill" },
+        { "value": "rounded", "label": "Rounded (follows corner roundness)" },
+        { "value": "square", "label": "Square" }
+      ] },
+      { "type": "select", "id": "button_fill", "label": "Secondary buttons", "default": "outline", "options": [
+        { "value": "outline", "label": "Outline" },
+        { "value": "soft", "label": "Soft tint" }
+      ] },
+      { "type": "range", "id": "button_border_thickness", "label": "Outline thickness", "min": 1, "max": 4, "step": 1, "unit": "px", "default": 2 },
+      { "type": "select", "id": "button_shadow", "label": "Button shadow", "default": "small", "options": [
+        { "value": "none", "label": "None" },
+        { "value": "small", "label": "Small" },
+        { "value": "medium", "label": "Medium" }
+      ] },
+      { "type": "range", "id": "button_scale", "label": "Button size", "min": 90, "max": 125, "step": 5, "unit": "%", "default": 100 }
+    ]
+  },
+  {
+    "name": "Layout",
+    "settings": [
+      { "type": "range", "id": "page_width", "label": "Page width", "min": 1000, "max": 1600, "step": 20, "unit": "px", "default": 1280 },
+      { "type": "range", "id": "spacing_sections", "label": "Space between sections", "min": 16, "max": 96, "step": 4, "unit": "px", "default": 56 }
+    ]
+  },
+  {
+    "name": "Ordering",
+    "settings": [
+      { "type": "checkbox", "id": "quick_add", "label": "Quick 'Add' button on food cards", "default": true, "info": "Items with choices (size, toppings, deal options) open a pop-up; others go straight into the cart." },
+      { "type": "text", "id": "quick_add_label", "label": "Add button text", "default": "Add" },
+      { "type": "select", "id": "card_style_default", "label": "Default food card", "default": "image-top", "options": [
+        { "value": "image-top", "label": "Photo on top" },
+        { "value": "compact", "label": "Photo on the side" },
+        { "value": "list", "label": "List row (delivery-app style)" }
+      ], "info": "Used by sections whose Card style is 'Theme default'." },
+      { "type": "checkbox", "id": "ask_location_first", "label": "Ask for delivery area or branch on the first visit", "default": true, "info": "Only when you have more than one branch or delivery areas. Never shown in the editor preview." },
+      { "type": "textarea", "id": "checkout_note", "label": "Note at checkout", "default": "Pay with cash when your order arrives or when you collect it.", "info": "Shown above the Place order button, e.g. payment or delivery-time information." }
+    ]
+  },
+  {
+    "name": "Header and cart",
+    "settings": [
+      { "type": "checkbox", "id": "header_sticky", "label": "Keep the header visible while scrolling", "default": true },
+      { "type": "checkbox", "id": "show_cart", "label": "Show the cart button in the header", "default": true },
+      { "type": "checkbox", "id": "show_search", "label": "Show menu search", "default": true, "info": "A search box above the full menu." },
+      { "type": "select", "id": "mobile_menu_style", "label": "Phone menu", "default": "drawer", "options": [
+        { "value": "drawer", "label": "Slide-in panel" },
+        { "value": "fullscreen", "label": "Full screen" }
+      ] }
+    ]
+  },
+  {
+    "name": "Footer",
+    "settings": [
+      { "type": "text", "id": "footer_copyright", "label": "Copyright text", "placeholder": "© 2026 Your restaurant", "info": "Leave empty for '© <year> <restaurant name>'." },
+      { "type": "range", "id": "footer_columns", "label": "Footer columns (desktop)", "min": 2, "max": 4, "step": 1, "default": 4 }
+    ]
+  }
+]

@@ -1,0 +1,58 @@
+{%- comment -%}
+  Category page (/collection/<handle>): title, description, other
+  categories as chips and the items. card_style like the full menu.
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+{%- assign tq_card = s.card_style | default: 'inherit' -%}
+{%- if tq_card == 'inherit' -%}{%- assign tq_card = theme.card_style_default | default: 'image-top' -%}{%- endif -%}
+{%- assign tq_cols = s.columns | default: 4 -%}
+{%- if tq_card == 'list' -%}{%- assign tq_cols = 2 -%}{%- endif -%}
+<section class="tb-section tb-collection" aria-labelledby="tb-col-title">
+  <div class="tb-container">
+    {%- if collection -%}
+      <nav class="tb-crumbs" aria-label="Breadcrumb"><ol role="list"><li><a href="/">Home</a></li><li><a href="/menu">Menu</a></li><li aria-current="page">{{ collection.title | escape }}</li></ol></nav>
+      <div class="tq-head tq-head--row">
+        <div>
+          <h1 class="tq-head__title" id="tb-col-title">{{ collection.title | escape }}</h1>
+          {%- if collection.description.size > 0 -%}<p class="tq-head__sub">{{ collection.description | escape }}</p>{%- endif -%}
+        </div>
+      </div>
+      {%- if s.show_other_categories -%}
+        <ul class="tb-chips" role="list" aria-label="Other categories">
+          {%- for cat in menu_categories -%}{%- if cat.items.size > 0 -%}
+            <li><a class="tb-chip{% if cat.id == collection.id %} is-active{% endif %}" href="{{ cat.url | escape }}"{% if cat.id == collection.id %} aria-current="page"{% endif %}>{{ cat.title | escape }}</a></li>
+          {%- endif -%}{%- endfor -%}
+        </ul>
+      {%- endif -%}
+      {%- if collection.items.size > 0 -%}
+        <ul class="tq-grid" style="--tq-cols: {{ tq_cols }};" role="list">
+          {%- for item in collection.items -%}<li>{%- render 'card-item', item: item, style: tq_card, show_tags: true -%}</li>{%- endfor -%}
+        </ul>
+      {%- else -%}
+        <p class="tb-empty">Nothing here at this branch right now. <a href="/menu">See the full menu</a></p>
+      {%- endif -%}
+    {%- else -%}
+      <h1 class="tq-head__title" id="tb-col-title">Category not found</h1>
+      <p class="tb-empty"><a href="/menu">See the full menu</a></p>
+    {%- endif -%}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Category page",
+  "description": "All items of one category.",
+  "icon": "LayoutGrid",
+  "settings": [
+    { "type": "select", "id": "card_style", "label": "Card style", "default": "inherit", "options": [
+      { "value": "inherit", "label": "Theme default" },
+      { "value": "image-top", "label": "Photo on top" },
+      { "value": "compact", "label": "Photo on the side" },
+      { "value": "list", "label": "List rows" }
+    ] },
+    { "type": "range", "id": "columns", "label": "Cards per row (desktop)", "min": 2, "max": 5, "step": 1, "default": 4 },
+    { "type": "checkbox", "id": "show_other_categories", "label": "Show other categories as chips", "default": true }
+  ],
+  "presets": [ { "name": "Category page", "category": "Menu & deals", "settings": {} } ]
+}
+{% endschema %}

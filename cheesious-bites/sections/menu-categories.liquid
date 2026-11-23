@@ -18,7 +18,7 @@
         {% for cat in menu_categories limit: section.settings.limit %}
           <a href="{{ cat.url }}" class="cb-cat-card cb-anim-up">
             {% if cat.image != blank %}
-              <img src="{{ cat.image }}" alt="{{ cat.title }}" loading="lazy">
+              <img src="{{ cat.image | image_width: 480 }}" srcset="{{ cat.image | image_srcset: '240,360,480,720' }}" sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 320px" width="480" height="360" alt="{{ cat.title }}" loading="lazy" decoding="async">
             {% else %}
               <div class="cb-skeleton" style="width:100%;height:100%;"></div>
             {% endif %}
@@ -34,7 +34,7 @@
         {% for cat in menu_categories limit: section.settings.limit %}
           <a href="{{ cat.url }}" class="cb-anim-up" style="display: flex; align-items: center; gap: 20px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 16px; transition: border-color 200ms ease;">
             {% if cat.image != blank %}
-              <img src="{{ cat.image }}" alt="{{ cat.title }}" style="width: 80px; height: 80px; object-fit: cover; border-radius: var(--radius-sm);" loading="lazy">
+              <img src="{{ cat.image | image_width: 160 }}" alt="{{ cat.title }}" style="width: 80px; height: 80px; object-fit: cover; border-radius: var(--radius-sm);" loading="lazy">
             {% endif %}
             <div style="flex: 1;">
               <h3 style="margin: 0 0 4px; font-size: 1.15rem;">{{ cat.title }}</h3>

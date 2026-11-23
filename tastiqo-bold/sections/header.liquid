@@ -1,0 +1,117 @@
+{%- comment -%}
+  Header: logo, main navigation, order-mode pill, account and cart.
+  layout: classic (logo left, menu centre) | centered (logo centre) |
+          app-bar (compact, app-like: menu in the side panel only).
+  On phones the navigation opens in a side panel (native <dialog>).
+  Ends with <!--tb:main--> so the layout can open <main> after the
+  header group.
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+{%- assign tq_layout = s.layout | default: 'classic' -%}
+{%- assign tq_nav = navigation.primary -%}
+<header class="tb-header tb-header--{{ tq_layout }}" data-tb-header>
+  <div class="tb-container tb-header__row">
+    <button type="button" class="tb-iconbtn tb-header__burger" data-tb-open-dialog="tb-nav-{{ section.id }}" aria-label="Open menu" aria-haspopup="dialog">{% render 'icon', name: 'menu' %}</button>
+    <a class="tb-logo" href="/" aria-label="{{ restaurant.name | escape }} – home">
+      {%- if theme.logo_image.size > 0 -%}
+        <img src="{{ theme.logo_image | escape }}" alt="{{ restaurant.name | escape }}" height="44" decoding="async" fetchpriority="high">
+      {%- elsif restaurant.logo.size > 0 and s.use_account_logo -%}
+        <img src="{{ restaurant.logo | escape }}" alt="{{ restaurant.name | escape }}" height="44" decoding="async" fetchpriority="high">
+      {%- else -%}
+        <span class="tb-logo__text">{{ restaurant.name | escape }}</span>
+      {%- endif -%}
+    </a>
+    {%- if tq_layout != 'app-bar' and tq_nav.size > 0 -%}
+      <nav class="tb-nav" aria-label="Main">
+        <ul class="tb-nav__list" role="list">
+          {%- for link in tq_nav -%}
+            <li><a class="tb-nav__link{% if link.active %} is-active{% endif %}" href="{% render 'safe-url', url: link.url %}"{% if link.active %} aria-current="page"{% endif %}>{{ link.title | escape }}</a></li>
+          {%- endfor -%}
+        </ul>
+      </nav>
+    {%- endif -%}
+    <div class="tb-header__actions">
+      {%- if s.show_mode_pill -%}
+        <button type="button" class="tb-modepill tb-modepill--header" data-tb-open-location aria-label="Change order type and location">
+          <span data-tb-mode-icon>{% render 'icon', name: 'scooter' %}</span>
+          <span class="tb-modepill__text"><strong data-tb-mode-label>Delivery</strong><span class="tb-modepill__place" data-tb-place-label>{{ branch.name | escape }}</span></span>
+          {% render 'icon', name: 'chevron-down' %}
+        </button>
+      {%- endif -%}
+      {%- if s.show_phone and restaurant.phone.size > 0 -%}
+        <a class="tb-iconbtn tb-hide-sm" href="{{ restaurant.phone | phone_link | escape }}" aria-label="Call {{ restaurant.phone | escape }}">{% render 'icon', name: 'phone' %}</a>
+      {%- endif -%}
+      {%- if s.show_account -%}
+        <a class="tb-iconbtn tb-hide-sm" href="/account" aria-label="My account" data-tb-account-link>{% render 'icon', name: 'user' %}</a>
+      {%- endif -%}
+      {%- if theme.show_cart != false -%}
+        <button type="button" class="tb-cartbtn" data-tb-open-cart aria-label="Open cart" aria-haspopup="dialog">
+          {% render 'icon', name: 'bag' %}
+          <span class="tb-cartbtn__count" data-tb-cart-count aria-hidden="true">0</span>
+          <span class="tb-cartbtn__total tb-hide-sm" data-tb-cart-total></span>
+        </button>
+      {%- endif -%}
+      {%- if s.cta_label.size > 0 -%}
+        <a class="tb-btn tb-btn--primary tb-hide-sm" href="{% render 'safe-url', url: s.cta_link, fallback: '/menu' %}">{{ s.cta_label | escape }}</a>
+      {%- endif -%}
+    </div>
+  </div>
+</header>
+
+<dialog class="tb-drawer tb-drawer--left{% if theme.mobile_menu_style == 'fullscreen' %} tb-drawer--full{% endif %}" id="tb-nav-{{ section.id }}" aria-label="Menu">
+  <div class="tb-drawer__panel">
+    <div class="tb-drawer__head">
+      <span class="tb-logo__text">{{ restaurant.name | escape }}</span>
+      <button type="button" class="tb-iconbtn" data-tb-close aria-label="Close menu">{% render 'icon', name: 'close' %}</button>
+    </div>
+    <button type="button" class="tb-modepill" data-tb-open-location>
+      <span data-tb-mode-icon>{% render 'icon', name: 'scooter' %}</span>
+      <span><strong data-tb-mode-label>Delivery</strong> · <span data-tb-place-label>{{ branch.name | escape }}</span></span>
+      <span class="tb-modepill__change">Change</span>
+    </button>
+    <nav aria-label="Main">
+      <ul class="tb-drawer__nav" role="list">
+        {%- for link in tq_nav -%}
+          <li><a href="{% render 'safe-url', url: link.url %}"{% if link.active %} aria-current="page"{% endif %}>{{ link.title | escape }}</a>
+            {%- if link.children.size > 0 -%}
+              <ul role="list">{%- for child in link.children -%}<li><a href="{% render 'safe-url', url: child.url %}">{{ child.title | escape }}</a></li>{%- endfor -%}</ul>
+            {%- endif -%}
+          </li>
+        {%- endfor -%}
+        <li><a href="/account/orders">My orders</a></li>
+        <li><a href="/account">My account</a></li>
+      </ul>
+    </nav>
+    {%- if restaurant.phone.size > 0 -%}
+      <a class="tb-btn tb-btn--secondary tb-btn--block" href="{{ restaurant.phone | phone_link | escape }}">{% render 'icon', name: 'phone' %} {{ restaurant.phone | escape }}</a>
+    {%- endif -%}
+  </div>
+</dialog>
+<!--tb:main-->
+
+{% schema %}
+{
+  "name": "Header",
+  "description": "Logo, menu, delivery/pickup pill, account and cart.",
+  "icon": "PanelTop",
+  "group": "header",
+  "settings": [
+    { "type": "select", "id": "layout", "label": "Layout", "default": "classic", "options": [
+      { "value": "classic", "label": "Classic (logo left)" },
+      { "value": "centered", "label": "Logo in the middle" },
+      { "value": "app-bar", "label": "App bar (compact)" }
+    ] },
+    { "type": "checkbox", "id": "show_mode_pill", "label": "Show Delivery / Pickup pill", "default": true, "info": "Shows the order type and branch or area; customers tap it to change." },
+    { "type": "checkbox", "id": "show_account", "label": "Show account icon", "default": true },
+    { "type": "checkbox", "id": "show_phone", "label": "Show phone icon", "default": false },
+    { "type": "checkbox", "id": "use_account_logo", "label": "Use the logo from Settings when no theme logo is set", "default": true },
+    { "type": "text", "id": "cta_label", "label": "Button text (desktop)", "default": "", "placeholder": "Order now", "info": "Leave empty for no button." },
+    { "type": "url", "id": "cta_link", "label": "Button link", "default": "/menu" }
+  ],
+  "presets": [
+    { "name": "Header – Classic", "category": "Header", "settings": { "layout": "classic" } },
+    { "name": "Header – Centred logo", "category": "Header", "settings": { "layout": "centered" } },
+    { "name": "Header – App bar", "category": "Header", "settings": { "layout": "app-bar" } }
+  ]
+}
+{% endschema %}

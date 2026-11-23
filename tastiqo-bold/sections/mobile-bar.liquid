@@ -1,0 +1,54 @@
+{%- comment -%}
+  App-like bar at the bottom of the screen on phones.
+  layout: tabs (Home, Menu, Deals, Orders + cart button) | cart (a
+  floating "View order" button that shows the item count and total;
+  also on desktop when "Show on computers" is on).
+  The cart parts hide while the cart is empty. Starts with <!--tb:/main-->.
+{%- endcomment -%}
+<!--tb:/main-->
+{%- assign s = section.settings -%}
+{%- assign tq_layout = s.layout | default: 'tabs' -%}
+{%- assign tq_deals = menu_categories | where: 'id', s.deals_collection | first -%}
+{%- assign tq_deals_url = '/menu' -%}
+{%- if tq_deals -%}{%- assign tq_deals_url = tq_deals.url -%}{%- elsif s.deals_link.size > 0 -%}{%- capture tq_deals_url -%}{% render 'safe-url', url: s.deals_link, fallback: '/menu' %}{%- endcapture -%}{%- endif -%}
+{%- if tq_layout == 'tabs' -%}
+<nav class="tb-tabbar" aria-label="Quick links" data-tb-tabbar>
+  <a class="tb-tabbar__item{% if request.path == '/' %} is-active{% endif %}" href="/"{% if request.path == '/' %} aria-current="page"{% endif %}>{% render 'icon', name: 'home' %}<span>Home</span></a>
+  <a class="tb-tabbar__item{% if request.path == '/menu' %} is-active{% endif %}" href="{% if request.path == '/' and s.menu_on_home %}#menu{% else %}/menu{% endif %}"{% if request.path == '/menu' %} aria-current="page"{% endif %}>{% render 'icon', name: 'grid' %}<span>Menu</span></a>
+  <a class="tb-tabbar__item" href="{{ tq_deals_url }}">{% render 'icon', name: 'tag' %}<span>{{ s.deals_label | default: 'Deals' | escape }}</span></a>
+  <a class="tb-tabbar__item{% if request.path contains '/account' %} is-active{% endif %}" href="/account/orders">{% render 'icon', name: 'user' %}<span>Orders</span></a>
+  <button type="button" class="tb-tabbar__item tb-tabbar__cart" data-tb-open-cart aria-label="Open cart">
+    <span class="tb-tabbar__icon">{% render 'icon', name: 'bag' %}<span class="tb-cartbtn__count" data-tb-cart-count aria-hidden="true">0</span></span><span data-tb-cart-total>Cart</span>
+  </button>
+</nav>
+{%- endif -%}
+<button type="button" class="tb-floatcart{% if s.show_desktop %} tb-floatcart--desktop{% endif %}{% if tq_layout == 'tabs' %} tb-floatcart--above-tabs{% endif %}" data-tb-open-cart data-tb-floatcart hidden>
+  <span class="tb-floatcart__count" data-tb-cart-count>0</span>
+  <span class="tb-floatcart__label">{{ s.cart_label | default: 'View order' | escape }}</span>
+  <span class="tb-floatcart__total" data-tb-cart-total></span>
+</button>
+
+{% schema %}
+{
+  "name": "Phone bottom bar",
+  "description": "App-style tab bar and a floating View order button.",
+  "icon": "Smartphone",
+  "group": "footer",
+  "settings": [
+    { "type": "select", "id": "layout", "label": "Layout", "default": "tabs", "options": [
+      { "value": "tabs", "label": "Tab bar + floating cart button" },
+      { "value": "cart", "label": "Floating cart button only" }
+    ] },
+    { "type": "text", "id": "cart_label", "label": "Cart button text", "default": "View order" },
+    { "type": "checkbox", "id": "show_desktop", "label": "Also show the floating cart button on computers", "default": true },
+    { "type": "text", "id": "deals_label", "label": "Deals tab text", "default": "Deals" },
+    { "type": "collection", "id": "deals_collection", "label": "Deals tab opens", "info": "Pick your Deals category. Leave empty to use the link below." },
+    { "type": "url", "id": "deals_link", "label": "Deals link", "default": "#deals" },
+    { "type": "checkbox", "id": "menu_on_home", "label": "Menu tab jumps to the menu on the home page", "default": true }
+  ],
+  "presets": [
+    { "name": "Phone bottom bar – Tabs", "category": "Footer", "settings": { "layout": "tabs" } },
+    { "name": "Floating cart button", "category": "Footer", "settings": { "layout": "cart" } }
+  ]
+}
+{% endschema %}

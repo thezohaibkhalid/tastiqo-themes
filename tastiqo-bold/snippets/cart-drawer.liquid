@@ -1,0 +1,25 @@
+{%- comment -%}
+  Slide-in cart (native <dialog>: focus is trapped, Esc closes, the page
+  behind is inert). Filled by assets/theme.js from the local cart.
+{%- endcomment -%}
+<dialog class="tb-drawer" id="tb-cart" aria-labelledby="tb-cart-title" data-tb-cart-drawer>
+  <div class="tb-drawer__panel">
+    <div class="tb-drawer__head">
+      <h2 class="tb-drawer__title" id="tb-cart-title">Your order</h2>
+      <button type="button" class="tb-iconbtn" data-tb-close aria-label="Close cart">{% render 'icon', name: 'close' %}</button>
+    </div>
+    <button type="button" class="tb-modepill" data-tb-open-location>
+      <span data-tb-mode-icon>{% render 'icon', name: 'scooter' %}</span>
+      <span><strong data-tb-mode-label>Delivery</strong> · <span data-tb-place-label>{{ branch.name | escape }}</span></span>
+      <span class="tb-modepill__change">Change</span>
+    </button>
+    <div class="tb-drawer__body" data-tb-cart-lines>
+      <p class="tb-empty">Your cart is empty. Add something tasty!</p>
+    </div>
+    <div class="tb-drawer__foot" data-tb-cart-foot hidden>
+      <div class="tb-sumrow"><span>Subtotal</span><strong data-tb-cart-subtotal></strong></div>
+      <p class="tb-fine">Delivery fee and taxes are shown at checkout.</p>
+      <a href="/cart" class="tb-btn tb-btn--primary tb-btn--block tb-btn--lg">Go to checkout {% render 'icon', name: 'arrow-right' %}</a>
+    </div>
+  </div>
+</dialog>

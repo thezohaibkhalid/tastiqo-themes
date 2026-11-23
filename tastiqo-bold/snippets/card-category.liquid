@@ -1,0 +1,31 @@
+{%- comment -%}
+  Category card (shared snippet, section-library contract).
+  Params: cat (CategoryContext), style (circle | image-tile | chip),
+          title, image, badge (optional overrides), show_count.
+{%- endcomment -%}
+{%- assign tq_title = title | default: cat.title -%}
+{%- assign tq_img = image | default: cat.image -%}
+{%- if style == 'image-tile' -%}
+  <a class="tq-cat-tile" href="{{ cat.url }}">
+    {%- if tq_img.size > 0 -%}<img src="{{ tq_img | escape }}" alt="" width="600" height="450" loading="lazy" decoding="async">{%- else -%}<span class="tq-cat-tile__ph" aria-hidden="true"></span>{%- endif -%}
+    {%- if badge.size > 0 -%}<span class="tq-badge">{{ badge | escape }}</span>{%- endif -%}
+    <span class="tq-cat-tile__body">
+      <span class="tq-cat-tile__title">{{ tq_title | escape }}</span>
+      {%- if show_count -%}<span class="tq-cat-tile__meta">{{ cat.items.size }} {{ cat.items.size | pluralize: 'item', 'items' }}</span>{%- endif -%}
+    </span>
+  </a>
+{%- elsif style == 'chip' -%}
+  <a class="tq-chip" href="{{ cat.url }}">
+    {%- if tq_img.size > 0 -%}<img src="{{ tq_img | escape }}" alt="" width="32" height="32" loading="lazy" decoding="async">{%- else -%}<span class="tq-chip__ph" aria-hidden="true"></span>{%- endif -%}
+    <span>{{ tq_title | escape }}</span>
+    {%- if badge.size > 0 -%}<span class="tq-badge">{{ badge | escape }}</span>{%- endif -%}
+  </a>
+{%- else -%}
+  <a class="tq-cat-circle" href="{{ cat.url }}">
+    <span class="tq-cat-circle__img">
+      {%- if tq_img.size > 0 -%}<img src="{{ tq_img | escape }}" alt="" width="240" height="240" loading="lazy" decoding="async">{%- endif -%}
+    </span>
+    <span class="tq-cat-circle__title">{{ tq_title | escape }}</span>
+    {%- if badge.size > 0 -%}<span class="tq-badge">{{ badge | escape }}</span>{%- endif -%}
+  </a>
+{%- endif -%}

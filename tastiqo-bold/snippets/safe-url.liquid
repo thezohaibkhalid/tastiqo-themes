@@ -1,0 +1,21 @@
+{%- comment -%}
+  Prints a link target that is safe to put in href="": relative paths
+  (/menu), in-page anchors (#menu), http(s), tel:, mailto: and WhatsApp
+  links. Anything else (javascript:, data:, protocol-relative //host)
+  becomes `fallback` (default "/"). The value is HTML-escaped.
+  Usage: href="{% render 'safe-url', url: link.url %}"
+{%- endcomment -%}
+{%- assign tq_su = url | append: '' | strip -%}
+{%- assign tq_su_l = tq_su | downcase -%}
+{%- assign tq_su_1 = tq_su | slice: 0, 1 -%}
+{%- assign tq_su_2 = tq_su | slice: 0, 2 -%}
+{%- assign tq_su_ok = false -%}
+{%- if tq_su_1 == '/' and tq_su_2 != '//' -%}{%- assign tq_su_ok = true -%}
+{%- elsif tq_su_1 == '#' or tq_su_1 == '?' -%}{%- assign tq_su_ok = true -%}
+{%- else -%}
+  {%- assign tq_su_8 = tq_su_l | slice: 0, 8 -%}
+  {%- assign tq_su_7 = tq_su_l | slice: 0, 7 -%}
+  {%- assign tq_su_4 = tq_su_l | slice: 0, 4 -%}
+  {%- if tq_su_8 == 'https://' or tq_su_7 == 'http://' or tq_su_4 == 'tel:' or tq_su_7 == 'mailto:' -%}{%- assign tq_su_ok = true -%}{%- endif -%}
+{%- endif -%}
+{%- if tq_su_ok and tq_su.size > 0 -%}{{ tq_su | escape }}{%- else -%}{{ fallback | default: '/' | escape }}{%- endif -%}

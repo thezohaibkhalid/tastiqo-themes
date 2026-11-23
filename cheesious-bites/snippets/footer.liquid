@@ -26,9 +26,9 @@
     <div class="cb-footer-brand">
       <a href="/" class="cb-footer-logo">
         {% if theme.logo_image != blank %}
-          <img src="{{ theme.logo_image }}" alt="{{ restaurant.name }}">
+          <img src="{{ theme.logo_image }}" alt="{{ restaurant.name }}" loading="lazy" decoding="async">
         {% elsif restaurant.logo %}
-          <img src="{{ restaurant.logo }}" alt="{{ restaurant.name }}">
+          <img src="{{ restaurant.logo }}" alt="{{ restaurant.name }}" loading="lazy" decoding="async">
         {% else %}
           <span class="cb-logo-mark">🧀</span>
           <span>{{ restaurant.name | default: "Cheesious Bites" }}</span>
