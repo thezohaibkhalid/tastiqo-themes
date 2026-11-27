@@ -1,0 +1,36 @@
+{% capture cs_limit %}{% render 'css-number', value: section.settings.limit, min: 1, max: 24, fallback: 12 %}{% endcapture %}{% assign cs_limit = cs_limit | strip | plus: 0 | round %}
+<section class="section cat-strip" data-section-id="{{ section.id | escape }}" data-section-type="{{ section.type | escape }}" aria-labelledby="{{ section.id | escape }}-title">
+  <div class="container">
+    <div class="section-head">
+      <h2 class="section-title" id="{{ section.id | escape }}-title">{{ section.settings.heading | default: 'Explore the menu' | escape }}</h2>
+      <a class="link-more" href="{{ routes.menu | default: '/menu' }}">Full menu</a>
+    </div>
+    {% if menu_categories.size > 0 %}
+    <ul class="cat-strip__list" role="list">
+      {% for c in menu_categories limit: cs_limit %}
+        {% assign cs_img = c.image | default: '' %}
+        {% if cs_img == '' %}{% for cs_it in c.items %}{% if cs_img == '' and cs_it.imageUrl and cs_it.imageUrl != '' %}{% assign cs_img = cs_it.imageUrl %}{% endif %}{% endfor %}{% endif %}
+        <li>
+          <a class="cat-strip__item" href="{{ c.url | escape }}" data-category-link="{{ c.handle | escape }}">
+            <span class="cat-strip__ring">{% if cs_img != '' %}<img src="{{ cs_img | escape }}" alt="" width="96" height="96" loading="lazy" decoding="async">{% else %}{% render 'icon', name: 'logo', icon_size: 34 %}{% endif %}</span>
+            <span class="cat-strip__name">{{ c.title | escape }}</span>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="empty-note">The menu for this branch is being updated. Please check back soon.</p>
+    {% endif %}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Featured categories",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Explore the menu" },
+    { "type": "range", "id": "limit", "label": "Categories to show", "min": 1, "max": 24, "step": 1, "default": 12 }
+  ],
+  "presets": [{ "name": "Featured categories", "category": "Menu" }]
+}
+{% endschema %}

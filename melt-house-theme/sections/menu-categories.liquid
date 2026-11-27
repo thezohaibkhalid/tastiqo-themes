@@ -1,0 +1,66 @@
+{% assign mc_h = 'h2' %}{% if section.settings.title_is_page_heading %}{% assign mc_h = 'h1' %}{% endif %}
+<section class="section menu" data-section-id="{{ section.id | escape }}" data-section-type="{{ section.type | escape }}" data-menu aria-labelledby="{{ section.id | escape }}-title">
+  <div class="container">
+    <div class="section-head">
+      <{{ mc_h }} class="section-title{% if mc_h == 'h1' %} page-title{% endif %}" id="{{ section.id | escape }}-title">{{ section.settings.title | default: 'Menu' | escape }}</{{ mc_h }}>
+      {% if branch.name and branch.name != '' %}<p class="menu__branch muted">Prices and availability for <strong>{{ branch.name | escape }}</strong>. <a href="{{ routes.locations | default: '/locations' }}" data-open-location>Change</a></p>{% endif %}
+    </div>
+  </div>
+
+  {% if section.settings.show_tabs and menu_categories.size > 1 %}
+  <nav class="cat-tabs" aria-label="Menu categories" data-cat-tabs>
+    <div class="container cat-tabs__inner">
+      <ul class="cat-tabs__list">
+        {% for c in menu_categories %}{% if c.items.size > 0 %}<li><a class="cat-tabs__link" href="#cat-{{ c.handle | escape }}" data-tab-for="cat-{{ c.handle | escape }}">{{ c.title | escape }}</a></li>{% endif %}{% endfor %}
+      </ul>
+    </div>
+  </nav>
+  {% endif %}
+
+  <div class="container">
+    {% if section.settings.show_search %}
+    <form class="menu-search" action="{{ routes.search | default: '/search' }}" method="get" role="search" data-menu-search>
+      <label class="visually-hidden" for="{{ section.id | escape }}-q">Search the menu</label>
+      {% render 'icon', name: 'search', icon_size: 20 %}
+      <input class="menu-search__input" id="{{ section.id | escape }}-q" type="search" name="q" placeholder="Search dishes, e.g. pizza" autocomplete="off" enterkeyhint="search" data-menu-filter>
+      <button class="btn btn--primary btn--sm menu-search__submit" type="submit">Search</button>
+    </form>
+    <p class="menu__empty empty-note" data-menu-noresults hidden>No dishes match your search. <button type="button" class="link-btn" data-menu-clear>Clear search</button></p>
+    {% endif %}
+
+    {% assign mc_shown = 0 %}
+    {% for c in menu_categories %}
+      {% if c.items.size > 0 %}
+      {% assign mc_shown = mc_shown | plus: 1 %}
+      <section class="menu-cat" id="cat-{{ c.handle | escape }}" aria-labelledby="cat-{{ c.handle | escape }}-title" data-menu-cat>
+        <h2 class="menu-cat__title" id="cat-{{ c.handle | escape }}-title"><a href="{{ c.url | escape }}">{{ c.title | escape }}</a></h2>
+        {% if section.settings.show_banners %}{% assign mc_kicker = c.description | default: '' | strip_html | truncatewords: 6 %}{% render 'category-banner', category: c, kicker: mc_kicker %}{% elsif c.description and c.description != '' %}<p class="menu-cat__desc muted">{{ c.description | strip_html | escape }}</p>{% endif %}
+        <div class="item-grid">
+          {% for it in c.items %}<div class="item-grid__cell">{% render 'item-card', item: it, category_title: c.title, eager: false %}</div>{% endfor %}
+        </div>
+      </section>
+      {% endif %}
+    {% endfor %}
+    {% if mc_shown == 0 %}
+    <div class="empty-state">
+      <h2>The menu is on its way</h2>
+      <p>This branch has no dishes online right now. Try another branch or check back soon.</p>
+      <a class="btn btn--primary" href="{{ routes.locations | default: '/locations' }}" data-open-location>Choose another branch</a>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Full menu",
+  "settings": [
+    { "type": "text", "id": "title", "label": "Heading", "default": "Menu" },
+    { "type": "checkbox", "id": "title_is_page_heading", "label": "Use the heading as the page's main heading", "default": false },
+    { "type": "checkbox", "id": "show_tabs", "label": "Show sticky category tabs", "default": true },
+    { "type": "checkbox", "id": "show_search", "label": "Show menu search", "default": true },
+    { "type": "checkbox", "id": "show_banners", "label": "Show a banner above each category", "default": true }
+  ],
+  "presets": [{ "name": "Full menu", "category": "Menu" }]
+}
+{% endschema %}

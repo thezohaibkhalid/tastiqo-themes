@@ -1,11 +1,11 @@
 [
   {
     "name": "theme_info",
-    "theme_name": "Tastiqo Bold",
+    "theme_name": "TapToBite Bold",
     "theme_version": "1.0.0",
-    "theme_author": "Tastiqo",
-    "theme_documentation_url": "https://docs.tastiqo.com/themes/tastiqo-bold",
-    "theme_support_url": "https://tastiqo.com/support",
+    "theme_author": "TapToBite",
+    "theme_documentation_url": "https://docs.taptobite.com/themes/tastiqo-bold",
+    "theme_support_url": "https://taptobite.com/support",
     "editor_settings": "schema"
   },
   {

@@ -1,0 +1,20 @@
+<div class="section notfound-page" data-section-id="{{ section.id | escape }}" data-section-type="{{ section.type | escape }}">
+  <div class="container container--narrow">
+    <div class="empty-state">
+      <span class="empty-state__icon" aria-hidden="true">{% render 'icon', name: 'logo', icon_size: 48 %}</span>
+      <h1 class="page-title">{{ section.settings.heading | default: 'Page not found' | escape }}</h1>
+      <p>{{ section.settings.text | escape }}</p>
+      <p class="actions-row"><a class="btn btn--accent" href="{{ routes.menu | default: '/menu' }}">Browse the menu</a> <a class="btn btn--ghost" href="{{ routes.home | default: '/' }}">Home</a></p>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Not found",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Page not found" },
+    { "type": "textarea", "id": "text", "label": "Text", "default": "Sorry, that page isn't on the menu. Try one of these instead." }
+  ]
+}
+{% endschema %}

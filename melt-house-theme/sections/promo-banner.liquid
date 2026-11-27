@@ -1,0 +1,35 @@
+{% capture pb_img %}{% render 'safe-url', url: section.settings.image %}{% endcapture %}{% assign pb_img = pb_img | strip %}
+{% if pb_img == '' and section.settings.bundled_art != 'none' %}{% capture pb_file %}{% render 'bundled-art', key: section.settings.bundled_art, variant: 'desktop' %}{% endcapture %}{% assign pb_file = pb_file | strip %}{% if pb_file != '' %}{% assign pb_img = pb_file | asset_url %}{% endif %}{% endif %}
+{% capture pb_link %}{% render 'safe-url', url: section.settings.link %}{% endcapture %}{% assign pb_link = pb_link | strip %}
+<section class="section promo" data-section-id="{{ section.id | escape }}" data-section-type="{{ section.type | escape }}"{% if section.settings.heading != '' %} aria-labelledby="{{ section.id | escape }}-title"{% else %} aria-label="Promotion"{% endif %}>
+  <div class="container">
+    <div class="promo__card{% if pb_img != '' %} promo__card--image{% endif %}">
+      <div class="promo__text">
+        {% if section.settings.kicker != '' %}<p class="promo__kicker">{{ section.settings.kicker | escape }}</p>{% endif %}
+        {% if section.settings.heading != '' %}<h2 class="promo__title" id="{{ section.id | escape }}-title">{{ section.settings.heading | escape }}</h2>{% endif %}
+        {% if section.settings.text != '' %}<p class="promo__body">{{ section.settings.text | escape | newline_to_br }}</p>{% endif %}
+        {% if pb_link != '' and section.settings.button_label != '' %}<a class="btn btn--accent" href="{{ pb_link | escape }}">{{ section.settings.button_label | escape }}</a>{% endif %}
+      </div>
+      {% if pb_img != '' %}<div class="promo__art"><img src="{{ pb_img | escape }}" alt="{{ section.settings.image_alt | escape }}" width="960" height="300" loading="lazy" decoding="async"></div>{% endif %}
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Promo banner",
+  "settings": [
+    { "type": "text", "id": "kicker", "label": "Small heading", "default": "Late night" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Late-night cravings" },
+    { "type": "textarea", "id": "text", "label": "Text", "default": "Late-night cravings sorted. See today's deals on the menu." },
+    { "type": "text", "id": "button_label", "label": "Button label", "default": "See deals" },
+    { "type": "url", "id": "link", "label": "Button link", "default": "/menu" },
+    { "type": "image_picker", "id": "image", "label": "Image" },
+    { "type": "select", "id": "bundled_art", "label": "Bundled artwork when no image is chosen", "default": "none", "options": [
+      { "value": "none", "label": "None" }, { "value": "crispy", "label": "Crispy box" }, { "value": "midnight", "label": "Midnight deal" }, { "value": "family", "label": "Family feast" }
+    ] },
+    { "type": "text", "id": "image_alt", "label": "Image description", "default": "" }
+  ],
+  "presets": [{ "name": "Promo banner", "category": "Promotions" }]
+}
+{% endschema %}

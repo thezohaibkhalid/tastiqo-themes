@@ -1,0 +1,45 @@
+{% assign ct_phone = restaurant.phone | default: '' %}
+{% assign ct_email = restaurant.email | default: '' %}
+{% assign ct_wa = theme.settings.social_whatsapp | default: '' | strip %}
+<div class="section contact-page" data-section-id="{{ section.id | escape }}" data-section-type="{{ section.type | escape }}">
+  <div class="container">
+    <h1 class="page-title">{{ section.settings.heading | default: 'Contact us' | escape }}</h1>
+    {% if section.settings.intro != '' %}<p class="lead">{{ section.settings.intro | escape }}</p>{% endif %}
+    <div class="contact-grid">
+      <section class="card" aria-labelledby="ct-reach">
+        <h2 class="card__title" id="ct-reach">Get in touch</h2>
+        <ul class="contact-list">
+          {% if ct_phone != '' %}<li><a class="contact-list__link" href="tel:{{ ct_phone | remove: ' ' | remove: '-' | escape }}">{% render 'icon', name: 'phone', icon_size: 20 %}<span><span class="contact-list__label">Call</span>{{ ct_phone | escape }}</span></a></li>{% endif %}
+          {% if ct_email != '' %}<li><a class="contact-list__link" href="mailto:{{ ct_email | escape }}">{% render 'icon', name: 'mail', icon_size: 20 %}<span><span class="contact-list__label">Email</span>{{ ct_email | escape }}</span></a></li>{% endif %}
+          {% if ct_wa != '' %}{% assign ct_wa_s = ct_wa | slice: 0, 8 | downcase %}<li><a class="contact-list__link" href="{% if ct_wa_s == 'https://' %}{{ ct_wa | escape }}{% else %}https://wa.me/{{ ct_wa | remove: '+' | remove: ' ' | remove: '-' | url_encode }}{% endif %}" target="_blank" rel="noopener noreferrer">{% render 'icon', name: 'whatsapp', icon_size: 20 %}<span><span class="contact-list__label">WhatsApp</span>Message us<span class="visually-hidden"> (opens in a new tab)</span></span></a></li>{% endif %}
+        </ul>
+        {% if ct_phone == '' and ct_email == '' and ct_wa == '' %}<p class="muted">Contact details will appear here once they're added to the restaurant profile.</p>{% endif %}
+        {% if section.settings.show_social %}{% render 'social-links', s: theme.settings %}{% endif %}
+      </section>
+      <section class="card" aria-labelledby="ct-hours">
+        <h2 class="card__title" id="ct-hours">Opening hours{% if branch.name and branch.name != '' %} — {{ branch.name | escape }}{% endif %}</h2>
+        {% render 'hours-list', hours: restaurant.hours %}
+      </section>
+      {% if locations.size > 1 %}
+      <section class="card contact-grid__wide" aria-labelledby="ct-branches">
+        <h2 class="card__title" id="ct-branches">Branches</h2>
+        <ul class="branch-contacts">
+          {% for l in locations %}<li><strong>{{ l.name | escape }}</strong>{% if l.address != '' %}<span>{{ l.address | escape }}{% if l.city != '' %}, {{ l.city | escape }}{% endif %}</span>{% endif %}{% if l.phone and l.phone != '' %}<a href="tel:{{ l.phone | remove: ' ' | remove: '-' | escape }}">{{ l.phone | escape }}</a>{% endif %}</li>{% endfor %}
+        </ul>
+        <a class="link-more" href="{{ routes.locations | default: '/locations' }}">Hours and directions</a>
+      </section>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Contact",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Contact us" },
+    { "type": "textarea", "id": "intro", "label": "Intro", "default": "Questions about an order or a large booking? Call or message the branch directly." },
+    { "type": "checkbox", "id": "show_social", "label": "Show social links", "default": true }
+  ]
+}
+{% endschema %}

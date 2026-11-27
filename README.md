@@ -1,13 +1,13 @@
-# Tastiqo Liquid themes
+# TapToBite Liquid themes
 
-Source of the Liquid themes used by Tastiqo's **hosted restaurant websites**.
+Source of the Liquid themes used by TapToBite's **hosted restaurant websites**.
 The Liquid runtime is **active**: `go-back` renders these themes per
 restaurant (by host), and restaurants customise them in the visual theme
 editor in `tastiqo-front` (**Themes** → **Customize**).
 
 | Theme | Folder |
 |---|---|
-| **Tastiqo Bold** (platform default for new restaurants) | `tastiqo-bold/` |
+| **TapToBite Bold** (platform default for new restaurants) | `tastiqo-bold/` |
 | Cheesious Bites | `cheesious-bites/` |
 | Flavor House | `flavor-house/` |
 
@@ -63,5 +63,5 @@ theme as a ZIP whose root contains `layout/`, `templates/`, `sections/`,
    tastiqo-admin changes it later. New restaurants get the default theme at
    signup; if its files are not uploaded yet, signup falls back to
    flavor-house instead of installing an empty theme.
-4. Restaurants that already have a theme keep it; they can install Tastiqo
+4. Restaurants that already have a theme keep it; they can install TapToBite
    Bold from **Website → Themes**.

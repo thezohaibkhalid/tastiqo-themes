@@ -1,0 +1,23 @@
+{% comment %}Only https links are rendered; WhatsApp also accepts a plain phone number.{% endcomment %}
+<ul class="social-list">
+  {% assign sl_items = 'instagram,facebook,tiktok,youtube,whatsapp,google_maps' | split: ',' %}
+  {% for sl_key in sl_items %}
+    {% case sl_key %}
+      {% when 'instagram' %}{% assign sl_url = s.social_instagram %}{% assign sl_label = 'Instagram' %}{% assign sl_icon = 'instagram' %}
+      {% when 'facebook' %}{% assign sl_url = s.social_facebook %}{% assign sl_label = 'Facebook' %}{% assign sl_icon = 'facebook' %}
+      {% when 'tiktok' %}{% assign sl_url = s.social_tiktok %}{% assign sl_label = 'TikTok' %}{% assign sl_icon = 'tiktok' %}
+      {% when 'youtube' %}{% assign sl_url = s.social_youtube %}{% assign sl_label = 'YouTube' %}{% assign sl_icon = 'youtube' %}
+      {% when 'whatsapp' %}{% assign sl_url = s.social_whatsapp %}{% assign sl_label = 'WhatsApp' %}{% assign sl_icon = 'whatsapp' %}
+      {% when 'google_maps' %}{% assign sl_url = s.social_google_maps %}{% assign sl_label = 'Google Maps' %}{% assign sl_icon = 'map' %}
+    {% endcase %}
+    {% assign sl_url = sl_url | default: '' | strip %}
+    {% if sl_url != '' %}
+      {% assign sl_scheme = sl_url | slice: 0, 8 | downcase %}
+      {% if sl_scheme == 'https://' %}
+        <li><a class="social-list__link" href="{{ sl_url | escape }}" target="_blank" rel="noopener noreferrer">{% render 'icon', name: sl_icon, icon_size: 20 %}<span>{{ sl_label }}</span><span class="visually-hidden"> (opens in a new tab)</span></a></li>
+      {% elsif sl_key == 'whatsapp' %}
+        <li><a class="social-list__link" href="https://wa.me/{{ sl_url | remove: '+' | remove: ' ' | remove: '-' | remove: '(' | remove: ')' | url_encode }}" target="_blank" rel="noopener noreferrer">{% render 'icon', name: 'whatsapp', icon_size: 20 %}<span>WhatsApp</span><span class="visually-hidden"> (opens in a new tab)</span></a></li>
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+</ul>

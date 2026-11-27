@@ -1,0 +1,53 @@
+{% assign im_match = false %}
+{% if product and product.handle and request.params.slug == product.handle %}{% assign im_match = true %}{% endif %}
+<div class="section item-page" data-section-id="{{ section.id | escape }}" data-section-type="{{ section.type | escape }}">
+  <div class="container">
+  {% if im_match %}
+    {% assign im_available = true %}{% if product.isAvailable == false or product.isSoldOut == true %}{% assign im_available = false %}{% endif %}
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <ol>
+        <li><a href="{{ routes.menu | default: '/menu' }}">Menu</a></li>
+        {% if product.collectionTitle and product.collectionTitle != '' %}<li>{% if product.collectionHandle and product.collectionHandle != '' %}<a href="/category/{{ product.collectionHandle | url_encode }}">{{ product.collectionTitle | escape }}</a>{% else %}{{ product.collectionTitle | escape }}{% endif %}</li>{% endif %}
+        <li aria-current="page">{{ product.name | escape }}</li>
+      </ol>
+    </nav>
+    <article class="item-detail" data-item-page data-product-id="{{ product.id | escape }}">
+      <div class="item-detail__media">{% render 'item-image', item: product, width: 640, eager: true, alt: product.name %}</div>
+      <div class="item-detail__info">
+        <h1 class="page-title item-detail__title">{{ product.name | escape }}</h1>
+        {% if product.tags.size > 0 %}<ul class="tag-list" aria-label="Tags">{% for t in product.tags %}<li class="tag">{{ t | escape }}</li>{% endfor %}</ul>{% endif %}
+        {% if product.description and product.description != '' %}<p class="item-detail__desc">{{ product.description | strip_html | escape | newline_to_br }}</p>{% endif %}
+        <p class="item-detail__price">{% render 'price', item: product %}{% if product.hasDiscount and product.savingsMoney %} <span class="badge badge--sale">Save {{ product.savingsMoney | escape }}</span>{% endif %}</p>
+        {% unless im_available %}
+          <p class="notice notice--warning" role="status">{% if product.isSoldOut %}Sold out at {{ branch.name | default: 'this branch' | escape }} right now.{% else %}Not available at {{ branch.name | default: 'this branch' | escape }} right now.{% endif %} <a href="{{ routes.locations | default: '/locations' }}" data-open-location>Try another branch</a></p>
+        {% endunless %}
+        <noscript><p class="notice">Ordering online needs JavaScript. You can still browse the menu, or call us{% if restaurant.phone %} on <a href="tel:{{ restaurant.phone | remove: ' ' | escape }}">{{ restaurant.phone | escape }}</a>{% endif %}.</p></noscript>
+        {% if im_available %}{% render 'item-form', item: product, uid: 'pdp', disabled: false %}{% endif %}
+      </div>
+    </article>
+
+    {% if section.settings.show_related and product.relatedItems.size > 0 %}
+    <section class="related" aria-labelledby="related-title">
+      <h2 class="section-title" id="related-title">{{ section.settings.related_heading | default: 'You may also like' | escape }}</h2>
+      <div class="item-grid">{% for it in product.relatedItems limit: 4 %}<div class="item-grid__cell">{% render 'item-card', item: it, category_title: '', eager: false %}</div>{% endfor %}</div>
+    </section>
+    {% endif %}
+  {% else %}
+    <div class="empty-state">
+      <h1 class="page-title">We couldn't find that dish</h1>
+      <p>It may have been renamed or isn't on the menu at {{ branch.name | default: 'this branch' | escape }}.</p>
+      <a class="btn btn--primary" href="{{ routes.menu | default: '/menu' }}">Browse the menu</a>
+    </div>
+  {% endif %}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Dish details",
+  "settings": [
+    { "type": "checkbox", "id": "show_related", "label": "Show related dishes", "default": true },
+    { "type": "text", "id": "related_heading", "label": "Related heading", "default": "You may also like" }
+  ]
+}
+{% endschema %}

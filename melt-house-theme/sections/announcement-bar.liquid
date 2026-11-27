@@ -1,0 +1,44 @@
+{% assign ab_count = 0 %}
+{% for block in section.blocks %}{% if block.settings.text != '' %}{% assign ab_count = ab_count | plus: 1 %}{% endif %}{% endfor %}
+{% if section.settings.enabled != false and ab_count > 0 %}
+{% capture ab_bg %}{% render 'css-color', value: section.settings.background, fallback: '#B91C2B' %}{% endcapture %}
+{% capture ab_fg %}{% render 'css-color', value: section.settings.text_color, fallback: '#FFFFFF' %}{% endcapture %}
+<div class="announcement" style="--ann-bg:{{ ab_bg | strip }};--ann-fg:{{ ab_fg | strip }}" data-section-id="{{ section.id | escape }}" data-section-type="{{ section.type | escape }}" role="region" aria-label="Announcements">
+  <ul class="announcement__list">
+    {% for block in section.blocks %}
+      {% if block.settings.text != '' %}
+      {% assign ab_link = block.settings.link | default: '' %}
+      {% assign ab_link_ok = false %}{% assign ab_l0 = ab_link | slice: 0 %}{% assign ab_l1 = ab_link | slice: 1 %}
+      {% if ab_l0 == '/' and ab_l1 != '/' %}{% assign ab_link_ok = true %}{% endif %}
+      {% assign ab_https = ab_link | slice: 0, 8 | downcase %}{% if ab_https == 'https://' %}{% assign ab_link_ok = true %}{% endif %}
+      <li class="announcement__item" data-block-id="{{ block.id | escape }}" data-block-type="{{ block.type | escape }}">
+        {% if ab_link_ok %}<a href="{{ ab_link | escape }}">{{ block.settings.text | escape }}</a>{% else %}{{ block.settings.text | escape }}{% endif %}
+      </li>
+      {% endif %}
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{% schema %}
+{
+  "name": "Announcement bar",
+  "settings": [
+    { "type": "checkbox", "id": "enabled", "label": "Show announcement bar", "default": true },
+    { "type": "color", "id": "background", "label": "Background", "default": "#B91C2B" },
+    { "type": "color", "id": "text_color", "label": "Text", "default": "#FFFFFF" }
+  ],
+  "blocks": [
+    {
+      "type": "announcement",
+      "name": "Announcement",
+      "settings": [
+        { "type": "text", "id": "text", "label": "Text", "default": "Fresh from the oven — order for delivery or pick-up." },
+        { "type": "url", "id": "link", "label": "Link (optional)", "default": "" }
+      ]
+    }
+  ],
+  "max_blocks": 3,
+  "presets": [{ "name": "Announcement bar", "category": "Header", "blocks": [{ "type": "announcement" }] }]
+}
+{% endschema %}

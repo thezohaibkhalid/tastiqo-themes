@@ -1,0 +1,18 @@
+{% comment %}Menu item card. Links to the item page (works without JS); theme.js opens the options sheet instead.{% endcomment %}
+{% assign ic_available = true %}{% if item.isAvailable == false or item.isSoldOut == true %}{% assign ic_available = false %}{% endif %}
+<article class="item-card{% unless ic_available %} is-unavailable{% endunless %}" data-item-card data-item-id="{{ item.id | escape }}" data-search="{{ item.name | append: ' ' | append: item.description | append: ' ' | append: category_title | strip_html | downcase | escape }}">
+  <a class="item-card__media" href="{{ item.url | escape }}" data-open-item="{{ item.id | escape }}" tabindex="-1" aria-hidden="true">{% render 'item-image', item: item, alt: item.name, width: 280, eager: eager %}</a>
+  <div class="item-card__body">
+    <h3 class="item-card__title"><a href="{{ item.url | escape }}" data-open-item="{{ item.id | escape }}">{{ item.name | escape }}</a></h3>
+    {% if item.description and item.description != '' %}<p class="item-card__desc">{{ item.description | strip_html | escape }}</p>{% endif %}
+    {% if item.tags.size > 0 %}<ul class="tag-list" aria-label="Tags">{% for t in item.tags limit: 2 %}<li class="tag">{{ t | escape }}</li>{% endfor %}</ul>{% endif %}
+    <div class="item-card__foot">
+      {% render 'price', item: item %}
+      {% if ic_available %}
+      <a class="btn btn--primary btn--sm" href="{{ item.url | escape }}" data-open-item="{{ item.id | escape }}"><span>Add<span class="hide-xs"> to cart</span></span><span class="visually-hidden"> {{ item.name | escape }}</span></a>
+      {% else %}
+      <span class="badge badge--muted">{% if item.isSoldOut %}Sold out{% else %}Unavailable{% endif %}</span>
+      {% endif %}
+    </div>
+  </div>
+</article>

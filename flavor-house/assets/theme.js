@@ -946,7 +946,7 @@
 
   /* -----------------------------------------------
      Checkout
-     The checkout is owned by Tastiqo and served at /checkout on this
+     The checkout is owned by TapToBite and served at /checkout on this
      website. Themes link to it and keep only the cart UI.
   ----------------------------------------------- */
 
@@ -1750,7 +1750,7 @@
 
 /* >>> tq-merch carousel (generated, keep in sync across themes) */
 /* ===============================================================
-   Tastiqo carousel (shared by hero-carousel, deals and showcase
+   TapToBite carousel (shared by hero-carousel, deals and showcase
    sections). Vanilla, dependency-free, ~2 KB.
 
    Markup contract (see sections/hero-carousel.liquid):

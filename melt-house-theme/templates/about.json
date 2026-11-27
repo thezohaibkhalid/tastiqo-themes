@@ -1,0 +1,32 @@
+{
+  "sections": {
+    "header": {
+      "type": "header-section",
+      "settings": {
+        "show_location": true
+      }
+    },
+    "main": {
+      "type": "about-main",
+      "settings": {}
+    },
+    "social": {
+      "type": "social-section",
+      "settings": {}
+    },
+    "footer": {
+      "type": "footer-section",
+      "settings": {}
+    }
+  },
+  "header_order": [
+    "header"
+  ],
+  "order": [
+    "main",
+    "social"
+  ],
+  "footer_order": [
+    "footer"
+  ]
+}

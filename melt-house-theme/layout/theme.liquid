@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en" dir="ltr" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+{% assign s = theme.settings %}
+{% assign head_html = content_for_header | append: '' %}
+{% comment %} ---------- Page title and metadata (only what content_for_header does not already supply) ---------- {% endcomment %}
+{% assign brand_name = restaurant.name | default: 'Our restaurant' %}
+{% assign page_label = '' %}
+{% case request.page_type %}
+  {% when 'index' %}
+    {% if s.seo_title and s.seo_title != '' %}{% assign page_label = s.seo_title %}{% endif %}
+  {% when 'product' %}
+    {% if product and product.name %}{% assign page_label = product.name %}{% endif %}
+  {% when 'collection' %}
+    {% if request.path == routes.menu %}{% assign page_label = 'Menu' %}{% elsif collection and collection.title %}{% assign page_label = collection.title %}{% else %}{% assign page_label = 'Menu' %}{% endif %}
+  {% when 'search' %}{% assign page_label = 'Search' %}
+  {% when 'cart' %}{% assign page_label = 'Your cart' %}
+  {% when 'checkout' %}{% assign page_label = 'Checkout' %}
+  {% when 'customers/login' %}{% assign page_label = 'Sign in' %}
+  {% when 'customers/account' %}
+    {% if request.path == routes.account_orders %}{% assign page_label = 'My orders' %}{% else %}{% assign page_label = 'My account' %}{% endif %}
+  {% when 'customers/order' %}{% assign page_label = 'Order details' %}
+  {% when '404' %}{% assign page_label = 'Page not found' %}
+  {% when 'page' %}
+    {% if request.path == routes.about %}{% assign page_label = 'About us' %}{% elsif request.path == routes.contact %}{% assign page_label = 'Contact' %}{% elsif request.path == routes.locations %}{% assign page_label = 'Locations' %}{% endif %}
+{% endcase %}
+{% if page_label == '' %}{% assign full_title = brand_name %}{% elsif request.page_type == 'index' %}{% assign full_title = page_label %}{% else %}{% assign full_title = page_label | append: ' | ' | append: brand_name %}{% endif %}
+{% assign meta_desc = s.seo_description | default: restaurant.description | default: restaurant.tagline | default: '' | strip_html | strip_newlines | truncatewords: 45 %}
+{% if request.page_type == 'product' and product and product.description %}{% assign meta_desc = product.description | strip_html | strip_newlines | truncatewords: 45 %}{% endif %}
+{{ content_for_header }}
+{% unless head_html contains '<title' %}<title>{{ full_title | escape }}</title>{% endunless %}
+{% unless head_html contains 'name="description"' %}{% if meta_desc != '' %}<meta name="description" content="{{ meta_desc | escape }}">{% endif %}{% endunless %}
+{% unless head_html contains 'og:title' %}
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{ full_title | escape }}">
+{% if meta_desc != '' %}<meta property="og:description" content="{{ meta_desc | escape }}">{% endif %}
+{% assign og_img = s.seo_og_image | default: restaurant.cover_image | default: '' %}
+{% if request.page_type == 'product' and product.imageUrl %}{% assign og_img = product.imageUrl %}{% endif %}
+{% if og_img != '' %}<meta property="og:image" content="{{ og_img | escape }}"><meta name="twitter:card" content="summary_large_image">{% endif %}
+{% endunless %}
+{% unless head_html contains 'rel="icon"' %}{% assign fav = s.favicon | default: restaurant.icon | default: '' %}{% if fav != '' %}<link rel="icon" href="{{ fav | escape }}">{% endif %}{% endunless %}
+{% if request.page_type == 'checkout' or request.page_type == 'customers/login' or request.page_type == 'customers/account' or request.page_type == 'customers/order' or request.page_type == 'cart' %}<meta name="robots" content="noindex">{% endif %}
+{% unless head_html contains 'theme.css' %}{{ 'theme.css' | asset_url | stylesheet_tag }}{% endunless %}
+
+{% comment %} ---------- Design tokens from global settings (validated before use) ---------- {% endcomment %}
+{% capture c_primary %}{% render 'css-color', value: s.color_primary, fallback: '#48271C' %}{% endcapture %}
+{% capture c_secondary %}{% render 'css-color', value: s.color_secondary, fallback: '#FDF1DC' %}{% endcapture %}
+{% capture c_accent %}{% render 'css-color', value: s.color_accent, fallback: '#EAA221' %}{% endcapture %}
+{% capture c_bg %}{% render 'css-color', value: s.color_background, fallback: '#F3F4F6' %}{% endcapture %}
+{% capture c_surface %}{% render 'css-color', value: s.color_surface, fallback: '#FFFFFF' %}{% endcapture %}
+{% capture c_text %}{% render 'css-color', value: s.color_text, fallback: '#24282B' %}{% endcapture %}
+{% capture c_muted %}{% render 'css-color', value: s.color_text_muted, fallback: '#555B62' %}{% endcapture %}
+{% capture c_border %}{% render 'css-color', value: s.color_border, fallback: '#D9DCE1' %}{% endcapture %}
+{% capture c_success %}{% render 'css-color', value: s.color_success, fallback: '#176543' %}{% endcapture %}
+{% capture c_warning %}{% render 'css-color', value: s.color_warning, fallback: '#80530E' %}{% endcapture %}
+{% capture c_error %}{% render 'css-color', value: s.color_error, fallback: '#A71D2A' %}{% endcapture %}
+{% capture f_head %}{% render 'font-stack', name: s.font_heading %}{% endcapture %}
+{% capture f_body %}{% render 'font-stack', name: s.font_body %}{% endcapture %}
+{% capture n_base %}{% render 'css-number', value: s.base_font_size, min: 12, max: 20, fallback: 16 %}{% endcapture %}
+{% capture n_hscale %}{% render 'css-number', value: s.heading_scale, min: 50, max: 150, fallback: 100 %}{% endcapture %}
+{% capture n_bscale %}{% render 'css-number', value: s.body_scale, min: 75, max: 150, fallback: 100 %}{% endcapture %}
+{% capture n_width %}{% render 'css-number', value: s.page_width, min: 900, max: 1600, fallback: 1200 %}{% endcapture %}
+{% capture n_space %}{% render 'css-number', value: s.spacing_sections, min: 0, max: 100, fallback: 40 %}{% endcapture %}
+{% assign radius_raw = s.border_radius | append: '' | remove: 'px' | strip %}
+{% capture n_radius %}{% render 'css-number', value: radius_raw, min: 0, max: 40, fallback: 8 %}{% endcapture %}
+{% capture n_bscale_btn %}{% render 'css-number', value: s.button_scale, min: 75, max: 150, fallback: 100 %}{% endcapture %}
+{% capture n_bborder %}{% render 'css-number', value: s.button_border_thickness, min: 0, max: 5, fallback: 0 %}{% endcapture %}
+{% capture n_logo %}{% render 'css-number', value: s.logo_width, min: 30, max: 300, fallback: 120 %}{% endcapture %}
+{% case s.button_style %}{% when 'pill' %}{% assign btn_radius = '999px' %}{% when 'square' %}{% assign btn_radius = '0px' %}{% else %}{% assign btn_radius = 'var(--radius)' %}{% endcase %}
+{% case s.button_shadow %}{% when 'small' %}{% assign btn_shadow = '0 1px 3px rgba(0,0,0,.18)' %}{% when 'medium' %}{% assign btn_shadow = '0 4px 12px rgba(0,0,0,.2)' %}{% else %}{% assign btn_shadow = 'none' %}{% endcase %}
+<style>
+@font-face{font-family:"Poppins";font-style:normal;font-weight:400;font-display:swap;src:url("{{ 'poppins-400.woff2' | asset_url }}") format("woff2")}
+@font-face{font-family:"Poppins";font-style:normal;font-weight:500;font-display:swap;src:url("{{ 'poppins-500.woff2' | asset_url }}") format("woff2")}
+@font-face{font-family:"Poppins";font-style:normal;font-weight:600;font-display:swap;src:url("{{ 'poppins-600.woff2' | asset_url }}") format("woff2")}
+@font-face{font-family:"Poppins";font-style:normal;font-weight:700;font-display:swap;src:url("{{ 'poppins-700.woff2' | asset_url }}") format("woff2")}
+:root{
+--color-primary:{{ c_primary | strip }};--color-secondary:{{ c_secondary | strip }};--color-accent:{{ c_accent | strip }};
+--color-background:{{ c_bg | strip }};--color-surface:{{ c_surface | strip }};--color-text:{{ c_text | strip }};
+--color-text-muted:{{ c_muted | strip }};--color-border:{{ c_border | strip }};--color-success:{{ c_success | strip }};
+--color-warning:{{ c_warning | strip }};--color-error:{{ c_error | strip }};
+--font-heading:{{ f_head | strip }};--font-body:{{ f_body | strip }};
+--base-font-size:{{ n_base | strip }}px;--heading-scale:{{ n_hscale | strip | plus: 0 | divided_by: 100.0 }};--body-scale:{{ n_bscale | strip | plus: 0 | divided_by: 100.0 }};
+--page-width:{{ n_width | strip }}px;--section-space:{{ n_space | strip }}px;--radius:{{ n_radius | strip }}px;
+--btn-radius:{{ btn_radius }};--btn-scale:{{ n_bscale_btn | strip | plus: 0 | divided_by: 100.0 }};--btn-shadow:{{ btn_shadow }};--btn-border:{{ n_bborder | strip }}px;
+--logo-width:{{ n_logo | strip }}px;
+}
+</style>
+{% if s.custom_css != nil and s.custom_css != '' %}<style id="merchant-css">{{ s.custom_css | replace: '</', '' }}</style>{% endif %}
+{% render 'site-data', restaurant: restaurant, localization: localization, branch: branch, branch_selector: branch_selector, menu_categories: menu_categories, routes: routes, request: request, utils: utils %}
+<script>document.documentElement.className=document.documentElement.className.replace('no-js','js');</script>
+{{ 'theme.js' | asset_url | script_tag }}
+</head>
+{% assign body_class = 'page-' | append: request.page_type | replace: '/', '-' %}
+<body class="{{ body_class | escape }}{% if s.header_sticky == false %} header-static{% endif %}">
+<a class="skip-link" href="#main">Skip to content</a>
+{% assign layout_parts = content_for_layout | split: '<!--mh:header-end-->' %}
+{% if layout_parts.size == 2 %}{% assign header_html = layout_parts.first %}{% assign body_html = layout_parts.last %}{% else %}{% assign header_html = '' %}{% assign body_html = content_for_layout %}{% endif %}
+{% assign foot_parts = body_html | split: '<!--mh:footer-start-->' %}
+{% if foot_parts.size == 2 %}{% assign main_html = foot_parts.first %}{% assign footer_html = foot_parts.last %}{% else %}{% assign main_html = body_html %}{% assign footer_html = '' %}{% endif %}
+{{ header_html }}
+<main id="main" tabindex="-1">
+{{ main_html }}
+</main>
+{{ footer_html }}
+{% render 'global-dialogs', restaurant: restaurant, branch: branch, branch_selector: branch_selector, routes: routes %}
+<div class="visually-hidden" aria-live="polite" aria-atomic="true" data-live-polite></div>
+<div class="visually-hidden" aria-live="assertive" aria-atomic="true" data-live-assertive></div>
+{% if s.custom_js != nil and s.custom_js != '' %}<script id="merchant-js">{{ s.custom_js | replace: '</script', '' }}</script>{% endif %}
+</body>
+</html>

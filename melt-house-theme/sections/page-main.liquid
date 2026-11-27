@@ -1,0 +1,43 @@
+{% assign pg_slug = request.params.slug | default: '' %}
+{% assign pg_block = nil %}
+{% for block in section.blocks %}{% if block.settings.slug == pg_slug %}{% assign pg_block = block %}{% endif %}{% endfor %}
+<div class="section content-page" data-section-id="{{ section.id | escape }}" data-section-type="{{ section.type | escape }}">
+  <div class="container container--narrow-wide">
+  {% if pg_block %}
+    <article class="prose" data-block-id="{{ pg_block.id | escape }}" data-block-type="{{ pg_block.type | escape }}">
+      <h1 class="page-title">{{ pg_block.settings.title | escape }}</h1>
+      {% if pg_block.settings.updated and pg_block.settings.updated != '' %}<p class="muted small">Last updated {{ pg_block.settings.updated | date: '%d %B %Y' }}</p>{% endif %}
+      {% if pg_block.settings.body != '' %}<p class="prose__pre">{{ pg_block.settings.body | strip_html | escape | newline_to_br }}</p>{% endif %}
+    </article>
+  {% else %}
+    <div class="empty-state">
+      <h1 class="page-title">Page not found</h1>
+      <p>We couldn't find that page.</p>
+      <a class="btn btn--primary" href="{{ routes.home | default: '/' }}">Go to the home page</a>
+    </div>
+  {% endif %}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Content pages",
+  "description": "Each block is one page shown at /page/<slug> or /pages/<slug>.",
+  "settings": [
+    { "type": "paragraph", "content": "Add a block per page. The slug is the last part of the address, e.g. 'terms' for /page/terms." }
+  ],
+  "blocks": [
+    {
+      "type": "page",
+      "name": "Page",
+      "settings": [
+        { "type": "text", "id": "slug", "label": "Slug", "default": "terms" },
+        { "type": "text", "id": "title", "label": "Title", "default": "Terms and conditions" },
+        { "type": "date", "id": "updated", "label": "Last updated" },
+        { "type": "textarea", "id": "body", "label": "Text", "default": "" }
+      ]
+    }
+  ],
+  "presets": [{ "name": "Content pages" }]
+}
+{% endschema %}

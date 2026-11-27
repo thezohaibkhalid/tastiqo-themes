@@ -1,5 +1,5 @@
 /* =================================================================
-   Tastiqo Bold — default storefront theme
+   TapToBite Bold — default storefront theme
    Mobile first. Every colour comes from the tokens below:
      --p-*  preset palette (html[data-scheme] + light/dark)
      --u-*  owner overrides (Theme settings → Colours), set inline
@@ -173,7 +173,7 @@ ul[role="list"], ol[role="list"] { list-style: none; margin: 0; padding: 0; }
 }
 
 /* ===============================================================
-   Tastiqo merchandising components (hero carousel, featured
+   TapToBite merchandising components (hero carousel, featured
    categories, product showcase, deals). Shared markup across themes;
    each theme maps --tq-* to its own design tokens above.
    =============================================================== */

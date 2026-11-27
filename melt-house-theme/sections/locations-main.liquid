@@ -1,0 +1,50 @@
+{% assign lm_set = branch_selector.set_branch_url | default: '/api/storefront/set-branch' %}
+<div class="section locations-page" data-section-id="{{ section.id | escape }}" data-section-type="{{ section.type | escape }}">
+  <div class="container">
+    <h1 class="page-title">{{ section.settings.heading | default: 'Our branches' | escape }}</h1>
+    {% if section.settings.intro != '' %}<p class="lead">{{ section.settings.intro | escape }}</p>{% endif %}
+    <p class="actions-row"><button type="button" class="btn btn--accent" data-open-location hidden>{% render 'icon', name: 'scooter', icon_size: 20 %}<span>Order for delivery</span></button></p>
+    {% if locations.size > 0 %}
+    <ul class="location-grid" role="list">
+      {% for l in locations %}
+      {% assign lm_current = false %}{% if l.id == branch.id %}{% assign lm_current = true %}{% endif %}
+      {% capture lm_maps %}{% render 'safe-url', url: l.maps_url %}{% endcapture %}{% assign lm_maps = lm_maps | strip %}
+      {% assign lm_maps_s = lm_maps | slice: 0, 8 %}{% if lm_maps_s != 'https://' %}{% assign lm_maps = '' %}{% endif %}
+      <li class="card location-card{% if lm_current %} is-current{% endif %}">
+        <div class="location-card__head">
+          <h2 class="location-card__name">{{ l.name | escape }}</h2>
+          <span class="status-pill {% if l.is_open %}status-pill--ok{% else %}status-pill--muted{% endif %}">{% if l.is_open %}Open now{% else %}Closed now{% endif %}</span>
+        </div>
+        {% if lm_current %}<p class="location-card__current">{% render 'icon', name: 'check', icon_size: 16 %}You're ordering from this branch</p>{% endif %}
+        {% if l.address and l.address != '' %}<p class="location-card__addr">{% render 'icon', name: 'pin', icon_size: 18 %}<span>{{ l.address | escape }}{% if l.city and l.city != '' %}, {{ l.city | escape }}{% endif %}</span></p>{% endif %}
+        {% if l.phone and l.phone != '' %}<p class="location-card__phone">{% render 'icon', name: 'phone', icon_size: 18 %}<a href="tel:{{ l.phone | remove: ' ' | remove: '-' | escape }}">{{ l.phone | escape }}</a></p>{% endif %}
+        <details class="location-card__hours"><summary>Opening hours</summary>{% render 'hours-list', hours: l.hours %}</details>
+        <div class="location-card__actions">
+          {% unless lm_current %}
+          <form method="post" action="{{ lm_set | escape }}" data-pickup-branch-form data-branch-name="{{ l.name | escape }}">
+            <input type="hidden" name="branch_id" value="{{ l.id | escape }}">
+            <button type="submit" class="btn btn--primary">Order pick-up here<span class="visually-hidden"> — {{ l.name | escape }}</span></button>
+          </form>
+          {% else %}
+          <a class="btn btn--primary" href="{{ routes.menu | default: '/menu' }}">See the menu</a>
+          {% endunless %}
+          {% if lm_maps != '' %}<a class="btn btn--ghost" href="{{ lm_maps | escape }}" target="_blank" rel="noopener noreferrer">{% render 'icon', name: 'map', icon_size: 18 %}<span>Directions<span class="visually-hidden"> to {{ l.name | escape }} (opens in a new tab)</span></span></a>{% endif %}
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="empty-note">Branch details will appear here once they're published.</p>
+    {% endif %}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Locations",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Our branches" },
+    { "type": "textarea", "id": "intro", "label": "Intro", "default": "Collect from a branch near you, or choose delivery and we'll find the closest kitchen." }
+  ]
+}
+{% endschema %}

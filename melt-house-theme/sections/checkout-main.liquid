@@ -1,0 +1,46 @@
+{% assign co_track = section.settings.tracking_app_url | default: '' | strip %}
+{% assign co_track_scheme = co_track | slice: 0, 8 | downcase %}
+{% if co_track_scheme != 'https://' %}{% assign co_track = '' %}{% endif %}
+<div class="section checkout" data-section-id="{{ section.id | escape }}" data-section-type="{{ section.type | escape }}" data-checkout data-tracking-url="{{ co_track | escape }}" data-tracking-code-path="{% if section.settings.tracking_code_in_path %}true{% else %}false{% endif %}" data-allow-notes="{% if section.settings.allow_notes %}true{% else %}false{% endif %}">
+  <div class="container">
+    <div data-checkout-main>
+      <p class="back-link"><a href="{{ routes.cart | default: '/cart' }}">{% render 'icon', name: 'chevron-left', icon_size: 16 %}Back to cart</a></p>
+      <h1 class="page-title" tabindex="-1" data-checkout-heading>{{ section.settings.heading | default: 'Checkout' | escape }}</h1>
+      <noscript><p class="notice">Checkout needs JavaScript. Please turn it on to place your order{% if restaurant.phone %}, or call us on <a href="tel:{{ restaurant.phone | remove: ' ' | escape }}">{{ restaurant.phone | escape }}</a>{% endif %}.</p></noscript>
+      <div class="checkout-layout">
+        <div class="checkout-steps">
+          <section class="card step" aria-labelledby="step-contact-title" data-step="contact">
+            <h2 class="step__title" id="step-contact-title"><span class="step__num" aria-hidden="true">1</span>Contact</h2>
+            <div data-step-body="contact"><p class="muted">Loading…</p></div>
+          </section>
+          <section class="card step" aria-labelledby="step-fulfil-title" data-step="fulfilment">
+            <h2 class="step__title" id="step-fulfil-title"><span class="step__num" aria-hidden="true">2</span>Delivery or pick-up</h2>
+            <div data-step-body="fulfilment"><p class="muted">Loading…</p></div>
+          </section>
+          <section class="card step" aria-labelledby="step-review-title" data-step="review">
+            <h2 class="step__title" id="step-review-title"><span class="step__num" aria-hidden="true">3</span>Review and place order</h2>
+            <div data-step-body="review"><p class="muted">Loading…</p></div>
+          </section>
+        </div>
+        <aside class="card checkout-summary" aria-labelledby="co-summary-title">
+          <h2 class="card__title" id="co-summary-title">Your order</h2>
+          <div data-checkout-summary></div>
+        </aside>
+      </div>
+    </div>
+    <div class="checkout-success" data-checkout-success hidden></div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Checkout",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Checkout" },
+    { "type": "checkbox", "id": "allow_notes", "label": "Let customers add order notes", "default": true },
+    { "type": "header", "content": "Order tracking app" },
+    { "type": "url", "id": "tracking_app_url", "label": "Tracking app URL", "info": "HTTPS only. Leave empty to show instructions instead of a link.", "default": "" },
+    { "type": "checkbox", "id": "tracking_code_in_path", "label": "Tracking app accepts the tracking code as the last part of the link", "info": "Only turn on if your tracking app documents a link like https://tracker.example/track/<code>. No phone number or sign-in token is ever added.", "default": false }
+  ]
+}
+{% endschema %}

@@ -55,7 +55,7 @@
         <ul class="tb-footer__legal" role="list">{%- for link in navigation.legal -%}<li><a href="{% render 'safe-url', url: link.url %}">{{ link.title | escape }}</a></li>{%- endfor -%}</ul>
       {%- endif -%}
       {%- if tq_layout == 'minimal' -%}{% render 'social-links' %}{%- endif -%}
-      {%- if s.show_powered_by -%}<p class="tb-fine">Online ordering by Tastiqo</p>{%- endif -%}
+      {%- if s.show_powered_by -%}<p class="tb-fine">Online ordering by TapToBite</p>{%- endif -%}
     </div>
   </div>
 </footer>
@@ -77,7 +77,7 @@
     { "type": "text", "id": "links_heading", "label": "Links heading", "default": "Explore" },
     { "type": "checkbox", "id": "show_hours", "label": "Show opening hours", "default": true },
     { "type": "text", "id": "payment_note", "label": "Payment note", "default": "Cash on delivery and pickup." },
-    { "type": "checkbox", "id": "show_powered_by", "label": "Show 'Online ordering by Tastiqo'", "default": true }
+    { "type": "checkbox", "id": "show_powered_by", "label": "Show 'Online ordering by TapToBite'", "default": true }
   ],
   "presets": [
     { "name": "Footer – Columns", "category": "Footer", "settings": { "layout": "columns" } },

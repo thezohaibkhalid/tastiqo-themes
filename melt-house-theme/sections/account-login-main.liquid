@@ -1,0 +1,21 @@
+<div class="section auth-page" data-section-id="{{ section.id | escape }}" data-section-type="{{ section.type | escape }}">
+  <div class="container container--narrow">
+    <div class="card auth-card">
+      <span class="brand-chip">{% render 'icon', name: 'logo', icon_size: 22 %}<span>{{ restaurant.name | escape }}</span></span>
+      <h1 class="page-title" tabindex="-1" data-auth-heading>{{ section.settings.heading | default: 'Sign in or create an account' | escape }}</h1>
+      <p class="muted">{{ section.settings.intro | escape }}</p>
+      <noscript><p class="notice">Signing in needs JavaScript. Please turn it on to continue.</p></noscript>
+      <div data-auth-form data-auth-mode="page"></div>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Sign in",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Sign in or create an account" },
+    { "type": "textarea", "id": "intro", "label": "Intro", "default": "We'll email you a 6-digit code. No password needed." }
+  ]
+}
+{% endschema %}

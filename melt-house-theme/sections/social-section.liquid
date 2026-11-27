@@ -1,0 +1,22 @@
+{% assign ss = theme.settings %}
+{% if ss.social_instagram != '' or ss.social_facebook != '' or ss.social_tiktok != '' or ss.social_youtube != '' or ss.social_whatsapp != '' or ss.social_google_maps != '' %}
+<section class="section social-section" data-section-id="{{ section.id | escape }}" data-section-type="{{ section.type | escape }}" aria-labelledby="{{ section.id | escape }}-title">
+  <div class="container">
+    <h2 class="section-title" id="{{ section.id | escape }}-title">{{ section.settings.heading | default: 'Follow us' | escape }}</h2>
+    {% if section.settings.text != '' %}<p class="muted">{{ section.settings.text | escape }}</p>{% endif %}
+    {% render 'social-links', s: ss %}
+  </div>
+</section>
+{% endif %}
+
+{% schema %}
+{
+  "name": "Social links",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Follow us" },
+    { "type": "text", "id": "text", "label": "Text", "default": "New deals land on our socials first." },
+    { "type": "paragraph", "content": "Links are set in Theme settings → Social and maps. This section hides itself when none are set." }
+  ],
+  "presets": [{ "name": "Social links", "category": "Content" }]
+}
+{% endschema %}

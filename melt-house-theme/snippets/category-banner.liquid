@@ -1,0 +1,5 @@
+{% comment %}Brand banner shown above each menu category. Uses the category image, else up to two item photos.{% endcomment %}
+<div class="cat-banner" aria-hidden="true">
+  <div class="cat-banner__text">{% if kicker and kicker != '' %}<span class="cat-banner__kicker">{{ kicker | escape }}</span>{% endif %}<span class="cat-banner__title">{{ category.title | escape }}</span></div>
+  <div class="cat-banner__art">{% if category.image and category.image != '' %}<img src="{{ category.image | escape }}" alt="" width="360" height="180" loading="lazy" decoding="async">{% else %}{% assign cb_n = 0 %}{% for cb_item in category.items %}{% if cb_item.imageUrl and cb_item.imageUrl != '' and cb_n < 2 %}<img src="{{ cb_item.imageUrl | escape }}" alt="" width="160" height="160" loading="lazy" decoding="async">{% assign cb_n = cb_n | plus: 1 %}{% endif %}{% endfor %}{% endif %}</div>
+</div>

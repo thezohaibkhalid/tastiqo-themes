@@ -1,0 +1,42 @@
+{% assign cm_match = false %}
+{% if collection and collection.handle and request.params.slug == collection.handle %}{% assign cm_match = true %}{% endif %}
+<div class="section collection-page" data-section-id="{{ section.id | escape }}" data-section-type="{{ section.type | escape }}">
+  <div class="container">
+  {% if cm_match %}
+    <nav class="breadcrumb" aria-label="Breadcrumb"><ol><li><a href="{{ routes.menu | default: '/menu' }}">Menu</a></li><li aria-current="page">{{ collection.title | escape }}</li></ol></nav>
+    <h1 class="page-title">{{ collection.title | escape }}</h1>
+    {% if collection.description and collection.description != '' %}<p class="lead">{{ collection.description | strip_html | escape }}</p>{% endif %}
+    {% if section.settings.show_banner %}{% render 'category-banner', category: collection, kicker: section.settings.kicker %}{% endif %}
+
+    {% if section.settings.show_other and menu_categories.size > 1 %}
+    <nav class="chip-nav" aria-label="Other categories">
+      <ul>{% for c in menu_categories %}<li><a class="chip{% if c.handle == collection.handle %} is-active{% endif %}" href="{{ c.url | escape }}"{% if c.handle == collection.handle %} aria-current="page"{% endif %}>{{ c.title | escape }}</a></li>{% endfor %}</ul>
+    </nav>
+    {% endif %}
+
+    {% if collection.items.size > 0 %}
+    <h2 class="visually-hidden">Dishes in {{ collection.title | escape }}</h2>
+    <div class="item-grid">{% for it in collection.items %}<div class="item-grid__cell">{% render 'item-card', item: it, category_title: collection.title, eager: false %}</div>{% endfor %}</div>
+    {% else %}
+    <p class="empty-note">Nothing in this category at {{ branch.name | default: 'this branch' | escape }} right now. <a href="{{ routes.menu | default: '/menu' }}">See the full menu</a></p>
+    {% endif %}
+  {% else %}
+    <div class="empty-state">
+      <h1 class="page-title">We couldn't find that category</h1>
+      <p>It may have moved or isn't offered at {{ branch.name | default: 'this branch' | escape }}.</p>
+      <a class="btn btn--primary" href="{{ routes.menu | default: '/menu' }}">Browse the full menu</a>
+    </div>
+  {% endif %}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Category",
+  "settings": [
+    { "type": "checkbox", "id": "show_banner", "label": "Show category banner", "default": true },
+    { "type": "text", "id": "kicker", "label": "Banner small heading", "default": "Freshly made" },
+    { "type": "checkbox", "id": "show_other", "label": "Show links to other categories", "default": true }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,70 @@
+{% comment %}Image-only carousel: a slide is shown only when it has an uploaded image or bundled artwork.{% endcomment %}
+{% assign hero_slides = 0 %}
+{% for block in section.blocks %}{% capture hs_test %}{% render 'hero-image-url', block: block, variant: 'desktop' %}{% endcapture %}{% assign hs_test = hs_test | strip %}{% if hs_test != '' %}{% assign hero_slides = hero_slides | plus: 1 %}{% endif %}{% endfor %}
+{% if hero_slides > 0 %}
+<section class="hero" data-section-id="{{ section.id | escape }}" data-section-type="{{ section.type | escape }}" data-carousel data-autoplay="{% if section.settings.autoplay %}true{% else %}false{% endif %}" data-interval="{{ section.settings.interval | default: 6 }}" aria-roledescription="carousel" aria-label="{{ section.settings.label | default: 'Promotions' | escape }}">
+  {% if section.settings.page_heading != '' %}<h1 class="visually-hidden">{{ section.settings.page_heading | replace: '[restaurant]', restaurant.name | escape }}</h1>{% endif %}
+  <div class="hero__viewport" data-carousel-track tabindex="-1">
+    {% assign hs_index = 0 %}
+    {% for block in section.blocks %}
+      {% capture hs_desktop %}{% render 'hero-image-url', block: block, variant: 'desktop' %}{% endcapture %}{% assign hs_desktop = hs_desktop | strip %}
+      {% if hs_desktop != '' %}
+      {% assign hs_index = hs_index | plus: 1 %}
+      {% capture hs_mobile %}{% render 'hero-image-url', block: block, variant: 'mobile' %}{% endcapture %}{% assign hs_mobile = hs_mobile | strip %}
+      {% capture hs_link %}{% render 'safe-url', url: block.settings.link %}{% endcapture %}{% assign hs_link = hs_link | strip %}
+      <div class="hero__slide" role="group" aria-roledescription="slide" aria-label="{{ hs_index }} of {{ hero_slides }}" data-block-id="{{ block.id | escape }}" data-block-type="{{ block.type | escape }}" data-carousel-slide>
+        {% if hs_link != '' %}<a class="hero__link" href="{{ hs_link | escape }}">{% else %}<div class="hero__link">{% endif %}
+          <picture>
+            {% if hs_mobile != '' and hs_mobile != hs_desktop %}<source media="(max-width: 767px)" srcset="{{ hs_mobile | escape }}" width="800" height="800">{% endif %}
+            <img class="hero__img{% if hs_mobile == '' or hs_mobile == hs_desktop %} hero__img--single{% endif %}" src="{{ hs_desktop | escape }}" alt="{{ block.settings.alt | escape }}" width="1920" height="600" {% if hs_index == 1 %}fetchpriority="high"{% else %}loading="lazy"{% endif %} decoding="async">
+          </picture>
+        {% if hs_link != '' %}</a>{% else %}</div>{% endif %}
+      </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+  {% if hero_slides > 1 %}
+  <div class="hero__controls" data-carousel-controls hidden>
+    <button type="button" class="hero__btn" data-carousel-prev aria-label="Previous slide">{% render 'icon', name: 'chevron-left', icon_size: 20 %}</button>
+    <span class="hero__pos" data-carousel-pos aria-live="off">1 / {{ hero_slides }}</span>
+    <button type="button" class="hero__btn" data-carousel-next aria-label="Next slide">{% render 'icon', name: 'chevron-right', icon_size: 20 %}</button>
+    <button type="button" class="hero__btn" data-carousel-toggle aria-label="Pause slideshow" aria-pressed="false">{% render 'icon', name: 'pause', icon_size: 18 %}</button>
+  </div>
+  {% endif %}
+</section>
+{% elsif section.settings.page_heading != '' %}
+<div data-section-id="{{ section.id | escape }}" data-section-type="{{ section.type | escape }}"><h1 class="visually-hidden">{{ section.settings.page_heading | replace: '[restaurant]', restaurant.name | escape }}</h1></div>
+{% endif %}
+
+{% schema %}
+{
+  "name": "Hero slideshow",
+  "description": "Image carousel. Upload a wide desktop image (1920 × 600) and a square mobile image (800 × 800) per slide. Slides without an image are not shown.",
+  "settings": [
+    { "type": "text", "id": "label", "label": "Accessible name", "default": "Promotions" },
+    { "type": "text", "id": "page_heading", "label": "Hidden page heading (for screen readers)", "info": "[restaurant] is replaced with your restaurant name. Leave empty if another section provides the page heading.", "default": "[restaurant] — order online" },
+    { "type": "checkbox", "id": "autoplay", "label": "Rotate slides automatically", "default": true },
+    { "type": "range", "id": "interval", "label": "Seconds per slide", "min": 5, "max": 12, "step": 1, "unit": "s", "default": 6 }
+  ],
+  "blocks": [
+    {
+      "type": "slide",
+      "name": "Slide",
+      "settings": [
+        { "type": "image_picker", "id": "image", "label": "Desktop image (1920 × 600)" },
+        { "type": "image_picker", "id": "mobile_image", "label": "Mobile image (800 × 800)" },
+        { "type": "select", "id": "bundled_art", "label": "Bundled artwork when no image is chosen", "default": "none", "options": [
+          { "value": "none", "label": "None" },
+          { "value": "crispy", "label": "Crispy box" },
+          { "value": "midnight", "label": "Midnight deal" },
+          { "value": "family", "label": "Family feast" }
+        ] },
+        { "type": "text", "id": "alt", "label": "Image description (alt text)", "default": "Today's specials" },
+        { "type": "url", "id": "link", "label": "Link", "default": "/menu" }
+      ]
+    }
+  ],
+  "max_blocks": 6,
+  "presets": [{ "name": "Hero slideshow", "category": "Promotions", "blocks": [{ "type": "slide", "settings": { "bundled_art": "crispy" } }] }]
+}
+{% endschema %}

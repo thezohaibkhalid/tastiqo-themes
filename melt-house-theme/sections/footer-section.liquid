@@ -1,0 +1,64 @@
+<!--mh:footer-start-->
+{% assign s = theme.settings %}
+{% capture fs_cols %}{% render 'css-number', value: s.footer_columns, min: 1, max: 4, fallback: 3 %}{% endcapture %}
+{% assign fs_phone = restaurant.phone | default: '' %}
+{% assign fs_email = restaurant.email | default: '' %}
+<footer class="site-footer" data-section-id="{{ section.id | escape }}" data-section-type="{{ section.type | escape }}" style="--footer-cols:{{ fs_cols | strip }}">
+  <div class="container site-footer__grid">
+    <div class="site-footer__col site-footer__brand">
+      <span class="site-footer__logo">{% render 'icon', name: 'logo', icon_size: 36 %}<span>{{ restaurant.name | escape }}</span></span>
+      {% if restaurant.tagline and restaurant.tagline != '' %}<p class="site-footer__tagline">{{ restaurant.tagline | escape }}</p>{% endif %}
+      <ul class="site-footer__contact">
+        {% if fs_phone != '' %}<li>{% render 'icon', name: 'phone', icon_size: 18 %}<a href="tel:{{ fs_phone | remove: ' ' | remove: '-' | escape }}">{{ fs_phone | escape }}</a></li>{% endif %}
+        {% if fs_email != '' %}<li>{% render 'icon', name: 'mail', icon_size: 18 %}<a href="mailto:{{ fs_email | escape }}">{{ fs_email | escape }}</a></li>{% endif %}
+        {% if restaurant.address and restaurant.address != '' %}<li>{% render 'icon', name: 'pin', icon_size: 18 %}<span>{{ restaurant.address | escape }}{% if restaurant.city and restaurant.city != '' %}, {{ restaurant.city | escape }}{% endif %}</span></li>{% endif %}
+      </ul>
+    </div>
+
+    {% if section.settings.show_hours %}
+    <div class="site-footer__col">
+      <h2 class="site-footer__heading">Opening hours{% if branch.name and branch.name != '' %}<span class="site-footer__sub">{{ branch.name | escape }}</span>{% endif %}</h2>
+      {% render 'hours-list', hours: restaurant.hours %}
+    </div>
+    {% endif %}
+
+    <div class="site-footer__col">
+      <h2 class="site-footer__heading">{{ section.settings.links_heading | default: 'Explore' | escape }}</h2>
+      <ul class="site-footer__links">
+        {% for link in navigation.footer %}<li><a href="{{ link.url | escape }}">{{ link.title | escape }}</a></li>{% endfor %}
+        <li><a href="{{ routes.locations | default: '/locations' }}">Locations</a></li>
+        <li><a href="{{ routes.account_orders | default: '/account/orders' }}">My orders</a></li>
+      </ul>
+    </div>
+
+    {% assign fs_has_social = false %}
+    {% if s.social_instagram != '' or s.social_facebook != '' or s.social_tiktok != '' or s.social_youtube != '' or s.social_whatsapp != '' or s.social_google_maps != '' %}{% assign fs_has_social = true %}{% endif %}
+    {% if fs_has_social %}
+    <div class="site-footer__col">
+      <h2 class="site-footer__heading">Follow us</h2>
+      {% render 'social-links', s: s %}
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="site-footer__legal">
+    <div class="container site-footer__legal-inner">
+      <p>{% if s.footer_copyright and s.footer_copyright != '' %}{{ s.footer_copyright | escape }}{% else %}© {{ utils.today | date: '%Y' }} {{ restaurant.name | escape }}. All rights reserved.{% endif %}</p>
+      {% if navigation.legal.size > 0 %}
+      <ul class="site-footer__legal-links">{% for link in navigation.legal %}<li><a href="{{ link.url | escape }}">{{ link.title | escape }}</a></li>{% endfor %}</ul>
+      {% endif %}
+    </div>
+  </div>
+</footer>
+<a class="to-top" href="#main" data-to-top aria-label="Back to top">{% render 'icon', name: 'arrow-up', icon_size: 20 %}</a>
+
+{% schema %}
+{
+  "name": "Footer",
+  "settings": [
+    { "type": "checkbox", "id": "show_hours", "label": "Show opening hours", "default": true },
+    { "type": "text", "id": "links_heading", "label": "Links heading", "default": "Explore" },
+    { "type": "paragraph", "content": "Columns, copyright and social links are in Theme settings. Contact details and hours come from your restaurant and branch settings." }
+  ]
+}
+{% endschema %}

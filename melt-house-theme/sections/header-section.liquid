@@ -1,0 +1,97 @@
+{% assign s = theme.settings %}
+{% assign hs_logo = s.logo_image | default: restaurant.logo | default: '' %}
+{% assign hs_menu_style = s.mobile_menu_style | default: 'drawer' %}
+{% assign hs_tiles = section.settings.map_tile_url | default: '' | strip %}
+{% assign hs_tiles_scheme = hs_tiles | slice: 0, 8 | downcase %}
+{% assign hs_map = false %}
+{% if section.settings.enable_map and hs_tiles_scheme == 'https://' %}{% if hs_tiles contains '{z}' and hs_tiles contains '{x}' and hs_tiles contains '{y}' %}{% assign hs_map = true %}{% endif %}{% endif %}
+<div class="site-header-wrap{% if s.header_sticky == false %} is-static{% endif %}" data-section-id="{{ section.id | escape }}" data-section-type="{{ section.type | escape }}" data-site-header{% if hs_map %} data-map-tiles="{{ hs_tiles | escape }}" data-map-attribution="{{ section.settings.map_attribution | escape }}" data-map-js="{{ 'leaflet.js' | asset_url }}" data-map-css="{{ 'leaflet.css' | asset_url }}"{% endif %}>
+<header class="site-header">
+  <div class="container site-header__bar">
+    <button type="button" class="icon-btn icon-btn--on-dark site-header__menu-btn" data-open-nav aria-controls="nav-dialog" aria-label="Open menu">{% render 'icon', name: 'menu' %}</button>
+
+    <a class="site-logo" href="{{ routes.home | default: '/' }}"{% if request.page_type == 'index' %} aria-current="page"{% endif %}>
+      {% if hs_logo != '' %}
+        <img src="{{ hs_logo | escape }}" alt="{{ restaurant.name | escape }}" width="{{ s.logo_width | default: 120 }}" height="40" class="site-logo__img">
+      {% else %}
+        <span class="site-logo__mark">{% render 'icon', name: 'logo', icon_size: 22 %}</span><span class="site-logo__text">{{ restaurant.name | escape }}</span>
+      {% endif %}
+    </a>
+
+    {% if section.settings.show_location %}
+    <a class="loc-btn" href="{{ routes.locations | default: '/locations' }}" data-open-location>
+      {% render 'icon', name: 'pin', icon_size: 22 %}
+      <span class="loc-btn__text">
+        <span class="loc-btn__mode" data-loc-mode>{% if branch.selected %}Ordering from{% else %}Choose delivery or takeaway{% endif %}</span>
+        <span class="loc-btn__label" data-loc-label>{% if branch.selected %}{{ branch.name | escape }}{% else %}Select location{% endif %}</span>
+      </span>
+      {% render 'icon', name: 'chevron-down', icon_size: 14 %}
+    </a>
+    {% endif %}
+
+    <nav class="site-nav" aria-label="Main">
+      <ul class="site-nav__list">
+        {% for link in navigation.primary %}
+          {% assign hs_active = false %}{% if link.url == request.path %}{% assign hs_active = true %}{% endif %}
+          {% if link.url == routes.menu and request.page_type == 'collection' %}{% assign hs_active = true %}{% endif %}
+          <li><a class="site-nav__link" href="{{ link.url | escape }}"{% if hs_active %} aria-current="page"{% endif %}>{{ link.title | escape }}</a></li>
+        {% endfor %}
+      </ul>
+    </nav>
+
+    <div class="site-header__actions">
+      {% if s.show_search != false %}
+      <a class="icon-btn icon-btn--on-dark" href="{{ routes.search | default: '/search' }}" aria-label="Search the menu"{% if request.page_type == 'search' %} aria-current="page"{% endif %}>{% render 'icon', name: 'search' %}</a>
+      {% endif %}
+      <a class="icon-btn icon-btn--on-dark account-link" href="{{ routes.account | default: '/account' }}" data-account-link{% if request.page_type contains 'customers' %} aria-current="page"{% endif %}>{% render 'icon', name: 'user' %}<span class="account-link__label hide-sm" data-account-label>Sign in</span><span class="visually-hidden" data-account-sr>Account</span></a>
+      {% if s.show_cart != false %}
+      <a class="cart-btn" href="{{ routes.cart | default: '/cart' }}" data-open-cart{% if request.page_type == 'cart' %} aria-current="page"{% endif %}>
+        {% render 'icon', name: 'cart' %}<span class="visually-hidden">Cart, </span><span class="cart-btn__count" data-cart-count>0</span><span class="visually-hidden"> items</span>
+      </a>
+      {% endif %}
+    </div>
+  </div>
+</header>
+</div>
+
+<dialog class="nav-dialog nav-dialog--{{ hs_menu_style | escape }}" id="nav-dialog" aria-label="Site menu" data-nav-dialog>
+  <div class="nav-dialog__head">
+    <span class="brand-chip brand-chip--on-dark">{% render 'icon', name: 'logo', icon_size: 22 %}<span>{{ restaurant.name | escape }}</span></span>
+    <button type="button" class="icon-btn icon-btn--on-dark" data-close-dialog aria-label="Close menu">{% render 'icon', name: 'close' %}</button>
+  </div>
+  <nav aria-label="Mobile">
+    <ul class="nav-dialog__list">
+      {% for link in navigation.primary %}
+        <li>
+          <a href="{{ link.url | escape }}"{% if link.url == request.path %} aria-current="page"{% endif %}>{{ link.title | escape }}</a>
+          {% if link.children.size > 0 %}
+          <ul class="nav-dialog__sub">{% for child in link.children %}<li><a href="{{ child.url | escape }}"{% if child.url == request.path %} aria-current="page"{% endif %}>{{ child.title | escape }}</a></li>{% endfor %}</ul>
+          {% endif %}
+        </li>
+      {% endfor %}
+      {% if section.settings.show_location %}<li><a href="{{ routes.locations | default: '/locations' }}" data-open-location>Delivery or takeaway</a></li>{% endif %}
+      {% if s.show_search != false %}<li><a href="{{ routes.search | default: '/search' }}">Search</a></li>{% endif %}
+      <li><a href="{{ routes.cart | default: '/cart' }}">Cart <span class="nav-dialog__count" data-cart-count>0</span></a></li>
+      <li><a href="{{ routes.account_orders | default: '/account/orders' }}">My orders</a></li>
+      <li><a href="{{ routes.account | default: '/account' }}" data-account-link>My account</a></li>
+    </ul>
+  </nav>
+  {% if restaurant.phone and restaurant.phone != '' %}
+  <p class="nav-dialog__contact">{% render 'icon', name: 'phone', icon_size: 18 %}<a href="tel:{{ restaurant.phone | remove: ' ' | remove: '-' | escape }}">{{ restaurant.phone | escape }}</a></p>
+  {% endif %}
+</dialog>
+<!--mh:header-end-->
+
+{% schema %}
+{
+  "name": "Header",
+  "settings": [
+    { "type": "checkbox", "id": "show_location", "label": "Show delivery / takeaway selector", "default": true },
+    { "type": "paragraph", "content": "Logo, sticky behaviour, search and cart icons and the mobile menu style are in Theme settings." },
+    { "type": "header", "content": "Delivery address map" },
+    { "type": "checkbox", "id": "enable_map", "label": "Allow a drop-off pin", "info": "The map is for pinning a saved delivery address only. It is not used in the delivery or takeaway selector.", "default": true },
+    { "type": "text", "id": "map_tile_url", "label": "Map tile URL template (HTTPS)", "info": "Must contain {z}, {x} and {y}. The default uses OpenStreetMap's public tiles, which are for light use only; for busy stores use a tile provider you have an account with.", "default": "https://tile.openstreetmap.org/{z}/{x}/{y}.png" },
+    { "type": "text", "id": "map_attribution", "label": "Map attribution", "default": "© OpenStreetMap contributors" }
+  ]
+}
+{% endschema %}

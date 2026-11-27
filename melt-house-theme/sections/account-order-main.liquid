@@ -1,0 +1,24 @@
+{% assign ao_track = section.settings.tracking_app_url | default: '' | strip %}
+{% assign ao_track_scheme = ao_track | slice: 0, 8 | downcase %}
+{% if ao_track_scheme != 'https://' %}{% assign ao_track = '' %}{% endif %}
+<div class="section order-page" data-section-id="{{ section.id | escape }}" data-section-type="{{ section.type | escape }}" data-order-page data-order-id="{{ request.params.id | escape }}" data-tracking-url="{{ ao_track | escape }}" data-tracking-code-path="{% if section.settings.tracking_code_in_path %}true{% else %}false{% endif %}">
+  <div class="container container--narrow-wide">
+    <p class="back-link"><a href="{{ routes.account_orders | default: '/account/orders' }}">{% render 'icon', name: 'chevron-left', icon_size: 16 %}All orders</a></p>
+    <h1 class="page-title" tabindex="-1" data-order-heading>{{ section.settings.heading | default: 'Order details' | escape }}</h1>
+    <noscript><p class="notice">Order details need JavaScript. Please turn it on to continue.</p></noscript>
+    <div data-order-root><p class="muted" role="status">Loading order…</p></div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Order details",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Order details" },
+    { "type": "header", "content": "Order tracking app" },
+    { "type": "url", "id": "tracking_app_url", "label": "Tracking app URL", "info": "HTTPS only. Live tracking happens in this separate app, never on the website.", "default": "" },
+    { "type": "checkbox", "id": "tracking_code_in_path", "label": "Tracking app accepts the tracking code as the last part of the link", "default": false }
+  ],
+  "presets": [{ "name": "Order details" }]
+}
+{% endschema %}

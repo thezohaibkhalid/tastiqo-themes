@@ -1,0 +1,37 @@
+{% assign sm_q = request.query.q | default: '' | strip %}
+{% assign sm_qd = sm_q | downcase %}
+<div class="section search-page" data-section-id="{{ section.id | escape }}" data-section-type="{{ section.type | escape }}" data-search-page>
+  <div class="container container--narrow-wide">
+    <h1 class="page-title">{{ section.settings.heading | default: 'Search the menu' | escape }}</h1>
+    <form class="menu-search menu-search--page" action="{{ routes.search | default: '/search' }}" method="get" role="search">
+      <label class="visually-hidden" for="search-q">Search dishes</label>
+      {% render 'icon', name: 'search', icon_size: 20 %}
+      <input class="menu-search__input" id="search-q" type="search" name="q" value="{{ sm_q | escape }}" placeholder="Search dishes, e.g. wings" autocomplete="off" enterkeyhint="search" data-menu-filter>
+      <button class="btn btn--primary btn--sm menu-search__submit" type="submit">Search</button>
+    </form>
+    <p class="search-page__count muted" role="status" data-search-count>{% if sm_q != '' %}Results for “{{ sm_q | escape }}”{% else %}Type a dish, ingredient or category.{% endif %}</p>
+
+    {% assign sm_total = 0 %}
+    <div data-menu>
+    {% for c in menu_categories %}
+      {% assign sm_cat_hits = 0 %}
+      {% capture sm_cards %}{% for it in c.items %}{% assign sm_hay = it.name | append: ' ' | append: it.description | append: ' ' | append: c.title | strip_html | downcase %}{% assign sm_tags = it.tags | join: ' ' | downcase %}{% assign sm_hay = sm_hay | append: ' ' | append: sm_tags %}{% if sm_qd == '' or sm_hay contains sm_qd %}{% assign sm_cat_hits = sm_cat_hits | plus: 1 %}<div class="item-grid__cell">{% render 'item-card', item: it, category_title: c.title, eager: false %}</div>{% else %}<div class="item-grid__cell" hidden>{% render 'item-card', item: it, category_title: c.title, eager: false %}</div>{% endif %}{% endfor %}{% endcapture %}
+      {% assign sm_total = sm_total | plus: sm_cat_hits %}
+      <section class="menu-cat" aria-labelledby="s-cat-{{ forloop.index }}" data-menu-cat{% if sm_cat_hits == 0 %} hidden{% endif %}>
+        <h2 class="menu-cat__title" id="s-cat-{{ forloop.index }}">{{ c.title | escape }}</h2>
+        <div class="item-grid">{{ sm_cards }}</div>
+      </section>
+    {% endfor %}
+    </div>
+    <p class="empty-note" data-menu-noresults{% if sm_total > 0 %} hidden{% endif %}>No dishes match{% if sm_q != '' %} “{{ sm_q | escape }}”{% endif %}. <a href="{{ routes.menu | default: '/menu' }}">Browse the full menu</a></p>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Search results",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Search the menu" }
+  ]
+}
+{% endschema %}

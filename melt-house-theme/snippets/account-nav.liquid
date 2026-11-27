@@ -1,0 +1,7 @@
+<nav class="account-nav" aria-label="Account">
+  <ul>
+    <li><a class="chip{% if current == 'account' %} is-active{% endif %}" href="{{ routes.account | default: '/account' }}"{% if current == 'account' %} aria-current="page"{% endif %}>Profile and addresses</a></li>
+    <li><a class="chip{% if current == 'orders' %} is-active{% endif %}" href="{{ routes.account_orders | default: '/account/orders' }}"{% if current == 'orders' %} aria-current="page"{% endif %}>My orders</a></li>
+    <li><button type="button" class="chip chip--ghost" data-sign-out hidden>Sign out</button></li>
+  </ul>
+</nav>

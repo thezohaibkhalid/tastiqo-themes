@@ -1,0 +1,43 @@
+{% comment %}Options form for one item. theme.js builds the same markup for the quick-view sheet, and validates min/max/required before adding to the cart.{% endcomment %}
+<form class="item-form" data-item-form data-product-id="{{ item.id | escape }}" data-base-price="{{ item.price | default: 0 }}" novalidate>
+  {% for g in item.modifier_groups %}
+    {% assign if_min = g.min | default: 0 | plus: 0 %}{% assign if_max = g.max | default: 0 | plus: 0 %}
+    {% if g.required and if_min < 1 %}{% assign if_min = 1 %}{% endif %}
+    {% assign if_radio = false %}{% if if_max == 1 and if_min == 1 %}{% assign if_radio = true %}{% endif %}
+    <fieldset class="opt-group" data-group-id="{{ g.id | escape }}" data-min="{{ if_min }}" data-max="{{ if_max }}" aria-describedby="{{ uid }}-hint-{{ forloop.index }}">
+      <legend class="opt-group__head">
+        <span class="opt-group__title">{{ g.title | escape }}</span>
+        <span class="badge {% if if_min > 0 %}badge--req{% else %}badge--muted{% endif %}">{% if if_min > 0 %}Required{% else %}Optional{% endif %}</span>
+      </legend>
+      <p class="opt-group__hint" id="{{ uid }}-hint-{{ forloop.index }}">{% if if_radio %}Choose 1{% elsif if_max == 0 %}{% if if_min > 0 %}Choose at least {{ if_min }}{% else %}Choose any{% endif %}{% elsif if_min > 0 %}{% if if_min == if_max %}Choose {{ if_max }}{% else %}Choose {{ if_min }} to {{ if_max }}{% endif %}{% else %}Choose up to {{ if_max }}{% endif %}</p>
+      {% for o in g.options %}
+      <label class="opt-row">
+        <input type="{% if if_radio %}radio{% else %}checkbox{% endif %}" name="{{ uid }}-{{ g.id | escape }}" value="{{ o.id | escape }}" data-price-delta="{{ o.price_delta | default: 0 }}"{% if o.is_default %} checked{% endif %}>
+        <span class="opt-row__mark" aria-hidden="true"></span>
+        <span class="opt-row__label">{{ o.label | escape }}</span>
+        {% if o.price_delta != 0 and o.price_delta != nil %}<span class="opt-row__price">{% if o.price_delta > 0 %}+{% endif %} {% if o.price_delta_money %}{{ o.price_delta_money | escape }}{% else %}{{ o.price_delta | money }}{% endif %}</span>{% endif %}
+      </label>
+      {% endfor %}
+      <p class="field-error" data-group-error></p>
+    </fieldset>
+  {% endfor %}
+
+  <div class="field">
+    <label class="field__label" for="{{ uid }}-notes">Special instructions <span class="muted">(optional)</span></label>
+    <textarea class="input" id="{{ uid }}-notes" name="notes" rows="2" maxlength="250" placeholder="Allergies or things to leave out"></textarea>
+  </div>
+
+  <p class="form-error" role="alert" data-item-error></p>
+
+  <div class="item-form__bar">
+    <div class="qty" role="group" aria-label="Quantity">
+      <button type="button" class="qty__btn" data-qty-step="-1" aria-label="Decrease quantity">{% render 'icon', name: 'minus', icon_size: 18 %}</button>
+      <input class="qty__input" type="number" inputmode="numeric" name="quantity" value="1" min="1" max="1000" step="1" aria-label="Quantity">
+      <button type="button" class="qty__btn" data-qty-step="1" aria-label="Increase quantity">{% render 'icon', name: 'plus', icon_size: 18 %}</button>
+    </div>
+    <button type="submit" class="btn btn--accent btn--lg item-form__add" data-item-add{% if disabled %} disabled{% endif %}>
+      <span>{% if disabled %}Unavailable{% else %}Add to cart{% endif %}</span>
+      <span class="item-form__total" data-item-total>{% if item.priceMoney %}{{ item.priceMoney | escape }}{% else %}{{ item.price | money }}{% endif %}</span>
+    </button>
+  </div>
+</form>

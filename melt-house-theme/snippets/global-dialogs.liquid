@@ -1,0 +1,98 @@
+{% comment %}Shared dialogs used on every page. theme.js fills their dynamic content; native <dialog> gives modal focus handling and Esc.{% endcomment %}
+{% assign gd_set_branch = branch_selector.set_branch_url | default: '/api/storefront/set-branch' %}
+
+<dialog class="sheet sheet--side" id="cart-drawer" aria-labelledby="cart-drawer-title" data-cart-drawer>
+  <div class="sheet__head">
+    <h2 class="sheet__title" id="cart-drawer-title">Your cart</h2>
+    <button type="button" class="icon-btn icon-btn--on-dark" data-close-dialog aria-label="Close cart">{% render 'icon', name: 'close', icon_size: 20 %}</button>
+  </div>
+  <div class="sheet__body" data-cart-render="drawer"><p class="muted">Loading your cart…</p></div>
+  <div class="sheet__foot" data-cart-summary="drawer"></div>
+</dialog>
+
+<dialog class="sheet sheet--item" id="item-dialog" aria-labelledby="item-dialog-title" data-item-dialog>
+  <div class="item-sheet" data-item-dialog-body></div>
+</dialog>
+
+<dialog class="sheet sheet--center" id="location-dialog" aria-labelledby="location-dialog-title" data-location-dialog>
+  <div class="sheet__head sheet__head--plain">
+    <span class="brand-chip">{% render 'icon', name: 'logo', icon_size: 22 %}<span>{{ restaurant.name | escape }}</span></span>
+    <button type="button" class="icon-btn" data-close-dialog aria-label="Close">{% render 'icon', name: 'close', icon_size: 20 %}</button>
+  </div>
+  <div class="sheet__body">
+    <h2 class="loc__title" id="location-dialog-title">How would you like your order?</h2>
+    <fieldset class="segmented" data-mode-group>
+      <legend class="visually-hidden">Order type</legend>
+      <label class="segmented__opt"><input type="radio" name="loc_order_type" value="delivery" checked><span>Delivery</span></label>
+      <label class="segmented__opt"><input type="radio" name="loc_order_type" value="pickup"><span>Takeaway</span></label>
+    </fieldset>
+
+    <div class="loc__panel" data-loc-panel="delivery">
+      <p class="loc__question">Where should we deliver?</p>
+      <div class="loc__actions">
+        <button type="button" class="btn btn--ghost btn--block" data-use-location>{% render 'icon', name: 'locate', icon_size: 18 %}<span>Use current location</span></button>
+      </div>
+      <p class="loc__status" role="status" data-geo-status></p>
+      <div class="loc__divider"><span>or choose manually</span></div>
+      <div class="field">
+        <label class="field__label" for="loc-city">City</label>
+        <select class="input" id="loc-city" data-loc-city autocomplete="address-level2" disabled><option value="">Loading cities…</option></select>
+        <button type="button" class="btn btn--ghost btn--block" data-retry-cities hidden>Retry loading cities</button>
+      </div>
+      <div class="field">
+        <label class="field__label" for="loc-area">Area</label>
+        <select class="input" id="loc-area" data-loc-area disabled><option value="">Choose a city first</option></select>
+      </div>
+      <div class="loc__proposal" data-loc-proposal aria-live="polite"></div>
+    </div>
+
+    <div class="loc__panel" data-loc-panel="pickup" hidden>
+      <p class="loc__question">Which branch will you collect from?</p>
+      {% assign gd_groups = branch_selector.cities_grouped %}
+      {% if gd_groups.size > 0 %}
+        {% for g in gd_groups %}
+          <fieldset class="branch-group">
+            <legend class="branch-group__city">{{ g.city | default: 'Branches' | escape }}</legend>
+            {% for b in g.branches %}{% render 'branch-option', b: b %}{% endfor %}
+          </fieldset>
+        {% endfor %}
+      {% else %}
+        <fieldset class="branch-group">
+          <legend class="visually-hidden">Branches</legend>
+          {% for b in branch_selector.branches %}{% render 'branch-option', b: b %}{% else %}<p class="muted">No branches are available for takeaway right now.</p>{% endfor %}
+        </fieldset>
+      {% endif %}
+    </div>
+
+    <p class="form-error" role="alert" data-loc-error></p>
+  </div>
+  <div class="sheet__foot loc__footer">
+    <button type="button" class="btn btn--accent btn--block btn--lg" data-loc-confirm disabled>Choose a delivery area</button>
+    <button type="button" class="btn btn--ghost btn--block" data-close-dialog>Keep browsing</button>
+  </div>
+</dialog>
+
+<dialog class="sheet sheet--map" id="map-dialog" aria-labelledby="map-dialog-title" data-map-dialog>
+  <div class="sheet__head">
+    <h2 class="sheet__title" id="map-dialog-title" data-map-title>Choose your location</h2>
+    <button type="button" class="icon-btn icon-btn--on-dark" data-close-dialog aria-label="Close map">{% render 'icon', name: 'close', icon_size: 20 %}</button>
+  </div>
+  <div class="map-picker">
+    <p class="map-picker__hint" id="map-hint" data-map-hint>Move the map so the pin is on your door, then confirm.</p>
+    <div class="map-picker__stage">
+    <div class="map-picker__canvas" data-map-canvas role="application" aria-roledescription="map" aria-label="Map. Use the arrow keys to move the map; the pin stays in the centre." aria-describedby="map-hint" tabindex="0"></div>
+    <span class="map-picker__pin" aria-hidden="true">{% render 'icon', name: 'pin', icon_size: 44 %}</span>
+    <button type="button" class="btn btn--ghost map-picker__locate" data-map-locate>{% render 'icon', name: 'locate', icon_size: 18 %}<span>Use current location</span></button>
+    </div>
+  </div>
+  <p class="loc__status map-picker__status" role="status" data-map-status></p>
+  <div class="sheet__foot">
+    <button type="button" class="btn btn--accent btn--block btn--lg" data-map-confirm>Confirm this location</button>
+  </div>
+</dialog>
+
+<form method="post" action="{{ gd_set_branch | escape }}" data-set-branch-form hidden>
+  <input type="hidden" name="branch_id" value="">
+</form>
+
+<div class="toast-region" data-toast-region></div>

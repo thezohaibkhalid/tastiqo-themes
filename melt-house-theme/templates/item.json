@@ -1,0 +1,44 @@
+{
+  "sections": {
+    "announcement": {
+      "type": "announcement-bar",
+      "settings": {},
+      "blocks": [
+        {
+          "id": "ann-1",
+          "type": "announcement",
+          "settings": {
+            "text": "Midnight deals are live from 12:00 AM to 3:00 AM.",
+            "link": "/menu"
+          }
+        }
+      ]
+    },
+    "header": {
+      "type": "header-section",
+      "settings": {
+        "show_location": true
+      }
+    },
+    "main": {
+      "type": "item-main",
+      "settings": {
+        "show_related": true
+      }
+    },
+    "footer": {
+      "type": "footer-section",
+      "settings": {}
+    }
+  },
+  "header_order": [
+    "announcement",
+    "header"
+  ],
+  "order": [
+    "main"
+  ],
+  "footer_order": [
+    "footer"
+  ]
+}

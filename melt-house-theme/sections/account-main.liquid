@@ -1,0 +1,19 @@
+<div class="section account-page" data-section-id="{{ section.id | escape }}" data-section-type="{{ section.type | escape }}" data-account-page>
+  <div class="container">
+    <h1 class="page-title" tabindex="-1">{{ section.settings.heading | default: 'My account' | escape }}</h1>
+    <noscript><p class="notice">Your account needs JavaScript. Please turn it on to continue.</p></noscript>
+    {% render 'account-nav', current: 'account', routes: routes %}
+    <div class="account-grid" data-account-root>
+      <p class="muted" role="status">Loading your account…</p>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Account",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "My account" }
+  ]
+}
+{% endschema %}

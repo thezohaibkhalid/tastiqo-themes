@@ -1,0 +1,27 @@
+<div class="section cart-page" data-section-id="{{ section.id | escape }}" data-section-type="{{ section.type | escape }}">
+  <div class="container">
+    <h1 class="page-title">{{ section.settings.heading | default: 'Your cart' | escape }}</h1>
+    <noscript><p class="notice">Your cart needs JavaScript to work. Please turn it on to order online{% if restaurant.phone %}, or call us on <a href="tel:{{ restaurant.phone | remove: ' ' | escape }}">{{ restaurant.phone | escape }}</a>{% endif %}.</p></noscript>
+    <div class="cart-layout">
+      <section class="cart-layout__lines card" aria-labelledby="cart-lines-title">
+        <h2 class="visually-hidden" id="cart-lines-title">Items</h2>
+        <div data-cart-render="page"><p class="muted">Loading your cart…</p></div>
+      </section>
+      <aside class="cart-layout__summary card" aria-labelledby="cart-summary-title">
+        <h2 class="card__title" id="cart-summary-title">Summary</h2>
+        <div data-cart-summary="page"></div>
+        {% if section.settings.note != '' %}<p class="muted small">{{ section.settings.note | escape }}</p>{% endif %}
+      </aside>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Cart",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Your cart" },
+    { "type": "textarea", "id": "note", "label": "Note under the summary", "default": "Prices shown are estimates. The restaurant confirms the final total, including any tax, when you place your order." }
+  ]
+}
+{% endschema %}

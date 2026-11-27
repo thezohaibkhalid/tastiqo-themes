@@ -1,0 +1,31 @@
+{
+  "sections": {
+    "header": {
+      "type": "header-section",
+      "settings": {
+        "show_location": true
+      }
+    },
+    "main": {
+      "type": "checkout-main",
+      "settings": {
+        "tracking_app_url": "",
+        "tracking_code_in_path": false,
+        "allow_notes": true
+      }
+    },
+    "footer": {
+      "type": "footer-section",
+      "settings": {}
+    }
+  },
+  "header_order": [
+    "header"
+  ],
+  "order": [
+    "main"
+  ],
+  "footer_order": [
+    "footer"
+  ]
+}

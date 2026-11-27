@@ -1,0 +1,49 @@
+{
+  "sections": {
+    "header": {
+      "type": "header-section",
+      "settings": {
+        "show_location": true
+      }
+    },
+    "main": {
+      "type": "page-main",
+      "settings": {},
+      "blocks": [
+        {
+          "id": "page-terms",
+          "type": "page",
+          "settings": {
+            "slug": "terms",
+            "title": "Terms and conditions",
+            "updated": "",
+            "body": "Orders are confirmed by the restaurant after you place them. Prices, availability and delivery areas can change by branch.\n\nPayment is cash on delivery or at the counter when you collect.\n\nFor questions about an order, contact the branch you ordered from."
+          }
+        },
+        {
+          "id": "page-privacy",
+          "type": "page",
+          "settings": {
+            "slug": "privacy",
+            "title": "Privacy policy",
+            "updated": "",
+            "body": "We use your name, email, phone number and delivery address to prepare, deliver and support your orders.\n\nWe only use your location when you tap 'Use current location', to find the nearest delivery area. It is not stored unless you save a delivery pin to an address."
+          }
+        }
+      ]
+    },
+    "footer": {
+      "type": "footer-section",
+      "settings": {}
+    }
+  },
+  "header_order": [
+    "header"
+  ],
+  "order": [
+    "main"
+  ],
+  "footer_order": [
+    "footer"
+  ]
+}

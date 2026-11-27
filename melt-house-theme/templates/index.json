@@ -1,0 +1,123 @@
+{
+  "sections": {
+    "announcement": {
+      "type": "announcement-bar",
+      "settings": {},
+      "blocks": [
+        {
+          "id": "ann-1",
+          "type": "announcement",
+          "settings": {
+            "text": "Midnight deals are live from 12:00 AM to 3:00 AM.",
+            "link": "/menu"
+          }
+        }
+      ]
+    },
+    "header": {
+      "type": "header-section",
+      "settings": {
+        "show_location": true
+      }
+    },
+    "hero": {
+      "type": "hero-slider",
+      "settings": {
+        "label": "Promotions",
+        "autoplay": true,
+        "interval": 6
+      },
+      "blocks": [
+        {
+          "id": "slide-crispy",
+          "type": "slide",
+          "settings": {
+            "bundled_art": "crispy",
+            "alt": "Crispy Box \u2014 strips, hot wings, fries and two dips",
+            "link": "/menu"
+          }
+        },
+        {
+          "id": "slide-midnight",
+          "type": "slide",
+          "settings": {
+            "bundled_art": "midnight",
+            "alt": "Midnight deal \u2014 medium pizza, garlic bread and two drinks",
+            "link": "/menu"
+          }
+        },
+        {
+          "id": "slide-family",
+          "type": "slide",
+          "settings": {
+            "bundled_art": "family",
+            "alt": "Family feast \u2014 two large pizzas, pasta, a side and a drink",
+            "link": "/menu"
+          }
+        }
+      ]
+    },
+    "categories": {
+      "type": "category-strip",
+      "settings": {
+        "heading": "Explore the menu",
+        "limit": 12
+      }
+    },
+    "popular": {
+      "type": "featured-dishes",
+      "settings": {
+        "source": "popular",
+        "heading": "Popular right now",
+        "kicker": "Customer favourites",
+        "limit": 6,
+        "show_view_all": true
+      },
+      "blocks": []
+    },
+    "promo": {
+      "type": "promo-banner",
+      "settings": {
+        "kicker": "12 AM \u2013 3 AM",
+        "heading": "Late-night cravings",
+        "text": "Late-night cravings sorted. Deals change by branch \u2014 see what's on near you.",
+        "button_label": "See deals",
+        "link": "/menu",
+        "bundled_art": "none"
+      }
+    },
+    "menu": {
+      "type": "menu-categories",
+      "settings": {
+        "title": "Our menu",
+        "title_is_page_heading": false,
+        "show_tabs": true,
+        "show_search": true,
+        "show_banners": true
+      }
+    },
+    "social": {
+      "type": "social-section",
+      "settings": {}
+    },
+    "footer": {
+      "type": "footer-section",
+      "settings": {}
+    }
+  },
+  "header_order": [
+    "announcement",
+    "header"
+  ],
+  "order": [
+    "hero",
+    "categories",
+    "popular",
+    "promo",
+    "menu",
+    "social"
+  ],
+  "footer_order": [
+    "footer"
+  ]
+}

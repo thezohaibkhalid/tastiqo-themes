@@ -1,0 +1,19 @@
+{% comment %}Use the uploaded primary photo, then the first usable gallery photo. Do not substitute an unrelated dish.{% endcomment %}
+{%- assign ii_w = width | default: 400 -%}
+{%- capture ii_src -%}{% render 'safe-url', url: item.imageUrl %}{%- endcapture -%}
+{%- assign ii_src = ii_src | strip -%}
+{%- if ii_src == '' -%}
+  {%- for ii_image in item.images -%}
+    {%- capture ii_candidate -%}{% render 'safe-url', url: ii_image %}{%- endcapture -%}
+    {%- assign ii_candidate = ii_candidate | strip -%}
+    {%- if ii_candidate != '' -%}
+      {%- assign ii_src = ii_candidate -%}
+      {%- break -%}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endif -%}
+{%- if ii_src != '' -%}
+  <img src="{{ ii_src | escape }}" alt="{{ alt | default: '' | escape }}" width="{{ ii_w }}" height="{{ ii_w }}" {% if eager %}fetchpriority="high"{% else %}loading="lazy"{% endif %} decoding="async" data-fallback-img{% if item.images.size > 0 %} data-photo-alternates="{{ item.images | json | escape }}"{% endif %}>
+{%- else -%}
+  <span class="img-fallback" aria-hidden="true">{% render 'icon', name: 'logo', icon_size: 40 %}</span>
+{%- endif -%}

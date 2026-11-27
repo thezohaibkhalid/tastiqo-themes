@@ -1,0 +1,94 @@
+[
+  {
+    "name": "theme_info",
+    "theme_name": "Melt",
+    "theme_version": "1.0.0",
+    "theme_author": "Restaurant storefront theme",
+    "theme_documentation_url": "",
+    "theme_support_url": ""
+  },
+  {
+    "name": "Colours",
+    "settings": [
+      { "type": "color", "id": "color_primary", "label": "Primary (header, buttons)", "default": "#48271C" },
+      { "type": "color", "id": "color_secondary", "label": "Secondary (soft highlight)", "default": "#FDF1DC" },
+      { "type": "color", "id": "color_accent", "label": "Accent (checkout and add buttons)", "default": "#EAA221" },
+      { "type": "color", "id": "color_background", "label": "Page background", "default": "#F3F4F6" },
+      { "type": "color", "id": "color_surface", "label": "Cards and panels", "default": "#FFFFFF" },
+      { "type": "color", "id": "color_text", "label": "Text", "default": "#24282B" },
+      { "type": "color", "id": "color_text_muted", "label": "Muted text", "default": "#555B62" },
+      { "type": "color", "id": "color_border", "label": "Borders", "default": "#D9DCE1" },
+      { "type": "color", "id": "color_success", "label": "Success", "default": "#176543" },
+      { "type": "color", "id": "color_warning", "label": "Warning", "default": "#80530E" },
+      { "type": "color", "id": "color_error", "label": "Error", "default": "#A71D2A" }
+    ]
+  },
+  {
+    "name": "Typography",
+    "settings": [
+      { "type": "font_picker", "id": "font_heading", "label": "Heading font", "default": "Poppins" },
+      { "type": "font_picker", "id": "font_body", "label": "Body font", "default": "Poppins" },
+      { "type": "range", "id": "base_font_size", "label": "Base font size", "min": 12, "max": 20, "step": 1, "unit": "px", "default": 16 },
+      { "type": "range", "id": "heading_scale", "label": "Heading scale", "min": 50, "max": 150, "step": 5, "unit": "%", "default": 100 },
+      { "type": "range", "id": "body_scale", "label": "Body scale", "min": 75, "max": 150, "step": 5, "unit": "%", "default": 100 }
+    ]
+  },
+  {
+    "name": "Layout and buttons",
+    "settings": [
+      { "type": "range", "id": "page_width", "label": "Maximum page width", "min": 900, "max": 1600, "step": 20, "unit": "px", "default": 1200 },
+      { "type": "range", "id": "spacing_sections", "label": "Space between sections", "min": 0, "max": 100, "step": 4, "unit": "px", "default": 40 },
+      { "type": "text", "id": "border_radius", "label": "Corner radius", "default": "8px" },
+      { "type": "select", "id": "button_style", "label": "Button shape", "default": "rounded", "options": [
+        { "value": "rounded", "label": "Rounded" }, { "value": "pill", "label": "Pill" }, { "value": "square", "label": "Square" }
+      ] },
+      { "type": "range", "id": "button_scale", "label": "Button size", "min": 75, "max": 150, "step": 5, "unit": "%", "default": 100 },
+      { "type": "select", "id": "button_shadow", "label": "Button shadow", "default": "none", "options": [
+        { "value": "none", "label": "None" }, { "value": "small", "label": "Small" }, { "value": "medium", "label": "Medium" }
+      ] },
+      { "type": "range", "id": "button_border_thickness", "label": "Button border", "min": 0, "max": 5, "step": 1, "unit": "px", "default": 0 }
+    ]
+  },
+  {
+    "name": "Header and footer",
+    "settings": [
+      { "type": "image_picker", "id": "logo_image", "label": "Logo" },
+      { "type": "range", "id": "logo_width", "label": "Logo width", "min": 30, "max": 300, "step": 5, "unit": "px", "default": 120 },
+      { "type": "image_picker", "id": "favicon", "label": "Favicon" },
+      { "type": "checkbox", "id": "header_sticky", "label": "Sticky header", "default": true },
+      { "type": "select", "id": "mobile_menu_style", "label": "Mobile menu", "default": "drawer", "options": [
+        { "value": "drawer", "label": "Drawer" }, { "value": "fullscreen", "label": "Full screen" }
+      ] },
+      { "type": "checkbox", "id": "show_search", "label": "Show search in header", "default": true },
+      { "type": "checkbox", "id": "show_cart", "label": "Show cart icon in header", "default": true },
+      { "type": "range", "id": "footer_columns", "label": "Footer columns", "min": 1, "max": 4, "step": 1, "default": 3 },
+      { "type": "text", "id": "footer_copyright", "label": "Copyright text", "default": "" }
+    ]
+  },
+  {
+    "name": "Social and maps",
+    "settings": [
+      { "type": "url", "id": "social_instagram", "label": "Instagram" },
+      { "type": "url", "id": "social_facebook", "label": "Facebook" },
+      { "type": "url", "id": "social_tiktok", "label": "TikTok" },
+      { "type": "url", "id": "social_youtube", "label": "YouTube" },
+      { "type": "url", "id": "social_whatsapp", "label": "WhatsApp link or number" },
+      { "type": "url", "id": "social_google_maps", "label": "Google Maps link" }
+    ]
+  },
+  {
+    "name": "SEO",
+    "settings": [
+      { "type": "text", "id": "seo_title", "label": "Home page title" },
+      { "type": "textarea", "id": "seo_description", "label": "Meta description" },
+      { "type": "image_picker", "id": "seo_og_image", "label": "Social share image" }
+    ]
+  },
+  {
+    "name": "Advanced",
+    "settings": [
+      { "type": "textarea", "id": "custom_css", "label": "Custom CSS" },
+      { "type": "textarea", "id": "custom_js", "label": "Custom JavaScript (vetted code only)" }
+    ]
+  }
+]

@@ -1,0 +1,8 @@
+<label class="branch-opt">
+  <input type="radio" name="loc_pickup_branch" value="{{ b.id | escape }}" data-branch-name="{{ b.name | escape }}" data-branch-open="{% if b.is_open %}true{% else %}false{% endif %}">
+  <span class="branch-opt__body">
+    <span class="branch-opt__name">{{ b.name | escape }}</span>
+    {% if b.address and b.address != '' %}<span class="branch-opt__addr">{{ b.address | escape }}{% if b.city and b.city != '' %}, {{ b.city | escape }}{% endif %}</span>{% endif %}
+    <span class="status-pill {% if b.is_open %}status-pill--ok{% else %}status-pill--muted{% endif %}">{% if b.is_open %}Open now{% else %}Closed now{% endif %}</span>
+  </span>
+</label>
